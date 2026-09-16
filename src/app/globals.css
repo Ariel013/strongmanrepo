@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/**
+ * Charte FIBDA — reprise du logiciel d'arbitrage d'origine.
+ *
+ * Deux univers distincts, à ne pas mélanger :
+ *  · l'administration, sur papier crème, lisible en plein jour sur un
+ *    ordinateur portable au bord du plateau ;
+ *  · les écrans publics, sur fond noir, lus à vingt mètres sur un mur LED.
+ *
+ * Aucun thème sombre automatique : le poste de saisie garde son fond clair
+ * même si l'ordinateur est réglé en sombre, sinon les officiels changent de
+ * repères d'un poste à l'autre.
+ */
+
+@theme {
+  /* ── Fonds et encres (administration) ── */
+  --color-papier: #fcfaf6;
+  --color-papier-2: #f4f1e9;
+  --color-encre: #141210;
+  --color-encre-2: #4a443b;
+  --color-encre-3: #8a8378;
+  --color-bordure: #e7e1d6;
+  --color-bordure-2: #ddd6c9;
+
+  /* ── Couleurs FIBDA ── */
+  --color-vert: #0b9237;
+  --color-vert-fonce: #03562a;
+  --color-orange: #ec6d23;
+  --color-orange-fonce: #bc4f14;
+  --color-rouge: #c4361f;
+  --color-rouge-fonce: #a6371c;
+
+  /* ── Écrans publics (mur LED) ── */
+  --color-nuit: #0a0908;
+  --color-nuit-2: #17150f;
+  --color-nuit-encre: #fcfaf6;
+
+  /* ── Catégories : une couleur par catégorie, dans l'ordre ── */
+  --color-cat-1: #ec6d23;
+  --color-cat-2: #0b9237;
+  --color-cat-3: #3e7cb1;
+  --color-cat-4: #b4692f;
+  --color-cat-5: #8e44ad;
+  --color-cat-6: #c4361f;
+  --color-cat-7: #0f8b8d;
+
+  /* ── Podium ── */
+  --color-or: #d4a017;
+  --color-argent: #9ba1a6;
+  --color-bronze: #a9713b;
+
+  --font-titre: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  background: var(--color-papier);
+  color: var(--color-encre);
+  font-family: var(--font-sans);
+  /* Les chiffres d'un chrono ou d'un classement ne doivent pas sautiller
+     quand ils changent : chasse fixe sur tous les nombres. */
+  font-variant-numeric: tabular-nums;
+}
+
+/** Clignotement des dernières secondes du chronomètre. */
+@keyframes clignote {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.clignote {
+  animation: clignote 0.6s steps(1, end) infinite;
+}
+
+/**
+ * Les écrans publics sont lus de loin et jamais touchés : pas de curseur,
+ * pas de sélection accidentelle par un régisseur qui frôle la souris.
+ */
+.mur-led {
+  background: var(--color-nuit);
+  color: var(--color-nuit-encre);
+  cursor: none;
+  user-select: none;
+  overflow: hidden;
+}

@@ -1,0 +1,7 @@
+# esbuild compile un binaire natif à l'installation. Il est requis par
+# drizzle-kit (migrations) et tsx (scripts) — deux outils de développement,
+# jamais embarqués dans l'application déployée.
+allowBuilds:
+  esbuild: true
+  sharp: false
+  unrs-resolver: false

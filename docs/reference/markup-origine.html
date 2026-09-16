@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="15b20640-5773-4fb0-9225-d437d2c0a835"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Arbitrage Strongman 2026 — FIBDA</title>
+<style>
+/* Clash Display */
+@font-face {
+  font-family: 'Clash Display';
+  src: url("7c6a507e-45ab-40ae-8db5-9b859f32f09b") format('woff2'),
+       url("0dfa5b56-95b8-4757-ba29-36fa7930cb9d") format('woff'),
+       url("0e400b34-23be-4cbe-acde-1a0c671212ab") format('truetype');
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Clash Display';
+  src: url("2fcbef81-bb8d-45ad-9a11-7db2d2ac6460") format('woff2'),
+       url("2a5d78d6-4100-42a8-9fbb-d051971679bf") format('woff'),
+       url("36fb32b0-1700-485a-8351-256461da5119") format('truetype');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Clash Display';
+  src: url("ae878af4-5fd7-402f-b5f2-0dbbdbc00783") format('woff2'),
+       url("299855fd-53da-404b-8c88-ed7d96476933") format('woff'),
+       url("58a435ff-aa0b-4cf8-968b-c1d5587a5264") format('truetype');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Clash Display';
+  src: url("fa14763f-de64-4a67-8396-8f18c39303cd") format('woff2'),
+       url("f211dbe1-b04f-4ec8-a94e-5f255e0aeb8f") format('woff'),
+       url("c0936bb5-8b64-4120-adb8-a0525d6eb34b") format('truetype');
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Clash Display';
+  src: url("9a90279c-6eef-4423-8a1e-bb74b1809f10") format('woff2'),
+       url("6b387d3a-8dd2-44b7-8b12-9b617980b2a5") format('woff'),
+       url("1427b988-be17-41d9-a1df-57b81a4f1f66") format('truetype');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+
+
+body{margin:0;background:#FCFAF6;color:#141210;font-family:'Clash Display','Barlow Condensed',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#0B9237;text-decoration:none}
+a:hover{color:#03562A;text-decoration:underline}
+input,select,textarea,button{font-family:inherit}
+@keyframes clignote{0%,49%{opacity:1}50%,100%{opacity:.2}}
+</style>
+</helmet>
+
+<div style="max-width:1180px;margin:0 auto;padding:0 20px 80px">
+
+<sc-if value="{{ pasSolo }}" hint-placeholder-val="{{ true }}">
+  <div>
+  <sc-if value="{{ espaceEssai }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:12px;align-items:center;margin-top:20px;padding:11px 18px;border-radius:12px;background:#EC6D23;color:#FFFFFF">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">Mode démonstration — rien de ce qui est ici ne compte</div>
+      <button sc-camel-on-click="{{ chargerDemo }}" title="Remplit la démonstration avec des athlètes fictifs pour s'entraîner" style="margin-left:auto;padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.6);background:transparent;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">{{ libDemo }}</button>
+      <button sc-camel-on-click="{{ viderDemo }}" title="Efface tout ce qui a été saisi ou importé dans la démonstration. La compétition réelle n'est pas touchée." style="padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.6);background:transparent;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Vider la démo</button>
+      <button sc-camel-on-click="{{ versModeReel }}" title="Revenir à la compétition réelle" style="padding:7px 13px;border-radius:8px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.14);color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Compétition réelle</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ demandeOuverte }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:1180px;margin:16px auto 0;padding:0 20px">
+      <div style="max-width:620px;padding:16px 18px;border-radius:12px;background:#FBEFEA;border:2px solid #C4361F">
+        <div style="font-size:15px;font-weight:700;color:#A6371C;margin-bottom:4px">{{ demandeTitre }}</div>
+        <div style="font-size:13px;line-height:1.55;color:#A6371C;margin-bottom:12px;text-wrap:pretty">{{ demandeTexte }}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button sc-camel-on-click="{{ annulerDemande }}" title="Ne rien effacer" style="flex:1;min-width:120px;padding:11px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Annuler</button>
+          <button sc-camel-on-click="{{ confirmerDemande }}" title="Confirmer l'effacement" style="flex:1;min-width:120px;padding:11px;border-radius:9px;border:none;background:#C4361F;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">{{ libConfirmer }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <div style="display:flex;align-items:center;gap:20px;padding:22px 26px;margin-top:20px;border-radius:16px 16px 0 0;background:linear-gradient(115deg,#03562A 0%,#0B3D22 45%,#141210 100%)">
+    <img src="bf516514-f6a2-413f-aa59-86f19a167150" alt="FIBDA" style="width:62px;height:62px;object-fit:contain;background:#FCFAF6;border-radius:10px;padding:4px;flex:none">
+    <div style="min-width:0">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#EC6D23">Fédération Ivoirienne de Bodybuilding et Disciplines Associées</div>
+      <div style="font-size:26px;font-weight:700;letter-spacing:-.01em;color:#FCFAF6;line-height:1.15">Championnat National de Strongman <span style="color:#EC6D23">2026</span></div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:10px;align-items:center;flex:none">
+      <sc-if value="{{ connecte }}" hint-placeholder-val="{{ false }}">
+        <button sc-camel-on-click="{{ deconnecter }}" title="Fermer la session et revenir à l'écran de connexion" style="padding:8px 13px;border-radius:9px;border:1px solid rgba(252,250,246,.22);background:transparent;color:#9AA79E;font-size:12px;font-weight:500;cursor:pointer">{{ libSession }}</button>
+      </sc-if>
+      <button sc-camel-on-click="{{ exporter }}" title="Télécharge le fichier de sauvegarde à conserver hors du poste : clé USB, second ordinateur. À faire avant la compétition et après chaque épreuve." style="padding:10px 16px;border-radius:9px;border:1px solid rgba(252,250,246,.28);background:rgba(252,250,246,.08);color:#FCFAF6;font-size:13px;font-weight:600;cursor:pointer">Exporter la sauvegarde</button>
+    </div>
+  </div>
+  <div style="display:flex;height:5px;border-radius:0 0 3px 3px;overflow:hidden">
+    <div style="flex:1;background:#EC6D23"></div>
+    <div style="flex:1;background:#FFFFFF"></div>
+    <div style="flex:1;background:#0B9237"></div>
+  </div>
+
+  <div style="display:flex;gap:8px;align-items:center;margin:18px 0 26px;flex-wrap:wrap">
+    <div style="display:flex;gap:4px;padding:4px;border-radius:10px;background:#F0EBE1;border:1px solid #E7E1D6;flex:none">
+      <button sc-camel-on-click="{{ versModeReel }}" title="Compétition réelle : les résultats officiels, les impressions et le procès-verbal" style="padding:7px 13px;border-radius:7px;border:none;background:{{ fondReel }};color:{{ encreReel }};font-size:13px;font-weight:700;cursor:pointer">Compétition réelle</button>
+      <button sc-camel-on-click="{{ versModeDemo }}" title="Mode démonstration : un espace séparé pour s'entraîner. Ce qui y est saisi ou importé y reste et ne touche jamais la compétition réelle." style="padding:7px 13px;border-radius:7px;border:none;background:{{ fondDemo }};color:{{ encreDemo }};font-size:13px;font-weight:700;cursor:pointer">Démonstration</button>
+    </div>
+    <button sc-camel-on-click="{{ versAccueil }}" title="Revenir à l'accueil du championnat" style="padding:7px 13px;border-radius:8px;border:1px solid #E7E1D6;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Accueil</button>
+    <span style="color:#B8B0A2;font-size:13px">›</span>
+    <span style="font-size:13px;font-weight:600;color:#03562A">{{ filAriane }}</span>
+    <span style="margin-left:auto;display:flex;gap:7px;align-items:center" title="Chaque modification est écrite sur ce poste dès la saisie ; aucune action n'est nécessaire.">
+      <span style="width:6px;height:6px;border-radius:999px;background:#0B9237;flex:none"></span>
+      <span style="font-size:12px;color:#8A8378">{{ libAutoEnreg }}</span>
+    </span>
+  </div>
+  </div>
+</sc-if>
+
+  
+
+  <sc-if value="{{ besoinLogin }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width:620px;margin:0 auto;padding:40px 0">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:28px">
+        <img src="bf516514-f6a2-413f-aa59-86f19a167150" alt="FIBDA" style="width:86px;height:86px;object-fit:contain">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#EC6D23;margin-top:12px">Championnat National de Strongman 2026</div>
+        <div style="font-size:26px;font-weight:700;margin-top:4px">Qui utilise ce poste ?</div>
+        <div style="font-size:15px;color:#4A443B;line-height:1.5;margin-top:8px;max-width:440px;text-wrap:pretty">Deux accès seulement : l'administrateur du logiciel et la régie de diffusion. Les juges, arbitres et chronométreurs n'ont pas de code : ils travaillent sur le terrain.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ comptes }}" as="c" hint-placeholder-count="4">
+          <div style="background:#FFFFFF;border:1px solid {{ c.bord }};border-radius:12px;overflow:hidden">
+            <button sc-camel-on-click="{{ c.choisir }}" title="Ouvrir la session de cette personne" style="display:flex;gap:14px;align-items:center;text-align:left;background:transparent;border:none;padding:15px 18px;cursor:pointer;width:100%">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:999px;background:#F5F1E8;color:#03562A;font-size:15px;font-weight:700;flex:none">{{ c.initiales }}</span>
+              <span style="flex:1;min-width:0">
+                <span style="display:block;font-size:16px;font-weight:600">{{ c.nom }}</span>
+                <span style="display:block;font-size:13px;color:#8A8378">{{ c.role }} · {{ c.portee }}</span>
+              </span>
+              <span style="font-size:13px;font-weight:600;color:#0B9237;flex:none">{{ c.libAction }}</span>
+            </button>
+            <sc-if value="{{ c.ouvert }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:0 18px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <input value="{{ codeSaisi }}" sc-camel-on-change="{{ setCodeSaisi }}" sc-camel-on-key-down="{{ c.touche }}" type="password" sc-camel-input-mode="numeric" sc-camel-auto-focus="{{ true }}" placeholder="Code d'accès" style="flex:1;min-width:150px;padding:12px 14px;border:1px solid #DDD6C9;border-radius:10px;background:#FCFAF6;font-size:17px;font-weight:700;letter-spacing:.22em;outline:none">
+                <button sc-camel-on-click="{{ c.valider }}" title="Ouvrir la session" style="padding:12px 20px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer">Entrer</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ erreurCode }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px;padding:12px 16px;border-radius:10px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:14px;font-weight:600;text-align:center">{{ erreurCode }}</div>
+      </sc-if>
+      <div style="margin-top:20px;font-size:13px;color:#8A8378;line-height:1.5;text-align:center">Les deux codes se règlent dans Préparation, étape Officiels. Tant qu'aucun code n'est saisi, le logiciel s'ouvre sans connexion.</div>
+      <div style="margin-top:14px;text-align:center">
+        <button sc-camel-on-click="{{ ignorerCodes }}" title="Ouvre le logiciel sans code : à n'utiliser que si vous êtes le responsable du poste et que le code a été perdu" style="padding:11px 18px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#6E675C;font-size:13px;font-weight:600;cursor:pointer">Code perdu — ouvrir sans connexion</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estAccueil }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:30px">
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Date et horaires</div>
+          <input value="{{ champDate }}" sc-camel-on-change="{{ setChampDate }}" title="Date officielle, reprise sur les écrans publics et les impressions" style="width:100%;padding:7px 9px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:16px;font-weight:600;outline:none">
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <input value="{{ champHeure }}" sc-camel-on-change="{{ setChampHeure }}" title="Heure d'ouverture" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;font-weight:600;color:#03562A;outline:none">
+            <span style="font-size:13px;color:#8A8378;flex:none">→</span>
+            <input value="{{ champFin }}" sc-camel-on-change="{{ setChampFin }}" title="Heure de clôture prévue" style="flex:1;min-width:0;padding:7px 9px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;font-weight:600;color:#03562A;outline:none">
+          </div>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Lieu</div>
+          <input value="{{ champLieu }}" sc-camel-on-change="{{ setChampLieu }}" title="Site de la compétition" style="width:100%;padding:7px 9px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:16px;font-weight:600;outline:none">
+          <input value="{{ champAdresse }}" sc-camel-on-change="{{ setChampAdresse }}" title="Adresse complète" style="width:100%;margin-top:8px;padding:7px 9px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:13px;color:#6E675C;outline:none">
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Engagés</div>
+          <div style="font-size:19px;font-weight:600">{{ nbAthletes }} athlètes · {{ nbEpreuves }} épreuves</div>
+          <div style="font-size:14px;color:#6E675C;margin-top:2px">{{ nbPeses }} pesées validées</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px">
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:16px;padding:26px;display:flex;flex-direction:column">
+          <div style="display:inline-flex;align-self:flex-start;padding:5px 11px;border-radius:999px;background:rgba(236,109,35,.12);color:#BC4F14;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Étape par étape</div>
+          <div style="font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px">Préparer la compétition</div>
+          <div style="font-size:15px;line-height:1.55;color:#4A443B;margin-bottom:20px;text-wrap:pretty">Épreuves, groupes de poids, officiels, athlètes, pesée et programme. Enregistrez à tout moment, revenez plus tard : un récapitulatif indique ce qui manque.</div>
+          <div style="margin-top:auto;display:flex;gap:10px;flex-wrap:wrap">
+            <button sc-camel-on-click="{{ versPreparation }}" title="Ouvre le parcours guidé en 6 étapes : épreuves, groupes, officiels, athlètes, pesée, programme" style="padding:13px 22px;border-radius:11px;border:none;background:#0B9237;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">{{ libPreparer }}</button>
+            <button sc-camel-on-click="{{ versRecap }}" title="Liste ce qui est prêt et ce qui manque avant le jour J" style="padding:13px 20px;border-radius:11px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:15px;font-weight:500;cursor:pointer">Récapitulatif</button>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:16px;padding:26px;display:flex;flex-direction:column">
+          <div style="display:inline-flex;align-self:flex-start;padding:5px 11px;border-radius:999px;background:rgba(11,146,55,.12);color:#03562A;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Jour J</div>
+          <div style="font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px">Lancer / reprendre</div>
+          <div style="font-size:15px;line-height:1.55;color:#4A443B;margin-bottom:20px;text-wrap:pretty">Plateau, athlète au plateau, chronomètre deux appuis, saisie des performances par la table, régie et mur LED, impressions et procès-verbal.</div>
+          <div style="margin-top:auto;display:flex;gap:10px;flex-wrap:wrap">
+            <button sc-camel-on-click="{{ versPlateau }}" title="Ouvre le plateau : ordre de passage, chronomètre, saisie et validation des performances" style="padding:13px 22px;border-radius:11px;border:none;background:#141210;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Ouvrir le plateau</button>
+          </div>
+        </div>
+
+        <div style="background:#141210;border:1px solid #141210;border-radius:16px;padding:26px;display:flex;flex-direction:column;color:#FCFAF6">
+          <div style="display:inline-flex;align-self:flex-start;padding:5px 11px;border-radius:999px;background:rgba(236,109,35,.22);color:#F7A76C;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Écrans géants</div>
+          <div style="font-size:24px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px">Régie de diffusion</div>
+          <div style="font-size:15px;line-height:1.55;color:#C9C2B6;margin-bottom:20px;text-wrap:pretty">Déclarez vos sorties vidéo, choisissez ce que chaque mur LED affiche, réglez la lisibilité avec la mire, puis ouvrez les fenêtres à glisser sur les écrans.</div>
+          <div style="margin-top:auto;display:flex;gap:10px;flex-wrap:wrap">
+            <button sc-camel-on-click="{{ versRegie }}" title="Paramétrer la régie : sorties, contenus, jour/nuit" style="padding:13px 22px;border-radius:11px;border:none;background:#EC6D23;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Paramétrer la régie</button>
+            <button sc-camel-on-click="{{ ouvrirMire }}" title="Ouvre la mire de lisibilité pour régler le mur LED" style="padding:13px 20px;border-radius:11px;border:1px solid rgba(252,250,246,.28);background:transparent;color:#FCFAF6;font-size:15px;font-weight:500;cursor:pointer">Mire de réglage</button>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ erreurEnreg }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:20px;padding:14px 18px;border-radius:12px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:14px;line-height:1.5;font-weight:600">{{ erreurEnreg }}</div>
+      </sc-if>
+
+      <div style="margin-top:28px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button sc-camel-on-click="{{ exporterListe }}" title="Liste des athlètes en CSV, à ouvrir dans Excel" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Exporter les athlètes (Excel)</button>
+        <button sc-camel-on-click="{{ exporterExcel }}" title="Classeur Excel complet : athlètes, catégories, épreuves, résultats et classements, une feuille par rubrique" style="padding:10px 16px;border-radius:9px;border:none;background:#03562A;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer">Exporter la compétition (Excel)</button>
+        <label title="Recharge une compétition depuis un classeur Excel exporté par ce logiciel, ou depuis une sauvegarde .json" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Importer une compétition
+          <input type="file" accept=".xls,.xml,.json" sc-camel-on-change="{{ importerExcel }}" style="display:none">
+        </label>
+        <button sc-camel-on-click="{{ exporterClassements }}" title="Classements par groupe et par épreuve en CSV" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Exporter les classements (Excel)</button>
+        <sc-if value="{{ modeReel }}" hint-placeholder-val="{{ true }}">
+          <button sc-camel-on-click="{{ copierVersDemo }}" title="Recopie les athlètes, photos et réglages actuels dans l'espace de démonstration, puis y bascule. La compétition réelle n'est pas modifiée." style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Copier cette liste dans la démonstration</button>
+        </sc-if>
+        <sc-if value="{{ modeReel }}" hint-placeholder-val="{{ true }}">
+          <button sc-camel-on-click="{{ demanderVierge }}" title="Repart à vide pour la compétition officielle : athlètes, passages et résultats effacés" style="padding:10px 16px;border-radius:9px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;font-weight:500;cursor:pointer">Démarrer une compétition réelle vierge</button>
+        </sc-if>
+        <button sc-camel-on-click="{{ demanderViderListe }}" title="Supprime tous les athlètes de cette liste, ainsi que les passages et résultats" style="padding:10px 16px;border-radius:9px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;font-weight:500;cursor:pointer">Supprimer la liste des athlètes</button>
+        <button sc-camel-on-click="{{ demanderTout }}" title="Efface toute la saisie et rétablit les 5 épreuves et 2 groupes officiels" style="padding:10px 16px;border-radius:9px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;font-weight:500;cursor:pointer">Tout remettre à zéro</button>
+      </div>
+
+      <sc-if value="{{ msgImportComp }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px;max-width:620px;padding:13px 16px;border-radius:11px;background:rgba(11,146,55,.07);border:1px solid rgba(11,146,55,.2);color:#03562A;font-size:13px;line-height:1.5;font-weight:600">{{ msgImportComp }}</div>
+      </sc-if>
+
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estPrepa }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;margin-bottom:22px;border-bottom:1px solid #E7E1D6">
+        <sc-for list="{{ etapes }}" as="et" hint-placeholder-count="6">
+          <button sc-camel-on-click="{{ et.aller }}" title="Étape {{ et.num }} — {{ et.titre }}" style="display:flex;align-items:center;gap:9px;padding:9px 15px;border-radius:10px;border:1px solid {{ et.bord }};background:{{ et.fond }};color:{{ et.encre }};font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:999px;background:{{ et.puceFond }};color:{{ et.puceEncre }};font-size:11px;font-weight:700">{{ et.num }}</span>
+            {{ et.titre }}
+          </button>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{ etape0 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:.01em;margin-bottom:6px">Épreuves <span style="color:#EC6D23">du championnat</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Les cinq épreuves officielles sont pré-remplies avec le critère de classement du règlement. Ajoutez autant d'épreuves que nécessaire, chacune avec sa mesure, son temps imparti et son nombre d'essais.</div>
+
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ epreuves }}" as="ep" hint-placeholder-count="5">
+              <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+                <div style="height:4px;background:{{ ep.bande }}"></div>
+                <div style="padding:18px 20px">
+                  <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+                    <div style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;background:#141210;color:#FCFAF6;font-size:14px;font-weight:700;flex:none">{{ ep.num }}</div>
+                    <div style="flex:1;min-width:220px">
+                      <input value="{{ ep.nom }}" sc-camel-on-change="{{ ep.setNom }}" title="Nom annoncé par le speaker et affiché sur le mur LED" placeholder="Nom de l'épreuve" style="width:100%;padding:9px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:16px;font-weight:600;outline:none">
+                    </div>
+                    <button sc-camel-on-click="{{ ep.suppr }}" title="Retire cette épreuve du championnat" style="padding:8px 13px;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;font-weight:500;cursor:pointer;flex:none">Retirer</button>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:16px">
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Mesure</div>
+                      <sc-raw-select value="{{ ep.mesure }}" sc-camel-on-change="{{ ep.setMesure }}" title="Ce qui est mesuré : cela détermine la saisie du juge et le sens du classement" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                        <option value="nb_temps">Nombre, puis temps</option>
+                        <option value="poids">Charge maximale (kg)</option>
+                        <option value="duree">Temps de maintien</option>
+                        <option value="chrono">Temps sur distance</option>
+                        <option value="distance">Distance parcourue</option>
+                        <option value="medley">Medley — parcours à ateliers</option>
+                      </sc-raw-select>
+                      <div style="font-size:12px;color:#8A8378;margin-top:5px;line-height:1.4">{{ ep.aide }}</div>
+                    </div>
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Temps imparti</div>
+                      <input value="{{ ep.temps }}" sc-camel-on-change="{{ ep.setTemps }}" title="Durée préparée d'office sur le chronomètre à chaque passage de cette épreuve" placeholder="ex. 60 s ou illimité" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                    </div>
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Essais par athlète</div>
+                      <input value="{{ ep.essais }}" sc-camel-on-change="{{ ep.setEssais }}" title="Nombre de tentatives autorisées ; le meilleur essai est retenu" type="number" min="1" max="9" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                    </div>
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Passage</div>
+                      <sc-raw-select value="{{ ep.passage }}" sc-camel-on-change="{{ ep.setPassage }}" title="Par groupe : les −100 kg passent, puis les +100 kg. Mélangé : tout le monde dans un seul ordre. Les classements restent séparés dans les deux cas." style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                        <option value="groupe">Par groupe de poids</option>
+                        <option value="melange">Tout le monde mélangé</option>
+                      </sc-raw-select>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:14px;padding:12px 14px;border-radius:11px;background:#F5F1E8">
+                    <button sc-camel-on-click="{{ ep.basculerNiveau }}" title="Épreuve à niveaux : chaque athlète déclare son niveau (hauteur de prise, cran, palier). Le niveau s'affiche sur sa fiche, à la sélection de l'épreuve et sur le mur LED pendant son passage." style="padding:9px 14px;border-radius:9px;border:1px solid {{ ep.bordNiveau }};background:{{ ep.fondNiveau }};color:{{ ep.encreNiveau }};font-size:13px;font-weight:700;cursor:pointer;flex:none">{{ ep.libNiveau }}</button>
+                    <div style="flex:1;min-width:180px;font-size:12px;color:#6E675C;line-height:1.45;text-wrap:pretty">{{ ep.aideNiveau }}</div>
+                    <sc-if value="{{ ep.niveau }}" hint-placeholder-val="{{ false }}">
+                      <input value="{{ ep.niveauxOptions }}" sc-camel-on-change="{{ ep.setNiveauxOptions }}" placeholder="Niveau 1, Niveau 2, Niveau 3" title="Niveaux proposés, séparés par des virgules. Chaque athlète choisit le sien." style="flex:1 1 220px;min-width:180px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:14px;outline:none">
+                    </sc-if>
+                  </div>
+
+                  <sc-if value="{{ ep.estMedley }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:14px;padding:14px;border-radius:11px;background:#FFF6E8;border:1px solid #F0D8B0">
+                      <div style="font-size:14px;font-weight:700;color:#8A5A0B;margin-bottom:4px">Medley — parcours à ateliers</div>
+                      <div style="font-size:12px;color:#8A5A0B;line-height:1.5;margin-bottom:12px;text-wrap:pretty">Un medley enchaîne plusieurs agrès sur une même distance, chronométré du départ à la ligne d'arrivée. Décrivez ici les ateliers dans l'ordre, la distance de chaque portage et la règle de fin de temps.</div>
+                      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Ateliers dans l'ordre</div>
+                          <textarea value="{{ ep.ateliers }}" sc-camel-on-change="{{ ep.setAteliers }}" title="Un atelier par ligne : agrès, charge et distance" rows="4" placeholder="Yoke 350 kg — 15 m
+Farmer's walk 2×120 kg — 15 m
+Sandbag 100 kg — 15 m" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:14px;line-height:1.5;outline:none;resize:vertical"></textarea>
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Distance totale</div>
+                          <input value="{{ ep.distanceTotale }}" sc-camel-on-change="{{ ep.setDistanceTotale }}" placeholder="45 m" title="Distance cumulée du parcours" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:14px;outline:none">
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin:12px 0 6px">Fin de temps</div>
+                          <input value="{{ ep.regleFin }}" sc-camel-on-change="{{ ep.setRegleFin }}" placeholder="Distance atteinte au coup de sifflet" title="Ce qui est retenu si l'athlète n'achève pas le parcours" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:14px;outline:none">
+                        </div>
+                      </div>
+                    </div>
+                  </sc-if>
+
+                  <div style="margin-top:16px;border-left:3px solid #EC6D23;padding:10px 0 10px 14px;background:rgba(236,109,35,.05)">
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Critère de classement</div>
+                    <textarea value="{{ ep.critere }}" sc-camel-on-change="{{ ep.setCritere }}" title="Texte du règlement, rappelé au juge et au speaker avant chaque passage" rows="2" style="width:100%;padding:9px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FFFFFF;color:#141210;font-size:14px;line-height:1.5;outline:none;resize:vertical"></textarea>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px">
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Matériel de compétition</div>
+                      <input value="{{ ep.materiel }}" sc-camel-on-change="{{ ep.setMateriel }}" title="Matériel fourni par l'organisation, sert à la check-list de plateau" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                    </div>
+                    <div>
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Équipements personnels autorisés</div>
+                      <input value="{{ ep.equipements }}" sc-camel-on-change="{{ ep.setEquipements }}" title="Équipements personnels autorisés, contrôlés à la vérification d'avant-pesée" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;color:#141210;font-size:14px;outline:none">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+            <button sc-camel-on-click="{{ ajouterEpreuve }}" title="Crée une épreuve supplémentaire avec ses propres critères de notation" style="padding:12px 20px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter une épreuve</button>
+            <button sc-camel-on-click="{{ ajouterMedley }}" title="Crée un medley : parcours à ateliers enchaînés sur une même distance, chronométré du départ à l'arrivée. Ateliers, distance et règle de fin de temps entièrement paramétrables." style="padding:12px 20px;border-radius:10px;border:1px solid #EC6D23;background:#FFF6E8;color:#BC4F14;font-size:14px;font-weight:700;cursor:pointer">+ Ajouter un medley</button>
+          </div>
+
+          <div style="margin-top:22px;padding:14px 16px;border-radius:11px;background:rgba(11,146,55,.07);border:1px solid rgba(11,146,55,.18);font-size:13px;line-height:1.5;color:#03562A">Barème appliqué : <strong>Points = N − Rang + 1</strong>, N étant le nombre de participants classés du groupe. Ex æquo : mêmes points, rang suivant sauté. Un zéro ou un forfait vaut 0 point et l'athlète reste classé au général.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ etape1 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Groupes <span style="color:#EC6D23">de poids</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Championnat réservé aux hommes. Deux groupes : moins de 100 kg et plus de 100 kg. Chaque groupe a son propre classement, même quand le passage se fait tout le monde mélangé. Seules les catégories retenues sont proposées au plateau et affichées sur les écrans géants.</div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+            <sc-for list="{{ groupes }}" as="g" hint-placeholder-count="2">
+              <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+                <div style="height:4px;background:{{ g.bande }}"></div>
+                <div style="padding:18px 20px">
+                  <input value="{{ g.nom }}" sc-camel-on-change="{{ g.setNom }}" title="Nom du groupe tel qu'il apparaît sur les classements et les impressions" style="width:100%;padding:9px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:17px;font-weight:600;outline:none">
+                  <div style="display:flex;gap:12px;margin-top:14px">
+                    <div style="flex:1">
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Poids min (kg)</div>
+                      <input value="{{ g.min }}" sc-camel-on-change="{{ g.setMin }}" title="Poids au-dessus duquel un athlète entre dans ce groupe. Laisser vide s'il n'y a pas de limite basse." placeholder="—" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:14px;outline:none">
+                    </div>
+                    <div style="flex:1">
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Poids max (kg)</div>
+                      <input value="{{ g.max }}" sc-camel-on-change="{{ g.setMax }}" title="Poids maximum inclus dans ce groupe. Laisser vide s'il n'y a pas de limite haute." placeholder="—" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:14px;outline:none">
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:14px">
+                    <button sc-camel-on-click="{{ g.retenir }}" title="Retenir cette catégorie : elle est proposée au plateau et affichée sur les écrans géants" style="flex:1;padding:11px;border-radius:9px;border:1px solid {{ g.bordRetenue }};background:{{ g.fondRetenue }};color:{{ g.encreRetenue }};font-size:14px;font-weight:700;cursor:pointer">Sélectionner</button>
+                    <button sc-camel-on-click="{{ g.mettreDeCote }}" title="Mettre cette catégorie de côté : elle reste enregistrée mais disparaît du plateau et des écrans" style="flex:1;padding:11px;border-radius:9px;border:1px solid {{ g.bordCote }};background:{{ g.fondCote }};color:{{ g.encreCote }};font-size:14px;font-weight:700;cursor:pointer">Mettre de côté</button>
+                  </div>
+                  <div style="margin-top:8px;font-size:12px;line-height:1.45;color:#8A8378;text-wrap:pretty">{{ g.etatCategorie }}</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #F0EBE1">
+                    <div style="font-size:14px;color:#4A443B">{{ g.effectif }}</div>
+                    <button sc-camel-on-click="{{ g.demanderSuppr }}" title="Retirer cette catégorie" style="padding:7px 12px;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;cursor:pointer;flex:none">Retirer</button>
+                  </div>
+                  <sc-if value="{{ g.aSupprimer }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:12px;padding:14px;border-radius:11px;background:#FBEFEA;border:1px solid #E9CFC4">
+                      <div style="font-size:14px;font-weight:700;color:#A6371C;margin-bottom:4px">Supprimer « {{ g.nom }} » ?</div>
+                      <div style="font-size:13px;line-height:1.5;color:#A6371C;margin-bottom:12px;text-wrap:pretty">{{ g.avertSuppr }}</div>
+                      <div style="display:flex;gap:8px;flex-wrap:wrap">
+                        <button sc-camel-on-click="{{ g.annulerSuppr }}" title="Ne rien supprimer" style="flex:1;min-width:110px;padding:10px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Annuler</button>
+                        <button sc-camel-on-click="{{ g.suppr }}" title="Supprimer définitivement cette catégorie" style="flex:1;min-width:110px;padding:10px;border-radius:9px;border:none;background:#C4361F;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">Supprimer</button>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <button sc-camel-on-click="{{ ajouterGroupe }}" title="Ajoute un groupe de poids supplémentaire" style="margin-top:16px;padding:12px 20px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter un groupe</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ etape2 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Officiels <span style="color:#EC6D23">et corps arbitral</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Minimum réglementaire : cinq arbitres principaux, deux responsables techniques, des chronométreurs et un secrétaire de table. Les juges valident l'essai sur le terrain et n'ont rien à saisir : la table enregistre la performance. Leurs noms servent à la feuille de notation et au procès-verbal.</div>
+
+          <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;padding:18px 20px;margin-bottom:18px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Codes d'accès du logiciel</div>
+            <div style="font-size:14px;color:#6E675C;line-height:1.5;margin-bottom:14px;text-wrap:pretty">Deux codes seulement. Laissez-les vides pour que le logiciel s'ouvre sans connexion.</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+              <div>
+                <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Administrateur</div>
+                <input value="{{ accesAdmin }}" sc-camel-on-change="{{ setAccesAdmin }}" placeholder="0000" title="Code du poste maître : préparation, plateau, saisie des performances, impressions" style="width:100%;padding:11px 13px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:17px;font-weight:700;letter-spacing:.2em;outline:none">
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Régie</div>
+                <input value="{{ accesRegie }}" sc-camel-on-change="{{ setAccesRegie }}" placeholder="0000" title="Code du poste de diffusion : écrans géants uniquement" style="width:100%;padding:11px 13px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:17px;font-weight:700;letter-spacing:.2em;outline:none">
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+            <sc-for list="{{ officiels }}" as="o" hint-placeholder-count="6">
+              <div style="display:flex;flex-wrap:wrap;gap:12px;padding:12px 18px;border-top:1px solid #F0EBE1;align-items:center">
+                <input value="{{ o.nom }}" sc-camel-on-change="{{ o.setNom }}" title="Nom porté sur la feuille de notation et le procès-verbal" placeholder="Nom, prénoms" style="flex:2 1 220px;min-width:170px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                <sc-raw-select value="{{ o.role }}" sc-camel-on-change="{{ o.setRole }}" title="Le rôle décide de ce que la personne voit et peut valider" style="flex:2 1 200px;min-width:160px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                  <option value="directeur">Directeur de compétition</option>
+                  <option value="technique">Responsable technique</option>
+                  <option value="arbitrage">Responsable arbitrage</option>
+                  <option value="juge">Juge principal</option>
+                  <option value="chrono">Chronométreur</option>
+                  <option value="secretaire">Secrétaire de table</option>
+                  <option value="regie">Régie</option>
+                  <option value="speaker">Speaker</option>
+                </sc-raw-select>
+                <button sc-camel-on-click="{{ o.suppr }}" title="Retire cet officiel" style="flex:0 0 auto;padding:9px 14px;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;cursor:pointer">Retirer</button>
+              </div>
+            </sc-for>
+          </div>
+          <button sc-camel-on-click="{{ ajouterOfficiel }}" title="Ajoute un officiel : juge, chronométreur, secrétaire, régie, speaker" style="margin-top:16px;padding:12px 20px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter un officiel</button>
+          <div style="margin-top:18px;font-size:13px;color:#8A8378;line-height:1.5">{{ manqueOfficiels }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ etape3 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Athlètes <span style="color:#EC6D23">engagés</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:18px;text-wrap:pretty">Importez votre liste, ou saisissez les fiches une par une. Les athlètes non ivoiriens sont marqués Invité et restent hors classement officiel. Les numéros de dossard se saisissent à la main, ici ou à la pesée : ils fixent l'ordre de passage de la première épreuve, du plus petit au plus grand. Les épreuves suivantes se rangent ensuite du total de points le plus bas au plus haut.</div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+            <button sc-camel-on-click="{{ ouvrirImport }}" title="Lire une liste depuis un fichier Excel, CSV, Word ou PDF, ou coller un texte" style="padding:11px 18px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Importer une liste</button>
+            <label title="Déposez toutes les photos en une fois : la correspondance se fait sur le nom du fichier" style="padding:11px 18px;border-radius:10px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Photos groupées
+              <input type="file" accept="image/*" multiple="{{ true }}" sc-camel-on-change="{{ photosGroupees }}" style="display:none">
+            </label>
+            <button sc-camel-on-click="{{ ajouterAthlete }}" title="Ajoute une fiche athlète vierge" style="padding:11px 18px;border-radius:10px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">+ Athlète</button>
+            <button sc-camel-on-click="{{ viderDossards }}" title="Efface tous les numéros de dossard pour les saisir à la main. L'ordre de passage de la première épreuve suit les dossards croissants." style="padding:11px 18px;border-radius:10px;border:1px solid #141210;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Effacer les dossards</button>
+            <input value="{{ recherche }}" sc-camel-on-change="{{ setRecherche }}" placeholder="Rechercher un nom, un club" title="Filtre la liste au fur et à mesure de la saisie" style="flex:1;min-width:180px;padding:11px 13px;border:1px solid #DDD6C9;border-radius:10px;background:#FCFAF6;font-size:14px;outline:none">
+            <sc-raw-select value="{{ filtre }}" sc-camel-on-change="{{ setFiltre }}" title="Filtrer la liste" style="padding:11px 13px;border:1px solid #DDD6C9;border-radius:10px;background:#FCFAF6;font-size:14px;outline:none">
+              <sc-for list="{{ filtres }}" as="ft" hint-placeholder-count="2">
+                <option value="{{ ft.cle }}">{{ ft.lbl }}</option>
+              </sc-for>
+            </sc-raw-select>
+          </div>
+          <div style="font-size:13px;color:#8A8378;margin-bottom:14px">{{ nbAffiches }}</div>
+
+          <sc-if value="{{ impOuvert }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;padding:20px;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+                <div style="font-size:18px;font-weight:700">Importer une liste d'athlètes</div>
+                <button sc-camel-on-click="{{ fermerImport }}" title="Fermer sans rien importer" style="margin-left:auto;padding:8px 13px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#6E675C;font-size:13px;cursor:pointer">Fermer</button>
+              </div>
+
+              <sc-if value="{{ impSource }}" hint-placeholder-val="{{ true }}">
+                <div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+                    <div style="border:1px dashed #B8B0A2;border-radius:12px;padding:18px;text-align:center">
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:8px">Depuis un fichier</div>
+                      <label title="Excel, CSV, Word ou PDF" style="display:inline-block;padding:11px 18px;border-radius:10px;border:none;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Choisir un fichier
+                        <input type="file" accept=".xlsx,.csv,.txt,.docx,.pdf" sc-camel-on-change="{{ importerFichier }}" style="display:none">
+                      </label>
+                      <div style="font-size:12px;color:#8A8378;margin-top:10px;line-height:1.45">Excel et CSV sont les plus fiables. Word ne marche bien qu'avec un vrai tableau. Le PDF est lu au mieux et les lignes douteuses sont signalées.</div>
+                      <button sc-camel-on-click="{{ modeleCSV }}" title="Télécharge un fichier vierge avec les bonnes colonnes" style="margin-top:12px;padding:8px 13px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:13px;cursor:pointer">Télécharger le modèle</button>
+                    </div>
+                    <div style="border:1px dashed #B8B0A2;border-radius:12px;padding:18px">
+                      <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:8px">Ou coller la liste</div>
+                      <textarea value="{{ impTexte }}" sc-camel-on-change="{{ setImpTexte }}" rows="6" placeholder="Collez ici la liste copiée depuis Word, un PDF ou un tableau" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:14px;line-height:1.5;outline:none;resize:vertical"></textarea>
+                      <button sc-camel-on-click="{{ importerTexte }}" title="Analyse le texte collé" style="margin-top:10px;padding:10px 16px;border-radius:9px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Lire ce texte</button>
+                    </div>
+                  </div>
+                  <div style="font-size:13px;color:#A6371C;margin-top:12px;line-height:1.45">{{ impErreur }}</div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ impLecture }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:26px 0;text-align:center;font-size:15px;color:#6E675C">Lecture du fichier en cours…</div>
+              </sc-if>
+
+              <sc-if value="{{ impVerif }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="font-size:13px;color:#6E675C;margin-bottom:12px">Source : {{ impNomSource }}. Vérifiez, décochez ce qui ne doit pas entrer, puis importez. Les lignes en rose ont un doute.</div>
+                  <div style="border:1px solid #E7E1D6;border-radius:12px;overflow:hidden">
+                    <div style="display:grid;grid-template-columns:44px 1.5fr 1fr 80px 1fr;gap:10px;padding:10px 14px;background:#F5F1E8;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#6E675C">
+                      <div>Garder</div>
+                      <div>Nom et prénoms</div>
+                      <div>Club</div>
+                      <div>Poids</div>
+                      <div>Téléphones</div>
+                    </div>
+                    <sc-for list="{{ impLignes }}" as="l" hint-placeholder-count="6">
+                      <div style="display:grid;grid-template-columns:44px 1.5fr 1fr 80px 1fr;gap:10px;padding:10px 14px;border-top:1px solid #F0EBE1;align-items:center;background:{{ l.fondLigne }}">
+                        <button sc-camel-on-click="{{ l.basculerGarder }}" title="Cocher ou décocher cette ligne" style="width:26px;height:26px;border-radius:7px;border:1.5px solid #B8B0A2;background:#FFFFFF;color:#0B9237;font-size:14px;font-weight:700;cursor:pointer">{{ l.marque }}</button>
+                        <div style="min-width:0">
+                          <div style="font-size:14px;font-weight:600">{{ l.nom }} <span style="font-weight:400">{{ l.prenoms }}</span></div>
+                          <div style="font-size:12px;color:#BC4F14">{{ l.motifs }}</div>
+                          <sc-if value="{{ l.doublon }}" hint-placeholder-val="{{ false }}">
+                            <button sc-camel-on-click="{{ l.basculerDoublon }}" title="Cet athlète existe déjà : compléter sa fiche ou ignorer la ligne" style="margin-top:4px;padding:3px 8px;border-radius:6px;border:1px solid #DDD6C9;background:#FCFAF6;color:#6E675C;font-size:11px;cursor:pointer">{{ l.libDoublon }}</button>
+                          </sc-if>
+                        </div>
+                        <div style="font-size:13px;color:#4A443B">{{ l.club }}</div>
+                        <div style="font-size:13px;color:#4A443B">{{ l.poids }}</div>
+                        <div style="font-size:12px;color:#6E675C">{{ l.tel }} / {{ l.urgence }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+                    <button sc-camel-on-click="{{ validerImport }}" title="Écrit les lignes cochées dans la liste des athlètes" style="padding:12px 20px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer">Importer les {{ impNbGardees }} lignes cochées</button>
+                    <div style="font-size:13px;color:#8A8378">Le poids lu dans le fichier reste indicatif : la pesée du jour J fait foi.</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ impResume }}" hint-placeholder-val="{{ false }}">
+                <div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px">
+                    <div style="background:#FCFAF6;border:1px solid #E7E1D6;border-radius:11px;padding:14px">
+                      <div style="font-size:26px;font-weight:700;color:#0B9237">{{ resAjoutes }}</div>
+                      <div style="font-size:12px;color:#6E675C">ajoutés</div>
+                    </div>
+                    <div style="background:#FCFAF6;border:1px solid #E7E1D6;border-radius:11px;padding:14px">
+                      <div style="font-size:26px;font-weight:700">{{ resFusionnes }}</div>
+                      <div style="font-size:12px;color:#6E675C">fiches complétées</div>
+                    </div>
+                    <div style="background:#FCFAF6;border:1px solid #E7E1D6;border-radius:11px;padding:14px">
+                      <div style="font-size:26px;font-weight:700;color:#8A8378">{{ resIgnores }}</div>
+                      <div style="font-size:12px;color:#6E675C">ignorés</div>
+                    </div>
+                    <div style="background:#FCFAF6;border:1px solid #E7E1D6;border-radius:11px;padding:14px">
+                      <div style="font-size:26px;font-weight:700;color:#EC6D23">{{ resAVerifier }}</div>
+                      <div style="font-size:12px;color:#6E675C">à vérifier</div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button sc-camel-on-click="{{ fermerImport }}" title="Rester sur la liste pour compléter les fiches" style="padding:12px 20px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Compléter les fiches</button>
+                    <button sc-camel-on-click="{{ versPesee }}" title="Passer à l'étape Pesée" style="padding:12px 20px;border-radius:10px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:15px;font-weight:500;cursor:pointer">Aller à la pesée</button>
+                    <button sc-camel-on-click="{{ annulerImport }}" title="Revenir à la liste d'avant l'import" style="margin-left:auto;padding:12px 18px;border-radius:10px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:14px;font-weight:500;cursor:pointer">Annuler cet import</button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ photosOuvert }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;padding:20px;margin-bottom:18px">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+                <div style="font-size:18px;font-weight:700">Correspondance des photos</div>
+                <button sc-camel-on-click="{{ fermerPhotos }}" title="Abandonner cet import de photos" style="margin-left:auto;padding:8px 13px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#6E675C;font-size:13px;cursor:pointer">Fermer</button>
+              </div>
+              <div style="font-size:13px;color:#6E675C;margin-bottom:14px">Vérifiez à qui va chaque photo. Les photos sont recadrées en portrait automatiquement.</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ photosCorresp }}" as="ph" hint-placeholder-count="4">
+                  <div style="display:flex;gap:12px;align-items:center;padding:10px;border:1px solid #E7E1D6;border-radius:11px">
+                    <div style="width:44px;height:54px;border-radius:7px;border:1px solid #DDD6C9;background-color:#F5F1E8;background-image:{{ ph.apercu }};background-size:cover;background-position:center;background-repeat:no-repeat;flex:none"></div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13px;color:#6E675C">{{ ph.nomFichier }}</div>
+                      <sc-raw-select value="{{ ph.athleteId }}" sc-camel-on-change="{{ ph.choisir }}" title="À qui appartient cette photo ?" style="width:100%;margin-top:5px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                        <option value="">— Ne pas utiliser —</option>
+                        <sc-for list="{{ athletesOptions }}" as="ao" hint-placeholder-count="6">
+                          <option value="{{ ao.id }}">{{ ao.nom }}</option>
+                        </sc-for>
+                      </sc-raw-select>
+                    </div>
+                    <div style="font-size:12px;font-weight:600;color:{{ ph.etatCouleur }};flex:none">{{ ph.etat }}</div>
+                  </div>
+                </sc-for>
+              </div>
+              <button sc-camel-on-click="{{ appliquerPhotos }}" title="Enregistre les photos sur les fiches désignées" style="margin-top:14px;padding:12px 20px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:15px;font-weight:600;cursor:pointer">Appliquer les photos</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ msgAffectation }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:14px;padding:12px 15px;border-radius:11px;background:rgba(11,146,55,.07);border:1px solid rgba(11,146,55,.2);color:#03562A;font-size:13px;line-height:1.5;font-weight:600">{{ msgAffectation }}</div>
+          </sc-if>
+
+          <sc-if value="{{ ilYaSansCategorie }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#FFF6E8;border:1px solid #F0D8B0;border-left:4px solid #E8A317;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+              <div style="font-size:15px;font-weight:700;color:#8A5A0B;margin-bottom:4px">{{ nbSansCategorie }}</div>
+              <div style="font-size:13px;color:#8A5A0B;line-height:1.5;margin-bottom:12px;text-wrap:pretty">Affectez-les à une catégorie existante, ou déclarez-les indépendants : ils concourent, leurs performances sont enregistrées, mais ils restent hors classement.</div>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#FFFFFF;border:1px solid #F0D8B0;border-radius:10px;padding:12px;margin-bottom:10px">
+                <button sc-camel-on-click="{{ toutSelectionner }}" title="Cocher tous les athlètes de cette liste" style="padding:9px 13px;border-radius:8px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:13px;font-weight:600;cursor:pointer">Tout cocher</button>
+                <button sc-camel-on-click="{{ toutDeselectionner }}" title="Décocher tout" style="padding:9px 13px;border-radius:8px;border:1px solid #DDD6C9;background:#FFFFFF;color:#6E675C;font-size:13px;font-weight:500;cursor:pointer">Tout décocher</button>
+                <div style="font-size:13px;color:#8A8378;flex:none">{{ libSelection }}</div>
+                <sc-raw-select value="{{ choixGroupe }}" sc-camel-on-change="{{ setChoixGroupe }}" title="Catégorie d'arrivée pour les athlètes cochés" style="flex:1;min-width:190px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                  <option value="">Catégorie d'arrivée…</option>
+                  <sc-for list="{{ categoriesOptions }}" as="co" hint-placeholder-count="2">
+                    <option value="{{ co.id }}">{{ co.nom }}</option>
+                  </sc-for>
+                  <option value="hors">Indépendant — hors classement</option>
+                </sc-raw-select>
+                <button sc-camel-on-click="{{ affecterSelection }}" title="Affecte tous les athlètes cochés à la catégorie choisie" style="padding:10px 16px;border-radius:9px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer">Affecter la sélection</button>
+                <button sc-camel-on-click="{{ repartirParPoids }}" title="Classe les athlètes cochés (ou toute la liste si rien n'est coché) d'après le poids relevé à la pesée" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Classer d'après le poids pesé</button>
+
+              </div>
+              <sc-if value="{{ msgAffectation }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-bottom:10px;padding:10px 12px;border-radius:9px;background:#FFFFFF;border:1px solid #F0D8B0;color:#8A5A0B;font-size:13px;font-weight:600;line-height:1.45">{{ msgAffectation }}</div>
+              </sc-if>
+
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ sansCategorie }}" as="s" hint-placeholder-count="2">
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#FFFFFF;border:1px solid #F0D8B0;border-radius:10px;padding:10px 12px">
+                    <button sc-camel-on-click="{{ s.basculerCoche }}" title="Sélectionner cet athlète pour une affectation groupée" style="width:26px;height:26px;border-radius:7px;border:1.5px solid {{ s.bordCoche }};background:{{ s.fondCoche }};color:#FFFFFF;font-size:14px;font-weight:700;cursor:pointer;flex:none;padding:0">{{ s.libCoche }}</button>
+                    <div style="flex:1;min-width:160px">
+                      <div style="font-size:14px;font-weight:600">{{ s.nom }}</div>
+                      <div style="font-size:12px;color:#8A8378">{{ s.detail }}</div>
+                    </div>
+                    <sc-raw-select value="{{ s.choix }}" sc-camel-on-change="{{ s.setChoix }}" title="Choisir la catégorie de cet athlète" style="flex:none;min-width:200px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                      <option value="">Affecter à…</option>
+                      <sc-for list="{{ categoriesOptions }}" as="co" hint-placeholder-count="2">
+                        <option value="{{ co.id }}">{{ co.nom }}</option>
+                      </sc-for>
+                      <option value="hors">Indépendant — hors classement</option>
+                    </sc-raw-select>
+                    <sc-if value="{{ s.erreur }}" hint-placeholder-val="{{ false }}">
+                      <div style="flex:1 1 100%;padding:9px 11px;border-radius:8px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:12px;font-weight:600;line-height:1.4">{{ s.erreur }}</div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ athletes }}" as="a" hint-placeholder-count="6">
+              <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:12px;overflow:hidden">
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 14px">
+                  <div style="width:36px;height:44px;border-radius:7px;border:1px solid #DDD6C9;background-color:#F5F1E8;background-image:{{ a.photoFond }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#8A8378;flex:none;overflow:hidden">
+                    <sc-if value="{{ a.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                      <div>{{ a.initiales }}</div>
+                    </sc-if>
+                  </div>
+                  <input value="{{ a.dossardSaisi }}" sc-camel-on-change="{{ a.setDossard }}" placeholder="—" title="Numéro de dossard, saisi à la main. L'ordre de passage de la première épreuve suit ces numéros, du plus petit au plus grand." style="width:52px;padding:7px 6px;border:1px solid #DDD6C9;border-radius:7px;background:#FCFAF6;font-size:15px;font-weight:700;text-align:center;color:#141210;flex:none;outline:none">
+                  <button sc-camel-on-click="{{ a.suppr }}" title="Supprimer cet athlète de la liste des engagés" style="width:30px;height:30px;padding:0;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:15px;font-weight:700;cursor:pointer;flex:none">✕</button>
+                  <div style="flex:3 1 160px;min-width:0">
+                    <div style="font-size:15px;font-weight:600;line-height:1.25">{{ a.nomAffiche }}</div>
+                    <div style="font-size:13px;color:#8A8378">{{ a.clubAffiche }} · {{ a.groupeNom }}</div>
+                  </div>
+                  <span style="display:flex;width:22px;height:15px;border:1px solid #DDD6C9;overflow:hidden;flex:none">
+                    <span style="flex:1;background:{{ a.d1 }}"></span>
+                    <span style="flex:1;background:{{ a.d2 }}"></span>
+                    <span style="flex:1;background:{{ a.d3 }}"></span>
+                  </span>
+                  <div style="flex:1 1 110px;min-width:96px;text-align:right">
+                    <div style="font-size:12px;font-weight:600;color:{{ a.statutCouleur }}">{{ a.statut }}</div>
+                    <div style="font-size:11px;color:{{ a.alerteCouleur }}">{{ a.alerte }}</div>
+                  </div>
+                  <button sc-camel-on-click="{{ a.basculer }}" title="Ouvrir ou replier la fiche" style="padding:8px 13px;border-radius:8px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:13px;font-weight:600;cursor:pointer;flex:none">{{ a.libBasculer }}</button>
+                </div>
+
+                <sc-if value="{{ a.ouvert }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding:14px;border-top:1px solid #F0EBE1;background:#FCFAF6">
+                    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+                      <div style="width:74px;flex:none">
+                        <div style="width:74px;height:88px;border-radius:9px;background-color:#F5F1E8;background-image:{{ a.photoFond }};background-size:cover;background-position:center;background-repeat:no-repeat;border:1px solid #DDD6C9;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:20px;font-weight:700;color:#8A8378">
+                          <sc-if value="{{ a.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                            <div>{{ a.initiales }}</div>
+                          </sc-if>
+                        </div>
+                        <label title="Photo affichée près du nom sur le mur LED" style="display:block;margin-top:7px;text-align:center;font-size:12px;color:#0B9237;cursor:pointer">Photo
+                          <input type="file" accept="image/*" sc-camel-on-change="{{ a.setPhoto }}" style="display:none">
+                        </label>
+                      </div>
+                      <div style="flex:1;min-width:260px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px 12px;align-items:end">
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#EC6D23;margin-bottom:6px">Dossard</div>
+                          <input value="{{ a.dossardSaisi }}" sc-camel-on-change="{{ a.setDossard }}" placeholder="—" title="Numéro de dossard, saisi à la main. Il fixe l'ordre de passage de la première épreuve, du plus petit au plus grand." style="width:100%;padding:9px 11px;border:1px solid #F0D8B0;border-radius:8px;background:#FFF6E8;font-size:17px;font-weight:700;text-align:center;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Nom</div>
+                          <input value="{{ a.nom }}" sc-camel-on-change="{{ a.setNom }}" title="Nom de famille, en capitales sur les affichages publics" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;font-weight:600;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Prénoms</div>
+                          <input value="{{ a.prenoms }}" sc-camel-on-change="{{ a.setPrenoms }}" title="Prénoms tels qu'ils seront annoncés" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Club</div>
+                          <input value="{{ a.club }}" sc-camel-on-change="{{ a.setClub }}" placeholder="Indépendant" title="Club affilié. Laisser vide affiche « Indépendant »." style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Nationalité</div>
+                          <sc-raw-select value="{{ a.pays }}" sc-camel-on-change="{{ a.setPays }}" title="Hors Côte d'Ivoire, l'athlète est marqué Invité et sort du classement officiel." style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                            <option value="BEN">Bénin</option>
+                            <option value="BFA">Burkina Faso</option>
+                            <option value="CMR">Cameroun</option>
+                            <option value="CIV">Côte d'Ivoire</option>
+                            <option value="USA">États-Unis</option>
+                            <option value="FRA">France</option>
+                            <option value="GHA">Ghana</option>
+                            <option value="GIN">Guinée</option>
+                            <option value="ISL">Islande</option>
+                            <option value="MLI">Mali</option>
+                            <option value="MAR">Maroc</option>
+                            <option value="NGA">Nigéria</option>
+                            <option value="SEN">Sénégal</option>
+                            <option value="TGO">Togo</option>
+                          </sc-raw-select>
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Catégorie</div>
+                          <sc-raw-select value="{{ a.categorieId }}" sc-camel-on-change="{{ a.setCategorie }}" title="Catégorie de poids. « Indépendant » retire l'athlète des classements tout en conservant ses performances." style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                            <option value="">— À déterminer par la pesée —</option>
+                            <sc-for list="{{ categoriesOptions }}" as="co" hint-placeholder-count="2">
+                              <option value="{{ co.id }}">{{ co.nom }}</option>
+                            </sc-for>
+                            <option value="hors">Indépendant — hors classement</option>
+                          </sc-raw-select>
+                        </div>
+                        <sc-for list="{{ a.niveaux }}" as="nv" hint-placeholder-count="0">
+                          <div>
+                            <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#BC4F14;margin-bottom:6px">Niveau — {{ nv.nom }}</div>
+                            <sc-raw-select value="{{ nv.val }}" sc-camel-on-change="{{ nv.set }}" title="Niveau déclaré par l'athlète pour cette épreuve de tenue. Il s'affiche à la sélection de l'épreuve et sur le mur LED pendant son passage." style="width:100%;padding:9px 11px;border:1px solid #F0D8B0;border-radius:8px;background:#FFF6E8;font-size:14px;outline:none">
+                              <option value="">— Niveau à déclarer —</option>
+                              <sc-for list="{{ nv.options }}" as="op" hint-placeholder-count="3">
+                                <option value="{{ op.v }}">{{ op.v }}</option>
+                              </sc-for>
+                            </sc-raw-select>
+                          </div>
+                        </sc-for>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Participation</div>
+                          <button sc-camel-on-click="{{ a.basculerInvite }}" title="Un invité concourt et ses performances sont enregistrées, mais il n'entre ni dans le classement de l'épreuve ni dans le classement général." style="width:100%;padding:10px 11px;border-radius:8px;border:1px solid {{ a.bordInvite }};background:{{ a.fondInvite }};color:{{ a.encreInvite }};font-size:14px;font-weight:600;cursor:pointer;text-align:left">{{ a.libInvite }}</button>
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Taille</div>
+                          <input value="{{ a.taille }}" sc-camel-on-change="{{ a.setTaille }}" placeholder="1,81 m" title="Taille déclarée" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Âge</div>
+                          <input value="{{ a.age }}" sc-camel-on-change="{{ a.setAge }}" title="Âge déclaré" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Commune</div>
+                          <input value="{{ a.commune }}" sc-camel-on-change="{{ a.setCommune }}" title="Commune de résidence" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Téléphone</div>
+                          <input value="{{ a.tel }}" sc-camel-on-change="{{ a.setTel }}" title="Téléphone de l'athlète" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#BC4F14;margin-bottom:6px">Contact d'urgence</div>
+                          <input value="{{ a.urgence }}" sc-camel-on-change="{{ a.setUrgence }}" title="Personne à prévenir en cas d'accident. Jamais affiché sur les écrans du public." style="width:100%;padding:9px 11px;border:1px solid #E9CFC4;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Poids déclaré</div>
+                          <input value="{{ a.poidsDeclare }}" title="Poids annoncé à l'inscription. Indicatif : seule la pesée compte." sc-camel-read-only="{{ true }}" style="width:100%;padding:9px 11px;border:1px solid #E7E1D6;border-radius:8px;background:#F5F1E8;color:#6E675C;font-size:15px;outline:none">
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#03562A;margin-bottom:6px">Poids de la pesée</div>
+                          <div title="{{ a.poidsMention }}" style="padding:9px 11px;border:1px solid #B7DCC4;border-radius:8px;background:#FFFFFF;font-size:17px;font-weight:700;color:{{ a.poidsCouleur }}">{{ a.poidsPesee }}</div>
+                        </div>
+                        <div>
+                          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Note pour le speaker</div>
+                          <input value="{{ a.note }}" sc-camel-on-change="{{ a.setNote }}" placeholder="Anecdote, prononciation" title="Note libre reprise sur la fiche du speaker" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FFFFFF;font-size:15px;outline:none">
+                        </div>
+                      </div>
+                    </div>
+                    <sc-if value="{{ a.erreurCat }}" hint-placeholder-val="{{ false }}">
+                      <div style="margin-top:12px;padding:11px 13px;border-radius:9px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:13px;font-weight:600;line-height:1.45">{{ a.erreurCat }}</div>
+                    </sc-if>
+                    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+                      <div style="flex:1;min-width:200px;font-size:12px;color:#8A8378;line-height:1.45;text-wrap:pretty">Une fiche importée dont une donnée a été devinée est marquée « À vérifier ». Le bouton ci-contre retire cette marque une fois la fiche relue.</div>
+                      <button sc-camel-on-click="{{ a.vu }}" title="Retire la marque « À vérifier » de cette fiche" style="padding:9px 14px;border-radius:9px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Fiche vérifiée</button>
+                      <button sc-camel-on-click="{{ a.suppr }}" title="Retire cet athlète de la liste des engagés" style="margin-left:auto;padding:9px 14px;border-radius:9px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;cursor:pointer">Retirer l'athlète</button>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:24px;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:4px">Logos des clubs</div>
+            <div style="font-size:13px;color:#6E675C;line-height:1.45;margin-bottom:14px">Un logo par club engagé. Il s'affiche près du nom de l'athlète sur les écrans du public.</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+              <sc-for list="{{ clubs }}" as="cl" hint-placeholder-count="3">
+                <div style="display:flex;gap:12px;align-items:center;border:1px solid #E7E1D6;border-radius:11px;padding:12px">
+                  <div style="width:46px;height:46px;border-radius:8px;border:1px solid #DDD6C9;background-color:#F5F1E8;background-image:{{ cl.logo }};background-size:contain;background-position:center;background-repeat:no-repeat;flex:none"></div>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600">{{ cl.nom }}</div>
+                    <div style="font-size:12px;color:#8A8378">{{ cl.effectif }}</div>
+                    <label title="Choisir l'image du logo" style="display:inline-block;margin-top:5px;font-size:12px;color:#0B9237;cursor:pointer">Choisir un logo
+                      <input type="file" accept="image/*" sc-camel-on-change="{{ cl.setLogo }}" style="display:none">
+                    </label>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ aucunClub }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:13px;color:#8A8378">Aucun club renseigné pour l'instant.</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ etape4 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Pesée <span style="color:#EC6D23">et vérification</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">14h00 — 15h00 : accueil, pesée, vérification des équipements. La validation attribue le groupe et le dossard, puis verrouille la ligne.</div>
+
+          <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+            <sc-for list="{{ pesee }}" as="p" hint-placeholder-count="4">
+              <div style="padding:14px 18px;border-top:1px solid #F0EBE1">
+                <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+                  <div style="display:flex;gap:10px;align-items:center;flex:2 1 220px;min-width:180px">
+                    <input value="{{ p.dossardSaisi }}" sc-camel-on-change="{{ p.setDossard }}" disabled="{{ p.verrou }}" placeholder="—" title="Numéro de dossard, saisi à la main" style="width:52px;padding:7px 6px;border:1px solid #DDD6C9;border-radius:7px;background:{{ p.champFond }};font-size:16px;font-weight:700;text-align:center;color:{{ p.dossardCouleur }};flex:none;outline:none">
+                    <div style="min-width:0">
+                      <div style="font-size:15px;font-weight:600;line-height:1.25">{{ p.nomComplet }}</div>
+                      <div style="font-size:13px;color:#8A8378">{{ p.sousTitre }}</div>
+                    </div>
+                  </div>
+                  <div style="flex:1 1 110px;min-width:100px">
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8A8378;margin-bottom:5px">Poids (kg)</div>
+                    <input value="{{ p.poids }}" sc-camel-on-change="{{ p.setPoids }}" title="Poids relevé à la bascule. La catégorie est déduite automatiquement." disabled="{{ p.verrou }}" placeholder="—" style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:{{ p.champFond }};font-size:15px;font-weight:600;outline:none">
+                  </div>
+                  <div style="flex:2 1 190px;min-width:160px">
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#8A8378;margin-bottom:5px">Catégorie</div>
+                    <sc-raw-select value="{{ p.categorieId }}" sc-camel-on-change="{{ p.setCategorie }}" disabled="{{ p.verrou }}" title="Catégorie de l'athlète. Laissée vide, elle est déduite du poids pesé." style="width:100%;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:{{ p.champFond }};font-size:14px;outline:none">
+                      <option value="">— Déduite du poids —</option>
+                      <sc-for list="{{ categoriesOptions }}" as="co" hint-placeholder-count="2">
+                        <option value="{{ co.id }}">{{ co.nom }}</option>
+                      </sc-for>
+                      <option value="hors">Indépendant — hors classement</option>
+                    </sc-raw-select>
+                  </div>
+                  <button sc-camel-on-click="{{ p.basculer }}" title="Valider affecte la catégorie, attribue le dossard et verrouille la ligne. Déverrouiller permet de corriger une erreur de pesée." style="flex:1 1 140px;min-width:130px;padding:11px 13px;border-radius:8px;border:1px solid {{ p.btnBord }};background:{{ p.btnFond }};color:{{ p.btnEncre }};font-size:13px;font-weight:600;cursor:pointer">{{ p.btnTexte }}</button>
+                </div>
+                <sc-if value="{{ p.erreur }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:13px;line-height:1.45;font-weight:600;text-wrap:pretty">{{ p.erreur }}</div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:16px;font-size:13px;color:#8A8378">{{ resumePesee }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ etape5 }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Programme <span style="color:#EC6D23">de la journée</span></div>
+          <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Jour unique. Ce programme alimente l'écran d'attente du mur LED et la fiche du speaker.</div>
+
+          <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:8px 18px 18px">
+            <sc-for list="{{ programme }}" as="pr" hint-placeholder-count="6">
+              <div style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #F0EBE1">
+                <div style="flex:none;width:96px">
+                  <input value="{{ pr.h }}" sc-camel-on-change="{{ pr.setH }}" title="Heure affichée sur l'écran d'attente et la fiche du speaker" style="width:100%;padding:8px 10px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:15px;font-weight:700;color:#03562A;outline:none">
+                </div>
+                <div style="flex:1;min-width:0">
+                  <input value="{{ pr.txt }}" sc-camel-on-change="{{ pr.setTxt }}" title="Intitulé du moment : accueil, briefing, épreuve, remise des récompenses" style="width:100%;padding:8px 10px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:15px;outline:none">
+                </div>
+                <button sc-camel-on-click="{{ pr.suppr }}" title="Retire cette ligne du programme" style="flex:none;padding:8px 12px;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;cursor:pointer">Retirer</button>
+              </div>
+            </sc-for>
+            <button sc-camel-on-click="{{ ajouterProgramme }}" title="Ajoute un moment au programme de la journée" style="margin-top:16px;padding:11px 18px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter une ligne</button>
+          </div>
+
+          <div style="margin-top:20px;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Récompenses</div>
+            <div style="font-size:13px;color:#6E675C;line-height:1.5;margin-bottom:14px;text-wrap:pretty">Titre, prime et lot de chaque place. Ce que vous écrivez ici s'affiche sur l'écran Podium et figure au procès-verbal. Modifiable à tout moment, même pendant la compétition.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ recompenses }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px;border:1px solid #E7E1D6;border-left:5px solid {{ r.couleur }};border-radius:11px">
+                  <div style="flex:none;width:80px;font-size:14px;font-weight:700;color:{{ r.couleur }}">{{ r.libRang }}</div>
+                  <input value="{{ r.titre }}" sc-camel-on-change="{{ r.setTitre }}" placeholder="Médaille d'or" title="Intitulé de la distinction" style="flex:2 1 170px;min-width:140px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                  <input value="{{ r.prime }}" sc-camel-on-change="{{ r.setPrime }}" placeholder="500 000 fr" title="Prime en espèces annoncée sur l'écran Podium" style="flex:1 1 130px;min-width:110px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;font-weight:700;color:#03562A;outline:none">
+                  <input value="{{ r.lot }}" sc-camel-on-change="{{ r.setLot }}" placeholder="Trophée, dotation…" title="Lot en nature, facultatif" style="flex:2 1 170px;min-width:140px;padding:9px 11px;border:1px solid #DDD6C9;border-radius:8px;background:#FCFAF6;font-size:14px;outline:none">
+                  <button sc-camel-on-click="{{ r.suppr }}" title="Retire cette récompense" style="flex:none;padding:9px 13px;border-radius:8px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;cursor:pointer">Retirer</button>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+              <button sc-camel-on-click="{{ ajouterRecompense }}" title="Ajoute une place récompensée" style="padding:11px 18px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter une récompense</button>
+              <button sc-camel-on-click="{{ retablirRecompenses }}" title="Revient aux trois médailles et primes officielles" style="padding:11px 18px;border-radius:10px;border:1px solid #DDD6C9;background:#FFFFFF;color:#6E675C;font-size:14px;font-weight:500;cursor:pointer">Rétablir les valeurs officielles</button>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:18px 20px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:8px">Bandeau partenaires</div>
+            <input value="{{ partenaires }}" sc-camel-on-change="{{ setPartenaires }}" title="Noms défilant sur l'écran d'attente et entre les passages" placeholder="Noms séparés par des virgules" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:15px;outline:none">
+            <div style="font-size:13px;color:#8A8378;margin-top:7px;line-height:1.45">Affiché sur l'écran d'attente et entre les passages.</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;gap:10px;margin-top:30px;padding-top:20px;border-top:1px solid #E7E1D6;flex-wrap:wrap">
+        <button sc-camel-on-click="{{ etapePrec }}" title="Revenir à l'étape précédente ; la saisie est conservée" style="padding:12px 20px;border-radius:10px;border:1px solid #DDD6C9;background:#FFFFFF;color:#141210;font-size:14px;font-weight:500;cursor:pointer">Étape précédente</button>
+        <button sc-camel-on-click="{{ etapeSuiv }}" title="Passer à l'étape suivante ; la saisie est conservée" style="padding:12px 20px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">{{ libSuivant }}</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estRecap }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Récapitulatif <span style="color:#EC6D23">de préparation</span></div>
+      <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Ce qui est prêt, ce qui manque. Rien n'empêche de lancer la compétition avec des lignes incomplètes, mais chaque manque est signalé ici.</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ recap }}" as="r" hint-placeholder-count="6">
+          <div style="display:flex;gap:14px;align-items:center;background:#FFFFFF;border:1px solid #E7E1D6;border-left:4px solid {{ r.couleur }};border-radius:12px;padding:15px 18px">
+            <div style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:{{ r.pucefond }};color:{{ r.couleur }};font-size:14px;font-weight:700;flex:none">{{ r.signe }}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:16px;font-weight:600">{{ r.titre }}</div>
+              <div style="font-size:14px;color:#6E675C;line-height:1.45">{{ r.detail }}</div>
+            </div>
+            <button sc-camel-on-click="{{ r.aller }}" title="Ouvre l'étape concernée pour compléter ce point" style="flex:none;padding:9px 14px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:13px;font-weight:500;cursor:pointer">Ouvrir</button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:26px;padding:20px;border-radius:14px;background:linear-gradient(100deg,#EC6D23,#BC4F14);color:#FFFFFF">
+        <div style="font-size:19px;font-weight:700;margin-bottom:4px">{{ verdictRecap }}</div>
+        <div style="font-size:14px;line-height:1.5;opacity:.92">{{ verdictDetail }}</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estPlateau }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:16px 18px;margin-bottom:18px">
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Épreuve en cours</div>
+          <sc-raw-select value="{{ epreuveCouranteId }}" sc-camel-on-change="{{ setEpreuveCourante }}" title="Épreuve dont on gère le plateau" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:15px;font-weight:600;outline:none">
+            <sc-for list="{{ epreuves }}" as="e" hint-placeholder-count="5">
+              <option value="{{ e.id }}">{{ e.nom }}</option>
+            </sc-for>
+          </sc-raw-select>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Passage</div>
+          <sc-raw-select value="{{ groupeCourantId }}" sc-camel-on-change="{{ setGroupeCourant }}" title="Par groupe de poids, ou tout le monde mélangé. Les classements restent séparés." style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:15px;font-weight:600;outline:none">
+            <sc-for list="{{ groupesPlateau }}" as="g" hint-placeholder-count="3">
+              <option value="{{ g.id }}">{{ g.nom }}</option>
+            </sc-for>
+          </sc-raw-select>
+        </div>
+        <button sc-camel-on-click="{{ construireFile }}" title="Reconstruit la liste À venir de cette épreuve dans l'ordre des dossards" style="padding:11px 18px;border-radius:10px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Reconstruire l'ordre</button>
+        <button sc-camel-on-click="{{ preparerToutes }}" title="Charge tous les athlètes dans toutes les épreuves d'un coup, par catégorie et toutes catégories mélangées. Les ordres déjà construits ne sont pas touchés." style="padding:11px 18px;border-radius:10px;border:none;background:#141210;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Précharger toutes les épreuves</button>
+        <button sc-camel-on-click="{{ versRegie }}" title="Raccourci vers la régie : changer ce qu'affichent les écrans géants sans quitter le plateau" style="padding:11px 18px;border-radius:10px;border:1px solid #EC6D23;background:#FFF6E8;color:#BC4F14;font-size:14px;font-weight:700;cursor:pointer">Régie des écrans</button>
+        <button sc-camel-on-click="{{ suspendre }}" title="Interrompt la compétition et l'affiche sur les écrans publics" style="padding:11px 18px;border-radius:10px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:14px;font-weight:600;cursor:pointer">Suspendre</button>
+      </div>
+
+      <sc-if value="{{ epreuveANiveaux }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:18px;padding:13px 16px;border-radius:11px;background:#FFF6E8;border:1px solid #F0D8B0;border-left:4px solid #E8A317;color:#8A5A0B;font-size:13px;line-height:1.5;font-weight:600;text-wrap:pretty">{{ messageNiveaux }}</div>
+      </sc-if>
+
+      <sc-if value="{{ estMedleyCourant }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:18px;padding:14px 16px;border-radius:11px;background:#FFFFFF;border:1px solid #E7E1D6">
+          <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:700">Medley — ateliers dans l'ordre</div>
+            <div style="font-size:13px;color:#EC6D23;font-weight:700">{{ distanceMedley }}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ ateliersCourants }}" as="at" hint-placeholder-count="3">
+              <div style="display:flex;gap:8px;align-items:center;padding:8px 12px;border-radius:9px;background:#F5F1E8">
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#141210;color:#FCFAF6;font-size:12px;font-weight:700;flex:none">{{ at.num }}</span>
+                <span style="font-size:13px;font-weight:600">{{ at.txt }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ msgPreparation }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:18px;padding:12px 16px;border-radius:11px;background:rgba(11,146,55,.07);border:1px solid rgba(11,146,55,.18);color:#03562A;font-size:13px;line-height:1.5;font-weight:600">{{ msgPreparation }}</div>
+      </sc-if>
+
+      <sc-if value="{{ suspendu }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:14px;align-items:center;background:#FFF6E8;border:1px solid #F0D8B0;border-left:4px solid #E8A317;border-radius:12px;padding:14px 18px;margin-bottom:18px">
+          <div style="flex:1;font-size:15px;font-weight:600;color:#8A5A0B">Compétition suspendue — {{ motifSuspension }}</div>
+          <button sc-camel-on-click="{{ reprendre }}" title="Reprendre la compétition" style="padding:9px 16px;border-radius:9px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Reprendre</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ melange }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;padding:16px 18px;margin-bottom:18px">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C;margin-bottom:12px">Appel — un athlète par catégorie</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+            <sc-for list="{{ ordreCats }}" as="c" hint-placeholder-count="2">
+              <div style="display:flex;gap:12px;align-items:center;border:1px solid #E7E1D6;border-left:5px solid {{ c.couleur }};border-radius:11px;padding:12px 14px">
+                <div style="font-size:20px;font-weight:700;color:{{ c.couleur }};flex:none">{{ c.prochainDossard }}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A8378">{{ c.nom }}</div>
+                  <div style="font-size:16px;font-weight:600;line-height:1.2">{{ c.prochainNom }}</div>
+                </div>
+                <button sc-camel-on-click="{{ c.appelerProchain }}" title="Appelle cet athlète au plateau" style="padding:9px 14px;border-radius:9px;border:none;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer;flex:none">Appeler</button>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start">
+
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+          <div style="padding:13px 18px;background:#F5F1E8;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C">À venir · {{ nbAvenir }}</div>
+          <sc-for list="{{ avenir }}" as="p" hint-placeholder-count="4">
+            <div style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid #F0EBE1">
+              <div style="width:34px;height:34px;border-radius:8px;background:#F0EBE1;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#6E675C;flex:none">{{ p.dossard }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:600;line-height:1.25">{{ p.nom }}</div>
+                <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:3px">
+                  <span style="padding:2px 8px;border-radius:999px;background:{{ p.catCouleur }};color:#FFFFFF;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">{{ p.categorie }}</span>
+                  <sc-if value="{{ p.aNiveau }}" hint-placeholder-val="{{ false }}">
+                    <span style="padding:2px 8px;border-radius:999px;background:#FFF6E8;border:1px solid #F0D8B0;color:#8A5A0B;font-size:11px;font-weight:700">{{ p.niveau }}</span>
+                  </sc-if>
+                  <span style="font-size:13px;color:#8A8378">{{ p.clubMention }}</span>
+                </div>
+              </div>
+              <button sc-camel-on-click="{{ p.appeler }}" title="Appelle cet athlète au plateau" style="padding:8px 13px;border-radius:8px;border:none;background:#141210;color:#FFFFFF;font-size:13px;font-weight:600;cursor:pointer;flex:none">Appeler</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ aucunAvenir }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px 18px;font-size:14px;color:#8A8378;line-height:1.5">Aucun passage en attente. Construisez l'ordre de passage pour cette épreuve.</div>
+          </sc-if>
+        </div>
+
+        <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;overflow:hidden">
+          <div style="padding:13px 18px;background:#141210;color:#FCFAF6;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">{{ libPlateau }}</div>
+          <div style="padding:18px">
+            <sc-if value="{{ melange }}" hint-placeholder-val="{{ false }}">
+              <button sc-camel-on-click="{{ appelerDuo }}" title="Appelle en une fois le prochain athlète de chaque catégorie : les deux passages s'ouvrent côte à côte, ici et sur le mur LED" style="width:100%;margin-bottom:14px;padding:14px;border-radius:11px;border:none;background:#141210;color:#FFFFFF;font-size:15px;font-weight:700;cursor:pointer">{{ libAppelerDuo }}</button>
+            </sc-if>
+
+            <div style="padding:14px;border-radius:12px;background:#0A0D0B;text-align:center;border:2px solid {{ chronoEncadre }}">
+              <div style="font-size:44px;font-weight:700;color:{{ chronoCouleurClair }};line-height:1;font-variant-numeric:tabular-nums;animation:{{ chronoAnim }}">{{ chronoTexte }}</div>
+              <div style="font-size:12px;color:#9AA79E;margin-top:6px">{{ chronoEtat }}</div>
+              <button sc-camel-on-click="{{ chronoAction }}" title="Premier appui : démarrer à l'annonce officielle. Second appui : arrêter au commencement réglementaire de l'essai. Impossible tant qu'aucun athlète n'est au plateau." style="width:100%;margin-top:12px;padding:16px;border-radius:11px;border:none;background:{{ chronoFond }};color:#FFFFFF;font-size:17px;font-weight:700;cursor:pointer">{{ chronoLibelle }}</button>
+            </div>
+            <sc-if value="{{ msgChrono }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:10px;padding:11px 13px;border-radius:9px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:13px;font-weight:600;line-height:1.45">{{ msgChrono }}</div>
+            </sc-if>
+
+            <div style="margin-top:14px;border-left:3px solid #EC6D23;padding:8px 0 8px 12px;font-size:13px;line-height:1.45;color:#4A443B">{{ critereCourant }}</div>
+
+            <sc-if value="{{ plateauVide }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px;padding:14px;border-radius:11px;background:#F5F1E8;font-size:14px;color:#8A8378;line-height:1.5">Appelez un athlète depuis la liste À venir : son passage quittera cette liste et deviendra visible ici.</div>
+            </sc-if>
+
+            <sc-for list="{{ plateaux }}" as="auPlateau" hint-placeholder-count="1">
+              <div style="margin-top:14px;border:1px solid #E7E1D6;border-top:4px solid {{ auPlateau.catCouleur }};border-radius:12px;padding:14px">
+              <div style="display:flex;gap:14px;align-items:flex-start">
+                <div style="width:84px;height:100px;border-radius:9px;border:1px solid #DDD6C9;background-color:#F5F1E8;background-image:{{ auPlateau.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#8A8378;flex:none;overflow:hidden">
+                  <sc-if value="{{ auPlateau.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                    <div>{{ auPlateau.initiales }}</div>
+                  </sc-if>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 7px;border-radius:7px;background:#EC6D23;color:#FFFFFF;font-size:14px;font-weight:700">{{ auPlateau.dossard }}</span>
+                    <span style="display:flex;width:22px;height:15px;border:1px solid #DDD6C9;overflow:hidden;flex:none">
+                      <span style="flex:1;background:{{ auPlateau.d1 }}"></span>
+                      <span style="flex:1;background:{{ auPlateau.d2 }}"></span>
+                      <span style="flex:1;background:{{ auPlateau.d3 }}"></span>
+                    </span>
+                    <span style="font-size:13px;color:#8A8378">{{ auPlateau.paysNom }}</span>
+                  </div>
+                  <div style="display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;background:{{ auPlateau.catCouleur }};color:#FFFFFF;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px">{{ auPlateau.categorie }}</div>
+                  <div style="font-size:21px;font-weight:700;line-height:1.15">{{ auPlateau.nom }}</div>
+                  <div style="font-size:14px;color:#6E675C">{{ auPlateau.club }} · {{ auPlateau.poidsTexte }}</div>
+                  <sc-if value="{{ auPlateau.aNiveau }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:inline-flex;margin-top:6px;padding:4px 10px;border-radius:8px;background:#FFF6E8;border:1px solid #F0D8B0;color:#8A5A0B;font-size:13px;font-weight:700">{{ auPlateau.niveau }}</div>
+                  </sc-if>
+                  <div style="font-size:13px;color:#8A8378;margin-top:5px;line-height:1.4">{{ auPlateau.note }}</div>
+                </div>
+                <button sc-camel-on-click="{{ auPlateau.renvoyer }}" title="Erreur d'appel : remet cet athlète dans la liste À venir, sans résultat" style="flex:none;padding:8px 12px;border-radius:9px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:13px;font-weight:600;cursor:pointer">← Retour file</button>
+              </div>
+
+              <sc-if value="{{ auPlateau.toursActifs }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:14px;padding:12px;border-radius:11px;background:#0A0D0B">
+                  <button sc-camel-on-click="{{ auPlateau.tour }}" title="Un appui à chaque répétition validée de cet athlète : pierre chargée, pneu renversé, levée verrouillée. Le compteur et le temps du dernier tour se remplissent tout seuls." style="width:100%;padding:15px;border-radius:10px;border:1.5px solid #FCFAF6;background:transparent;color:#FCFAF6;font-size:16px;font-weight:700;cursor:pointer">Tour — répétition validée</button>
+                  <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+                    <div style="flex:1;font-size:12px;color:#9AA79E">{{ auPlateau.nbTours }}</div>
+                    <sc-if value="{{ auPlateau.aDesTours }}" hint-placeholder-val="{{ false }}">
+                      <button sc-camel-on-click="{{ auPlateau.annulerTour }}" title="Retire le dernier tour compté pour cet athlète" style="flex:none;padding:6px 11px;border-radius:7px;border:1px solid rgba(252,250,246,.4);background:transparent;color:#FCFAF6;font-size:12px;font-weight:600;cursor:pointer">Retirer le dernier</button>
+                    </sc-if>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                    <sc-for list="{{ auPlateau.tours }}" as="lp" hint-placeholder-count="0">
+                      <span style="padding:4px 9px;border-radius:7px;background:rgba(252,250,246,.12);color:#FCFAF6;font-size:12px;font-weight:600">{{ lp.num }} · {{ lp.t }}</span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px;align-items:end">
+                <div>
+                  <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px;min-height:16px">{{ auPlateau.uniteValeur }}</div>
+                  <input value="{{ auPlateau.valeur }}" sc-camel-on-change="{{ auPlateau.setValeur }}" title="Performance mesurée sur cet essai" style="width:100%;padding:11px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:17px;font-weight:700;outline:none">
+                </div>
+                <sc-if value="{{ auPlateau.mixte }}" hint-placeholder-val="{{ false }}">
+                  <div>
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px;min-height:16px">{{ auPlateau.libTemps }}</div>
+                    <input value="{{ auPlateau.temps }}" sc-camel-on-change="{{ auPlateau.setTemps }}" title="Temps total, sert à départager les égalités" style="width:100%;padding:11px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:17px;font-weight:700;outline:none">
+                  </div>
+                </sc-if>
+              </div>
+              <sc-if value="{{ auPlateau.erreur }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:#FBEFEA;border:1px solid #E9CFC4;color:#A6371C;font-size:13px;font-weight:600;line-height:1.45">{{ auPlateau.erreur }}</div>
+              </sc-if>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #F0EBE1">
+                <button sc-camel-on-click="{{ auPlateau.officialiser }}" title="Enregistre la performance saisie par la table, met à jour le classement et appelle automatiquement l'athlète suivant" style="flex:1;min-width:100%;padding:16px;border-radius:11px;border:none;background:#0B9237;color:#FFFFFF;font-size:16px;font-weight:700;cursor:pointer">Valider la performance et appeler le suivant</button>
+                <button sc-camel-on-click="{{ auPlateau.zero }}" title="Essai nul : l'athlète a bien concouru mais aucune performance n'est validée (pierre non posée, levée non verrouillée, sortie de zone). Il reste classé dans l'épreuve avec 0 point, contrairement au forfait où il ne se présente pas." style="padding:13px 15px;border-radius:10px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Zéro</button>
+                <button sc-camel-on-click="{{ auPlateau.forfait }}" title="Forfait de l'athlète sur cette épreuve" style="padding:13px 15px;border-radius:10px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Forfait</button>
+              </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ annulationOuverte }}" hint-placeholder-val="{{ true }}">
+              <button sc-camel-on-click="{{ retourPassage }}" title="Annule la dernière validation : l'athlète précédent revient au plateau, sa performance est effacée" style="width:100%;margin-top:14px;padding:12px;border-radius:10px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:14px;font-weight:600;cursor:pointer">← Annuler la dernière validation</button>
+            </sc-if>
+            <sc-if value="{{ annulationVerrouillee }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:14px;padding:12px 14px;border-radius:10px;background:#F5F1E8;border:1px solid #DDD6C9;color:#6E675C;font-size:13px;line-height:1.45;font-weight:600;text-wrap:pretty">Épreuve terminée pour cette catégorie : l'annulation est verrouillée. Une correction passe désormais par la feuille de notation et la signature du juge principal.</div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+          <div style="padding:13px 18px;background:#F5F1E8;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C">Passages terminés · {{ nbTermine }}</div>
+          <sc-for list="{{ termines }}" as="t" hint-placeholder-count="3">
+            <div style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid #F0EBE1;background:{{ t.fondLigneRes }}">
+              <div style="width:34px;height:34px;border-radius:8px;background:#F0EBE1;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#6E675C;flex:none">{{ t.dossard }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:600;line-height:1.25;color:{{ t.encreNom }}">{{ t.nom }}</div>
+                <div style="font-size:13px;color:{{ t.couleurTexte }};font-weight:700">{{ t.texte }}</div>
+              </div>
+              <button sc-camel-on-click="{{ t.renvoyer }}" title="Annule l'officialisation et renvoie le passage dans À venir" style="padding:7px 11px;border-radius:8px;border:1px solid #DDD6C9;background:#FFFFFF;color:#6E675C;font-size:12px;cursor:pointer;flex:none">Annuler</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ aucunTermine }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px 18px;font-size:14px;color:#8A8378;line-height:1.5">Les passages officialisés s'empilent ici, consultables à tout moment.</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ melange }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:22px">
+          <div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C;margin-bottom:12px">Ordre de passage par catégorie — mis à jour à chaque validation</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+            <sc-for list="{{ ordreCats }}" as="c" hint-placeholder-count="3">
+              <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+                <div style="padding:11px 16px;background:{{ c.couleur }};color:#FFFFFF;display:flex;gap:10px;align-items:baseline">
+                  <div style="flex:1;min-width:0;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">{{ c.nom }}</div>
+                  <div style="font-size:12px;opacity:.9">{{ c.compte }}</div>
+                </div>
+                <sc-for list="{{ c.liste }}" as="p" hint-placeholder-count="4">
+                  <div style="display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid #F0EBE1;background:{{ p.fondClair }}">
+                    <div style="width:22px;font-size:13px;font-weight:700;color:#8A8378;flex:none">{{ p.rangCat }}</div>
+                    <div style="width:32px;height:30px;border-radius:7px;background:#F0EBE1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#4A443B;flex:none">{{ p.dossard }}</div>
+                    <div style="flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.2">{{ p.nom }}</div>
+                    <button sc-camel-on-click="{{ p.appeler }}" title="Appeler cet athlète au plateau maintenant" style="padding:6px 10px;border-radius:8px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:12px;font-weight:600;cursor:pointer;flex:none">Appeler</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:22px">
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+          <div style="padding:13px 18px;background:#F5F1E8;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C">{{ nomEpreuveCourante }} · {{ nomGroupeCourant }}</div>
+          <sc-for list="{{ clEpreuve }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid #F0EBE1">
+              <div style="width:26px;font-size:15px;font-weight:700;color:#EC6D23;flex:none">{{ c.rang }}</div>
+              <div style="flex:1;min-width:0;font-size:15px;font-weight:500">{{ c.nom }}</div>
+              <div style="font-size:14px;color:#6E675C;flex:none">{{ c.perf }}</div>
+              <div style="width:56px;text-align:right;font-size:15px;font-weight:700;flex:none">{{ c.points }} pts</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ aucunClassement }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px 18px;font-size:14px;color:#8A8378">Aucun résultat officialisé sur cette épreuve.</div>
+          </sc-if>
+        </div>
+        <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;overflow:hidden">
+          <div style="padding:13px 18px;background:#F5F1E8;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E675C">Classement général · {{ nomGroupeCourant }}</div>
+          <sc-for list="{{ clGeneral }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;gap:12px;align-items:center;padding:11px 18px;border-top:1px solid #F0EBE1">
+              <div style="width:26px;font-size:15px;font-weight:700;color:#03562A;flex:none">{{ c.rang }}</div>
+              <div style="flex:1;min-width:0;font-size:15px;font-weight:500">{{ c.nom }}</div>
+              <div style="width:70px;text-align:right;font-size:15px;font-weight:700;flex:none">{{ c.total }} pts</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estRegie }}" hint-placeholder-val="{{ true }}">
+    <div>
+      <div style="font-size:22px;font-weight:700;text-transform:uppercase;margin-bottom:6px">Régie <span style="color:#EC6D23">de diffusion</span></div>
+      <div style="font-size:15px;color:#4A443B;line-height:1.55;max-width:760px;margin-bottom:22px;text-wrap:pretty">Une sortie par écran. Choisissez le contenu, ouvrez la fenêtre sur la sortie vidéo correspondante : elle se met à jour toute seule à chaque décision du plateau. Sombre par défaut pour l'extérieur, bouton jour/nuit ci-dessous.</div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:16px 18px;margin-bottom:18px">
+        <div style="flex:1;min-width:200px;font-size:15px;font-weight:600">{{ themeLibelle }}</div>
+        <button sc-camel-on-click="{{ basculerTheme }}" title="Le mode nuit reste lisible en plein soleil et n'éblouit pas après 19h" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Basculer jour / nuit</button>
+        <button sc-camel-on-click="{{ ouvrirMire }}" title="Ouvre la mire de lisibilité pour régler le mur LED avant l'ouverture au public" style="padding:10px 16px;border-radius:9px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Ouvrir la mire</button>
+      </div>
+
+      <div style="background:#FFFFFF;border:2px solid #141210;border-radius:14px;padding:16px 18px;margin-bottom:18px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px">
+          <div style="font-size:16px;font-weight:700">Résultats de l'épreuve en cours</div>
+          <div style="font-size:13px;color:#EC6D23;font-weight:700">{{ nomEpreuveCourante }}</div>
+          <div style="margin-left:auto;font-size:12px;color:#8A8378">Classement séparé par catégorie, mis à jour à chaque validation</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+          <sc-for list="{{ epParCat }}" as="cc" hint-placeholder-count="2">
+            <div style="border:1px solid #E7E1D6;border-radius:12px;overflow:hidden">
+              <div style="padding:10px 14px;background:{{ cc.couleur }};color:#FFFFFF;font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase">{{ cc.nom }}</div>
+              <sc-if value="{{ cc.aucun }}" hint-placeholder-val="{{ true }}">
+                <div style="padding:12px 14px;font-size:13px;color:#8A8378;line-height:1.45">Aucun passage validé pour l'instant dans cette catégorie.</div>
+              </sc-if>
+              <sc-for list="{{ cc.lignes }}" as="c" hint-placeholder-count="0">
+                <div style="display:flex;gap:10px;align-items:center;padding:9px 14px;border-top:1px solid #F0EBE1">
+                  <div style="width:22px;font-size:14px;font-weight:700;color:{{ cc.couleur }};flex:none">{{ c.rang }}</div>
+                  <div style="flex:1;min-width:0;font-size:14px;font-weight:600;line-height:1.25">{{ c.nom }}</div>
+                  <div style="font-size:13px;color:#4A443B;flex:none">{{ c.perf }}</div>
+                  <div style="width:30px;text-align:right;font-size:14px;font-weight:700;color:#03562A;flex:none">{{ c.points }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ ecrans }}" as="e" hint-placeholder-count="2">
+          <div style="background:#FFFFFF;border:1px solid #E7E1D6;border-radius:14px;padding:16px 18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:180px">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Sortie</div>
+              <input value="{{ e.nom }}" sc-camel-on-change="{{ e.setNom }}" title="Nom de la sortie vidéo, affiché sur la mire" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:15px;font-weight:600;outline:none">
+            </div>
+            <div style="flex:1.4;min-width:220px">
+              <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#8A8378;margin-bottom:6px">Contenu diffusé</div>
+              <sc-raw-select value="{{ e.contenuCle }}" sc-camel-on-change="{{ e.setContenu }}" title="Ce que le public voit sur cette sortie" style="width:100%;padding:10px 12px;border:1px solid #DDD6C9;border-radius:9px;background:#FCFAF6;font-size:15px;outline:none">
+                  <option value="attente">Écran d'attente</option>
+                  <option value="plateau">Athlète au plateau + chronomètre</option>
+                  <option value="ordre">Ordre de passage à venir</option>
+                  <option value="verdict">Dernier verdict validé</option>
+                  <option value="classement">Classement général par catégorie</option>
+                  <option value="podium">Podium et palmarès</option>
+                  <option value="mire">Mire de lisibilité</option>
+              </sc-raw-select>
+            </div>
+            <button sc-camel-on-click="{{ e.apercu }}" title="Voir dans cette page ce que le public verra, sans ouvrir de fenêtre" style="padding:11px 15px;border-radius:10px;border:1px solid #DDD6C9;background:#FCFAF6;color:#141210;font-size:14px;font-weight:600;cursor:pointer">Aperçu</button>
+            <button sc-camel-on-click="{{ e.ouvrir }}" title="Ouvre une fenêtre à glisser sur la sortie vidéo, puis passer en plein écran" style="padding:11px 17px;border-radius:10px;border:none;background:#0B9237;color:#FFFFFF;font-size:14px;font-weight:600;cursor:pointer">Ouvrir la fenêtre</button>
+            <button sc-camel-on-click="{{ e.suppr }}" title="Retire cette sortie" style="padding:11px 15px;border-radius:10px;border:1px solid #E9CFC4;background:#FFFFFF;color:#A6371C;font-size:14px;cursor:pointer">Retirer</button>
+          </div>
+        </sc-for>
+      </div>
+      <button sc-camel-on-click="{{ ajouterEcran }}" title="Ajoute une sortie vidéo" style="margin-top:16px;padding:12px 20px;border-radius:10px;border:1px dashed #B8B0A2;background:#FFFFFF;color:#03562A;font-size:14px;font-weight:600;cursor:pointer">+ Ajouter une sortie</button>
+
+      <div style="margin-top:22px;padding:14px 16px;border-radius:11px;background:rgba(11,146,55,.07);border:1px solid rgba(11,146,55,.18);font-size:13px;line-height:1.5;color:#03562A">Montage retenu : ce poste est le poste maître. Les fenêtres écrans lisent la compétition sur ce même poste, sans dépendre du réseau — si le wifi tombe, la diffusion continue.</div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ estSolo }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;padding:3vh 4vw;background:{{ soloFond }};color:{{ soloEncre }};display:flex;flex-direction:column;gap:2vh">
+      <div style="display:flex;align-items:center;gap:1.5vw;flex:none">
+        <img src="bf516514-f6a2-413f-aa59-86f19a167150" alt="FIBDA" style="height:6vh;width:auto;object-fit:contain;background:#FCFAF6;border-radius:6px;padding:3px">
+        <div style="font-size:1.6vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#EC6D23">Championnat National de Strongman 2026</div>
+        <sc-if value="{{ espaceEssai }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:0.5vh 1.2vw;border-radius:0.6vh;background:#EC6D23;color:#FFFFFF;font-size:1.6vh;font-weight:700;letter-spacing:.16em">ESSAI</div>
+        </sc-if>
+        <div style="margin-left:auto;display:flex;gap:1vw;align-items:center">
+          <button sc-camel-on-click="{{ retourEcran }}" title="Revenir en arrière : quitter l'écran et retrouver la régie" style="padding:0.9vh 1.6vw;border-radius:0.8vh;border:1px solid rgba(154,167,158,.5);background:transparent;color:{{ soloSecond }};font-size:1.8vh;font-weight:700;cursor:pointer">{{ libRetourEcran }}</button>
+          <div style="display:flex;height:0.8vh;width:14vw;overflow:hidden;border-radius:2px">
+            <div style="flex:1;background:#EC6D23"></div>
+            <div style="flex:1;background:#FFFFFF"></div>
+            <div style="flex:1;background:#0B9237"></div>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ soloPlateauActif }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;gap:2vh;min-height:0">
+          <sc-if value="{{ soloUnSeul }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:1.5vw;align-items:stretch;flex:none">
+              <div style="flex:1;min-width:0;display:flex;align-items:center;gap:1.2vw;padding:1.2vh 1.6vw;border-radius:1vh;background:{{ auPlateau.catCouleur }};color:#FFFFFF">
+                <div style="font-size:1.8vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;opacity:.85;flex:none">Catégorie</div>
+                <div style="font-size:4.2vh;font-weight:700;line-height:1;letter-spacing:.02em;text-transform:uppercase">{{ auPlateau.categorie }}</div>
+              </div>
+              <div style="flex:none;display:flex;align-items:center;padding:1.2vh 1.6vw;border-radius:1vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};font-size:2.6vh;font-weight:600;color:#EC6D23">{{ nomEpreuveCourante }}</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ soloUnSeul }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;display:flex;gap:2.5vw;align-items:center;min-height:0;overflow:hidden">
+              <div style="width:19vw;height:52vh;border-radius:1vh;border:1px solid {{ soloBord }};background-color:{{ soloCarte }};background-image:{{ auPlateau.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:9vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                <sc-if value="{{ auPlateau.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                  <div>{{ auPlateau.initiales }}</div>
+                </sc-if>
+              </div>
+              <div style="flex:1 1 0;min-width:0">
+                <div style="display:flex;gap:1.5vw;align-items:center;flex-wrap:wrap;margin-bottom:1.2vh">
+                  <span style="padding:0.5vh 1.4vw;border-radius:1vh;background:#EC6D23;color:#FFFFFF;font-size:3.6vh;font-weight:700">{{ auPlateau.dossard }}</span>
+                  <span style="display:flex;width:4.4vw;height:2.8vh;overflow:hidden;flex:none">
+                    <span style="flex:1;background:{{ auPlateau.d1 }}"></span>
+                    <span style="flex:1;background:{{ auPlateau.d2 }}"></span>
+                    <span style="flex:1;background:{{ auPlateau.d3 }}"></span>
+                  </span>
+                  <span style="font-size:2.8vh;font-weight:600;color:{{ soloEncre }}">{{ auPlateau.nationalite }}</span>
+                  <span style="padding:0.4vh 1.2vw;border-radius:0.8vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};font-size:2.8vh;font-weight:700;color:#EC6D23">{{ auPlateau.poidsTexte }}</span>
+                  <sc-if value="{{ auPlateau.aNiveau }}" hint-placeholder-val="{{ false }}">
+                    <span style="padding:0.4vh 1.2vw;border-radius:0.8vh;background:#EC6D23;color:#FFFFFF;font-size:2.8vh;font-weight:700;text-transform:uppercase">{{ auPlateau.niveau }}</span>
+                  </sc-if>
+                  <span style="font-size:2.4vh;color:{{ soloSecond }}">{{ auPlateau.mention }}</span>
+                </div>
+                <div style="font-size:7vh;font-weight:700;line-height:1.05;letter-spacing:-.01em;overflow-wrap:anywhere;word-break:break-word">{{ auPlateau.nom }}</div>
+                <div style="display:flex;gap:1.2vw;align-items:center;margin-top:1.2vh">
+                  <sc-if value="{{ auPlateau.aLogo }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:6vh;height:6vh;border-radius:0.8vh;background-color:#FFFFFF;background-image:{{ auPlateau.logoBg }};background-size:contain;background-position:center;background-repeat:no-repeat;flex:none"></div>
+                  </sc-if>
+                  <div style="font-size:3.2vh;color:{{ soloSecond }};min-width:0;overflow-wrap:anywhere">{{ auPlateau.club }}</div>
+                </div>
+              </div>
+              <div style="flex:0 0 auto;width:max-content;text-align:center">
+                <div style="font-size:16vh;font-weight:700;line-height:.9;font-variant-numeric:tabular-nums;white-space:nowrap;color:{{ chronoCouleurEcran }};animation:{{ chronoAnim }}">{{ chronoTexte }}</div>
+                <div style="font-size:2.2vh;color:{{ soloSecond }};margin-top:1vh">{{ chronoLibelleEcran }}</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ duoActif }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;gap:1.6vh;min-height:0">
+              <div style="display:flex;align-items:center;gap:2vw;flex:none">
+                <div style="font-size:2.6vh;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#EC6D23">{{ nomEpreuveCourante }}</div>
+                <div style="margin-left:auto;display:flex;align-items:baseline;gap:1.2vw;flex:0 0 auto">
+                  <div style="font-size:11vh;font-weight:700;line-height:.9;font-variant-numeric:tabular-nums;white-space:nowrap;color:{{ chronoCouleurEcran }};animation:{{ chronoAnim }}">{{ chronoTexte }}</div>
+                  <div style="font-size:2.2vh;color:{{ soloSecond }}">{{ chronoLibelleEcran }}</div>
+                </div>
+              </div>
+
+              <div style="flex:1;display:flex;align-items:stretch;gap:1.6vw;min-height:0">
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1.4vh">
+                  <div style="padding:1.1vh 1.4vw;border-radius:1vh;background:{{ duoA.catCouleur }};color:#FFFFFF;font-size:3.6vh;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.05">{{ duoA.categorie }}</div>
+                  <div style="flex:1;display:flex;gap:1.4vw;align-items:center;min-height:0">
+                    <div style="width:13vw;height:36vh;border-radius:1vh;border:1px solid {{ soloBord }};background-color:{{ soloCarte }};background-image:{{ duoA.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:6vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                      <sc-if value="{{ duoA.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                        <div>{{ duoA.initiales }}</div>
+                      </sc-if>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;gap:1vw;align-items:center;margin-bottom:0.8vh">
+                        <span style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:#EC6D23;color:#FFFFFF;font-size:3vh;font-weight:700">{{ duoA.dossard }}</span>
+                        <span style="display:flex;width:3.6vw;height:2.4vh;overflow:hidden;flex:none">
+                          <span style="flex:1;background:{{ duoA.d1 }}"></span>
+                          <span style="flex:1;background:{{ duoA.d2 }}"></span>
+                          <span style="flex:1;background:{{ duoA.d3 }}"></span>
+                        </span>
+                        <span style="font-size:2.4vh;font-weight:600;color:{{ soloEncre }}">{{ duoA.nationalite }}</span>
+                      </div>
+                      <div style="font-size:5.4vh;font-weight:700;line-height:1.05;letter-spacing:-.01em">{{ duoA.nom }}</div>
+                      <div style="font-size:2.6vh;color:{{ soloSecond }};margin-top:0.6vh">{{ duoA.club }}</div>
+                      <div style="display:flex;gap:1vw;flex-wrap:wrap;margin-top:1vh">
+                        <div style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};font-size:2.8vh;font-weight:700;color:#EC6D23">{{ duoA.poidsTexte }}</div>
+                        <sc-if value="{{ duoA.aNiveau }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:#EC6D23;color:#FFFFFF;font-size:2.8vh;font-weight:700;text-transform:uppercase">{{ duoA.niveau }}</div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="flex:none;display:flex;width:1.5vw;align-self:stretch;border-radius:0.4vh;overflow:hidden">
+                  <div style="flex:1;background:#EC6D23"></div>
+                  <div style="flex:1;background:#FFFFFF"></div>
+                  <div style="flex:1;background:#0B9237"></div>
+                </div>
+
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1.4vh">
+                  <div style="padding:1.1vh 1.4vw;border-radius:1vh;background:{{ duoB.catCouleur }};color:#FFFFFF;font-size:3.6vh;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.05">{{ duoB.categorie }}</div>
+                  <div style="flex:1;display:flex;gap:1.4vw;align-items:center;min-height:0">
+                    <div style="width:13vw;height:36vh;border-radius:1vh;border:1px solid {{ soloBord }};background-color:{{ soloCarte }};background-image:{{ duoB.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:6vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                      <sc-if value="{{ duoB.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                        <div>{{ duoB.initiales }}</div>
+                      </sc-if>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="display:flex;gap:1vw;align-items:center;margin-bottom:0.8vh">
+                        <span style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:#EC6D23;color:#FFFFFF;font-size:3vh;font-weight:700">{{ duoB.dossard }}</span>
+                        <span style="display:flex;width:3.6vw;height:2.4vh;overflow:hidden;flex:none">
+                          <span style="flex:1;background:{{ duoB.d1 }}"></span>
+                          <span style="flex:1;background:{{ duoB.d2 }}"></span>
+                          <span style="flex:1;background:{{ duoB.d3 }}"></span>
+                        </span>
+                        <span style="font-size:2.4vh;font-weight:600;color:{{ soloEncre }}">{{ duoB.nationalite }}</span>
+                      </div>
+                      <div style="font-size:5.4vh;font-weight:700;line-height:1.05;letter-spacing:-.01em">{{ duoB.nom }}</div>
+                      <div style="font-size:2.6vh;color:{{ soloSecond }};margin-top:0.6vh">{{ duoB.club }}</div>
+                      <div style="display:flex;gap:1vw;flex-wrap:wrap;margin-top:1vh">
+                        <div style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};font-size:2.8vh;font-weight:700;color:#EC6D23">{{ duoB.poidsTexte }}</div>
+                        <sc-if value="{{ duoB.aNiveau }}" hint-placeholder-val="{{ false }}">
+                          <div style="padding:0.4vh 1.1vw;border-radius:0.8vh;background:#EC6D23;color:#FFFFFF;font-size:2.8vh;font-weight:700;text-transform:uppercase">{{ duoB.niveau }}</div>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ melange }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:none">
+              <div style="font-size:1.8vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:{{ soloSecond }};margin-bottom:1vh">Appel — un athlète par catégorie</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(20vw,1fr));gap:1.4vw">
+                <sc-for list="{{ ordreCats }}" as="c" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:1.2vw;border-radius:1vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};border-left:0.7vw solid {{ c.couleur }};padding:1.2vh 1.4vw;min-width:0">
+                    <div style="font-size:3.6vh;font-weight:700;color:{{ c.couleur }};flex:none">{{ c.prochainDossard }}</div>
+                    <div style="min-width:0">
+                      <div style="font-size:1.7vh;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:{{ soloSecond }}">{{ c.nom }}</div>
+                      <div style="font-size:3.2vh;font-weight:700;line-height:1.1">{{ c.prochainNom }}</div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloPlateauVide }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2vh">
+          <div style="font-size:2.4vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#EC6D23">{{ nomEpreuveCourante }} · {{ nomGroupeCourant }}</div>
+          <sc-if value="{{ soloAucunProchain }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:8vh;font-weight:700;line-height:1.05">Épreuve terminée</div>
+              <div style="font-size:3vh;color:{{ soloSecond }};margin-top:1vh">Résultats en cours de vérification</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ soloProchain }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-size:2.2vh;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:{{ soloSecond }}">Prochain passage</div>
+              <div style="display:flex;gap:2.5vw;align-items:center;margin-top:2vh">
+                <sc-if value="{{ soloProchainAPhoto }}" hint-placeholder-val="{{ false }}">
+                  <div style="width:14vw;height:17vw;border-radius:1vh;border:1px solid {{ soloBord }};background-image:{{ soloProchainBg }};background-size:cover;background-position:center;background-repeat:no-repeat;overflow:hidden;flex:none"></div>
+                </sc-if>
+                <div style="font-size:9vh;font-weight:700;color:#EC6D23;line-height:1">{{ soloProchainDossard }}</div>
+                <div style="min-width:0">
+                  <div style="display:inline-flex;padding:0.5vh 1.2vw;border-radius:0.8vh;background:{{ soloProchainCatCouleur }};color:#FFFFFF;font-size:2.6vh;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1vh">{{ soloProchainCat }}</div>
+                  <div style="font-size:8vh;font-weight:700;line-height:1.02">{{ soloProchainNom }}</div>
+                  <div style="font-size:3vh;color:{{ soloSecond }}">{{ soloProchainClub }}</div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloOrdreCats }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:2vh">
+          <div style="font-size:3.4vh;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Ordre de passage — {{ nomEpreuveCourante }}</div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(22vw,1fr));gap:1.6vw;overflow:hidden">
+            <sc-for list="{{ ordreCats }}" as="c" hint-placeholder-count="3">
+              <div style="min-width:0;display:flex;flex-direction:column;border-radius:1vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};overflow:hidden">
+                <div style="padding:1.4vh 1.2vw;background:{{ c.couleur }};color:#FFFFFF;font-size:3.2vh;font-weight:700;text-transform:uppercase;letter-spacing:.04em;line-height:1.1">{{ c.nom }}</div>
+                <sc-for list="{{ c.liste }}" as="p" hint-placeholder-count="4">
+                  <div style="display:flex;gap:1.2vw;align-items:center;padding:1vh 1.2vw;border-top:1px solid {{ soloBord }};background:{{ p.fondLigne }}">
+                    <div style="width:4.6vh;height:5.6vh;border-radius:0.6vh;border:1px solid {{ soloBord }};background-color:{{ soloFond }};background-image:{{ p.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:1.8vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                      <sc-if value="{{ p.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                        <div>{{ p.initiales }}</div>
+                      </sc-if>
+                    </div>
+                    <div style="width:3.4vw;font-size:3.2vh;font-weight:700;color:{{ c.couleur }};flex:none">{{ p.dossard }}</div>
+                    <div style="flex:1;min-width:0;font-size:3vh;font-weight:600;line-height:1.15;overflow-wrap:anywhere">{{ p.nom }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloOrdre }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;overflow:hidden">
+          <div style="font-size:4vh;font-weight:700;text-transform:uppercase;margin-bottom:2vh">Ordre de passage — {{ nomEpreuveCourante }}</div>
+          <sc-for list="{{ avenir }}" as="p" hint-placeholder-count="6">
+            <div style="display:flex;gap:2vw;align-items:center;padding:1.2vh 0;border-bottom:1px solid {{ soloBord }}">
+              <div style="width:6vh;height:7.4vh;border-radius:0.8vh;border:1px solid {{ soloBord }};background-color:{{ soloCarte }};background-image:{{ p.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:2.4vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                <sc-if value="{{ p.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                  <div>{{ p.initiales }}</div>
+                </sc-if>
+              </div>
+              <div style="width:6vw;font-size:4.2vh;font-weight:700;color:#EC6D23">{{ p.dossard }}</div>
+              <div style="flex:1;min-width:0;font-size:4.2vh;font-weight:600;overflow-wrap:anywhere">{{ p.nom }}</div>
+              <div style="display:inline-flex;padding:0.3vh 1vw;border-radius:0.6vh;background:{{ p.catCouleur }};color:#FFFFFF;font-size:2vh;font-weight:700;text-transform:uppercase;flex:none">{{ p.categorie }}</div>
+              <div style="font-size:2.6vh;color:{{ soloSecond }};flex:none">{{ p.club }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloVerdict }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center">
+          <div style="font-size:2.4vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:{{ soloSecond }}">Dernier verdict officialisé</div>
+          <div style="font-size:8vh;font-weight:700;margin-top:2vh;line-height:1.05">{{ soloVerdictNom }}</div>
+          <div style="font-size:14vh;font-weight:700;line-height:1;color:{{ soloVerdictCouleur }}">{{ soloVerdictTexte }}</div>
+          <div style="font-size:3vh;color:{{ soloSecond }};margin-top:1vh">{{ nomEpreuveCourante }} · {{ nomGroupeCourant }}</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloClassement }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">
+          <div style="font-size:3.6vh;font-weight:700;text-transform:uppercase;margin-bottom:2vh;flex:none">Classement général par catégorie</div>
+          <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(24vw,1fr));gap:1.6vw;overflow:hidden">
+            <sc-for list="{{ clParCat }}" as="cc" hint-placeholder-count="2">
+              <div style="min-width:0;display:flex;flex-direction:column;border-radius:1vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};overflow:hidden">
+                <div style="padding:1.2vh 1.2vw;background:{{ cc.couleur }};color:#FFFFFF;font-size:3vh;font-weight:700;text-transform:uppercase;letter-spacing:.03em;line-height:1.1;flex:none">{{ cc.nom }}</div>
+                <sc-for list="{{ cc.lignes }}" as="c" hint-placeholder-count="6">
+                  <div style="display:flex;gap:1.2vw;align-items:center;padding:0.9vh 1.2vw;border-top:1px solid {{ soloBord }}">
+                    <div style="width:3vw;font-size:3vh;font-weight:700;color:{{ cc.couleur }};flex:none">{{ c.rang }}</div>
+                    <div style="width:4.6vh;height:5.6vh;border-radius:0.6vh;border:1px solid {{ soloBord }};background-color:{{ soloFond }};background-image:{{ c.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:1.8vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                      <sc-if value="{{ c.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                        <div>{{ c.initiales }}</div>
+                      </sc-if>
+                    </div>
+                    <div style="flex:1;min-width:0;font-size:2.8vh;font-weight:600;overflow-wrap:anywhere">{{ c.nom }}</div>
+                    <div style="font-size:3vh;font-weight:700;flex:none">{{ c.total }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloPodium }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2vh">
+          <div style="font-size:4vh;font-weight:700;text-transform:uppercase">Podium — {{ nomGroupeCourant }}</div>
+          <sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+            <div style="display:flex;gap:2vw;align-items:center;padding:2vh 2vw;border-radius:1vh;background:{{ soloCarte }};border:1px solid {{ soloBord }};border-left:0.8vw solid {{ p.couleur }}">
+              <div style="font-size:6vh;font-weight:700;color:{{ p.couleur }};width:5vw">{{ p.rang }}</div>
+              <div style="width:9vh;height:11vh;border-radius:0.8vh;border:1px solid {{ soloBord }};background-color:{{ soloFond }};background-image:{{ p.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:3vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                <sc-if value="{{ p.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                  <div>{{ p.initiales }}</div>
+                </sc-if>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:5vh;font-weight:700;line-height:1.1">{{ p.nom }}</div>
+                <div style="font-size:2.4vh;color:{{ soloSecond }}">{{ p.metal }} · {{ p.total }} points</div>
+              </div>
+              <div style="font-size:3.4vh;font-weight:700;color:#EC6D23">{{ p.prime }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloAttente }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;gap:3vw;min-height:0">
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+            <div style="font-size:2.4vh;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#EC6D23">{{ compteurLib }}</div>
+            <div style="font-size:12vh;font-weight:700;line-height:1;font-variant-numeric:tabular-nums">{{ compteur }}</div>
+            <div style="font-size:5vh;font-weight:700;line-height:1.05;margin-top:1vh">{{ champDate }}</div>
+            <div style="font-size:4vh;font-weight:600;color:#0B9237;margin-top:1vh">{{ champHeure }} → {{ champFin }}</div>
+            <div style="font-size:3vh;color:{{ soloSecond }};margin-top:2vh">{{ champLieu }}</div>
+            <div style="font-size:2.4vh;color:{{ soloSecond }}">{{ champAdresse }}</div>
+            <div style="margin-top:auto;font-size:2.2vh;color:{{ soloSecond }};padding-top:3vh">{{ soloPartenaires }}</div>
+          </div>
+          <div style="width:42vw;flex:none;overflow:hidden;display:flex;flex-direction:column">
+            <div style="display:flex;gap:1.5vw;align-items:center;margin-bottom:1.5vh;flex:none">
+              <div style="font-size:2.4vh;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:{{ soloSecond }}">{{ soloEngagesTitre }}</div>
+              <sc-if value="{{ plusieursPagesEng }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:0.6vw;align-items:center;margin-left:auto">
+                  <sc-for list="{{ pagesEng }}" as="pg" hint-placeholder-count="2">
+                    <div style="width:{{ pg.large }};height:0.7vh;border-radius:999px;background:{{ pg.fond }}"></div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;gap:0.4vh">
+              <sc-for list="{{ soloEngages }}" as="a" hint-placeholder-count="10">
+                <div style="display:flex;gap:1.4vw;align-items:center;padding:0.7vh 0;border-bottom:1px solid {{ soloBord }}">
+                  <div style="width:5.2vh;height:6.4vh;border-radius:0.7vh;border:1px solid {{ soloBord }};background-color:{{ soloCarte }};background-image:{{ a.photoBg }};background-size:cover;background-position:center;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;font-size:2vh;font-weight:700;color:{{ soloSecond }};flex:none;overflow:hidden">
+                    <sc-if value="{{ a.sansPhoto }}" hint-placeholder-val="{{ true }}">
+                      <div>{{ a.initiales }}</div>
+                    </sc-if>
+                  </div>
+                  <div style="width:3.6vw;font-size:2.8vh;font-weight:700;color:#EC6D23;flex:none">{{ a.dossard }}</div>
+                  <div style="flex:1;min-width:0;font-size:2.8vh;font-weight:600;overflow-wrap:anywhere">{{ a.nom }}</div>
+                  <div style="font-size:2vh;color:{{ soloSecond }};flex:none">{{ a.club }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ soloMire }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2vh">
+          <div style="display:flex;gap:0;height:8vh">
+            <div style="flex:1;background:#EC6D23"></div>
+            <div style="flex:1;background:#FFFFFF"></div>
+            <div style="flex:1;background:#0B9237"></div>
+            <div style="flex:1;background:#03562A"></div>
+            <div style="flex:1;background:#141210"></div>
+            <div style="flex:1;background:#CB7C4A"></div>
+          </div>
+          <div style="font-size:9vh;font-weight:700;line-height:1">KONÉ IBRAHIM</div>
+          <div style="font-size:6vh;font-weight:700;line-height:1">KONÉ IBRAHIM</div>
+          <div style="font-size:4vh;font-weight:600;line-height:1">KONÉ IBRAHIM · Iron Club Abidjan</div>
+          <div style="font-size:2.6vh;font-weight:500;line-height:1">Renversement de pneu · 4 renversements · 58,2 s</div>
+          <div style="font-size:1.8vh;color:{{ soloSecond }}">Lisez la plus petite ligne encore nette depuis le dernier rang : c'est votre plancher de taille de texte pour cette sortie.</div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+
+
+
+</body></html>
