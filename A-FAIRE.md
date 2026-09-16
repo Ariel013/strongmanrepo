@@ -68,7 +68,15 @@ Marche à suivre, entièrement sur vercel.com :
    Vercel écrit alors `BLOB_READ_WRITE_TOKEN` tout seul dans les variables.
 3. **Redéployer** — une variable ajoutée ne s'applique qu'au déploiement
    suivant : onglet Deployments → ⋯ sur le dernier → **Redeploy**.
-4. Vérifier en déposant une photo sur une fiche athlète.
+4. Vérifier **sans se connecter** : `GET /api/sante` doit montrer
+   `BLOB_READ_WRITE_TOKEN: true` et aucun avertissement. S'il reste `false`
+   alors que la variable existe dans Vercel, c'est que le déploiement en cours
+   est **antérieur** à son ajout — redéployez.
+5. Puis déposer une photo sur une fiche athlète.
+
+> ⚠️ Le magasin Blob crée **trois** variables : `BLOB_READ_WRITE_TOKEN`,
+> `BLOB_STORE_ID` et `BLOB_WEBHOOK_PUBLIC_KEY`. Seule la première sert au
+> dépôt des photos — elle commence par `vercel_blob_rw_`.
 
 Pour travailler en local avec les photos, recopier la valeur depuis
 Settings → Environment Variables dans le `.env` du poste.

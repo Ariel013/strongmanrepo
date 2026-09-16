@@ -22,6 +22,7 @@ export async function GET() {
     DATABASE_URL: Boolean(process.env.DATABASE_URL),
     SESSION_SECRET: Boolean(process.env.SESSION_SECRET),
     ADMIN_PASSWORD_HASH: Boolean(process.env.ADMIN_PASSWORD_HASH),
+    BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
   };
 
   const problemes: string[] = [];
@@ -40,6 +41,32 @@ export async function GET() {
       "ADMIN_PASSWORD_HASH malformée : attendu « pbkdf2$…$…$… ». " +
         "Avez-vous collé le mot de passe au lieu de son empreinte ?",
     );
+
+  /**
+   * Le stockage des photos.
+   *
+   * Facultatif : sans lui, tout fonctionne et la vignette retombe sur les
+   * initiales. Mais son absence ne se constate aujourd'hui qu'en tentant un
+   * envoi, dans l'administration, derrière un code d'accès — c'est-à-dire là
+   * où on ne peut pas la diagnostiquer de l'extérieur. Il est donc rapporté
+   * ici, avec la cause la plus fréquente : une variable ajoutée APRÈS le
+   * dernier déploiement n'existe pas encore pour le code qui tourne.
+   */
+  const avertissements: string[] = [];
+  if (!variables.BLOB_READ_WRITE_TOKEN) {
+    avertissements.push(
+      "BLOB_READ_WRITE_TOKEN absente du déploiement en cours : aucune photo " +
+        "ne peut être déposée. Si le magasin Blob vient d'être créé, " +
+        "REDÉPLOYEZ — une variable ajoutée ne s'applique qu'au déploiement " +
+        "suivant.",
+    );
+  } else if (!/^vercel_blob_rw_/.test(process.env.BLOB_READ_WRITE_TOKEN ?? "")) {
+    avertissements.push(
+      "BLOB_READ_WRITE_TOKEN présente mais de forme inattendue : " +
+        "attendu « vercel_blob_rw_… ». Avez-vous copié BLOB_STORE_ID à la " +
+        "place du jeton de lecture-écriture ?",
+    );
+  }
 
   // Détecte l'erreur de copie la plus fréquente : les guillemets repris
   // depuis le fichier .env, que la plateforme prend pour une partie de
@@ -90,6 +117,8 @@ export async function GET() {
       variables,
       base,
       problemes,
+      // Ce qui n'empêche pas la compétition, mais prive d'une fonction.
+      avertissements,
     },
     {
       status: problemes.length === 0 ? 200 : 503,
