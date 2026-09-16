@@ -25,6 +25,20 @@ export async function GET() {
     BLOB_READ_WRITE_TOKEN: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
   };
 
+  /**
+   * De quel environnement parle-t-on, et quelles variables du magasin
+   * d'images sont réellement visibles ?
+   *
+   * Sans cela, « le jeton est dans Vercel mais le code ne le voit pas » reste
+   * indémêlable : variable rangée dans le mauvais environnement, valeur vide,
+   * ou confusion entre les trois variables que crée un magasin Blob. On
+   * n'expose que des NOMS et le nom de l'environnement — jamais une valeur.
+   */
+  const environnement = process.env.VERCEL_ENV ?? "hors Vercel";
+  const variablesBlob = Object.keys(process.env)
+    .filter((k) => k.startsWith("BLOB_"))
+    .sort();
+
   const problemes: string[] = [];
   if (!variables.DATABASE_URL)
     problemes.push("DATABASE_URL absente : le site ne peut lire aucune donnée.");
@@ -55,10 +69,15 @@ export async function GET() {
   const avertissements: string[] = [];
   if (!variables.BLOB_READ_WRITE_TOKEN) {
     avertissements.push(
-      "BLOB_READ_WRITE_TOKEN absente du déploiement en cours : aucune photo " +
-        "ne peut être déposée. Si le magasin Blob vient d'être créé, " +
-        "REDÉPLOYEZ — une variable ajoutée ne s'applique qu'au déploiement " +
-        "suivant.",
+      variablesBlob.length > 0
+        ? `Le magasin Blob est bien relié (${variablesBlob.join(", ")}), mais ` +
+          "BLOB_READ_WRITE_TOKEN manque à l'appel — c'est la SEULE des trois " +
+          "qui autorise le dépôt. Dans Vercel → Settings → Environment " +
+          `Variables, vérifiez qu'elle existe pour l'environnement « ${environnement} » ` +
+          "et qu'elle a bien une valeur."
+        : "Aucune variable BLOB_* visible : le magasin Blob n'est pas relié à " +
+          "ce projet. Storage → votre magasin → Connect Project, puis " +
+          "redéployez.",
     );
   } else if (!/^vercel_blob_rw_/.test(process.env.BLOB_READ_WRITE_TOKEN ?? "")) {
     avertissements.push(
@@ -115,6 +134,8 @@ export async function GET() {
     {
       etat: problemes.length === 0 ? "en ordre" : "configuration incomplète",
       variables,
+      environnement,
+      variablesBlob,
       base,
       problemes,
       // Ce qui n'empêche pas la compétition, mais prive d'une fonction.
