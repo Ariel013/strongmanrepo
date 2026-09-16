@@ -87,21 +87,26 @@ export function ChampTexte({
       ) : (
         <input {...commun} />
       )}
-      {erreur ? (
-        <div
-          role="alert"
-          style={{
-            marginTop: 4,
-            fontSize: 12,
-            fontWeight: 600,
-            color: C.rougeFonce,
-            lineHeight: 1.4,
-          }}
-        >
-          {erreur}
-        </div>
-      ) : null}
+      {erreur ? <Avertissement>{erreur}</Avertissement> : null}
     </>
+  );
+}
+
+/** Le message rouge qui accompagne un champ refusé. */
+function Avertissement({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      role="alert"
+      style={{
+        marginTop: 4,
+        fontSize: 12,
+        fontWeight: 600,
+        color: C.rougeFonce,
+        lineHeight: 1.4,
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -122,6 +127,7 @@ export function ChoixListe({
 }) {
   const [v, setV] = useState(valeur);
   const [precedente, setPrecedente] = useState(valeur);
+  const [erreur, setErreur] = useState("");
   const [, demarrer] = useTransition();
 
   if (valeur !== precedente) {
@@ -130,20 +136,34 @@ export function ChoixListe({
   }
 
   return (
-    <select
-      value={v}
-      onChange={(e) => {
-        const val = e.target.value;
-        setV(val);
-        demarrer(async () => {
-          await enregistrer(val);
-        });
-      }}
-      style={styleChamp(style)}
-      {...reste}
-    >
-      {children}
-    </select>
+    <>
+      <select
+        value={v}
+        onChange={(e) => {
+          const val = e.target.value;
+          setV(val);
+          demarrer(async () => {
+            const r = await enregistrer(val);
+            if (r.ok) {
+              setErreur("");
+            } else {
+              // Le serveur a refusé : on remet le choix précédent à l'écran
+              // plutôt que de laisser voir une valeur qui n'est pas en base.
+              setErreur(r.erreur ?? "Choix refusé.");
+              setV(valeur);
+            }
+          });
+        }}
+        style={styleChamp({
+          ...style,
+          borderColor: erreur ? C.rouge : undefined,
+        })}
+        {...reste}
+      >
+        {children}
+      </select>
+      {erreur ? <Avertissement>{erreur}</Avertissement> : null}
+    </>
   );
 }
 

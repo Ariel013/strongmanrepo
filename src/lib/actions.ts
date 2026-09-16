@@ -32,6 +32,17 @@ import {
 } from "./db/schema";
 import { NOM_COOKIE, lireSession } from "./auth";
 import { cleRapprochement } from "./import-liste";
+import {
+  dateFrancaise,
+  decimalFacultatif,
+  entierFacultatif,
+  entierObligatoire,
+  heureFrancaise,
+  parmi,
+  tempsImparti,
+  texteFacultatif,
+  texteObligatoire,
+} from "./validation";
 
 /** Refuse l'action si la session est absente ou expirée. */
 async function exigerSession() {
@@ -77,6 +88,24 @@ export interface Retour {
   ok: boolean;
   erreur?: string;
 }
+
+/** Les rôles d'officiel reconnus au procès-verbal. */
+const ROLES_ADMIS = [
+  "directeur", "technique", "arbitrage", "juge",
+  "chrono", "secretaire", "regie", "speaker",
+] as const;
+
+/** Les contenus qu'un écran public sait afficher. */
+const CONTENUS_ADMIS = [
+  "attente", "plateau", "ordre", "verdict",
+  "classement", "podium", "mire",
+] as const;
+
+/** Les nationalités proposées par la fiche athlète. */
+const PAYS_ADMIS = [
+  "BEN", "BFA", "CMR", "CIV", "USA", "FRA", "GHA",
+  "GIN", "ISL", "MLI", "MAR", "NGA", "SEN", "TGO",
+] as const;
 
 /** Forme d'un identifiant : tout le reste vient d'ailleurs que de nos écrans. */
 const UUID =
@@ -441,50 +470,6 @@ export async function reprendre(competitionId: string): Promise<Retour> {
 
 /* ── Préparation : identité de la compétition ─────────────────────────── */
 
-/**
- * Les mois écrits en toutes lettres, comme sur le poste d'origine.
- *
- * La date reste saisie en français courant (« Samedi 19 Septembre 2026»)
- * plutôt que dans un sélecteur : c'est ce qui est recopié depuis l'arrêté
- * fédéral, et l'obliger à passer par un calendrier fait perdre du temps à la
- * table pour rien.
- */
-const MOIS_FR: Record<string, number> = {
-  janvier: 0,
-  fevrier: 1,
-  "février": 1,
-  mars: 2,
-  avril: 3,
-  mai: 4,
-  juin: 5,
-  juillet: 6,
-  aout: 7,
-  "août": 7,
-  septembre: 8,
-  octobre: 9,
-  novembre: 10,
-  decembre: 11,
-  "décembre": 11,
-};
-
-/** « Samedi 19 Septembre 2026 » + « 14h00 » → une date exploitable. */
-function dateCible(date: string, heure: string): Date | null {
-  const m = date
-    .toLowerCase()
-    .match(/(\d{1,2})\s+([a-zéûîà]+)\s+(\d{4})/);
-  if (!m) return null;
-  const mois = MOIS_FR[m[2]];
-  if (mois === undefined) return null;
-  const h = heure.match(/(\d{1,2})\s*h\s*(\d{2})?/);
-  return new Date(
-    Number.parseInt(m[3], 10),
-    mois,
-    Number.parseInt(m[1], 10),
-    h ? Number.parseInt(h[1], 10) : 0,
-    h && h[2] ? Number.parseInt(h[2], 10) : 0,
-  );
-}
-
 export async function enregistrerIdentite(
   competitionId: string,
   champs: {
@@ -497,17 +482,53 @@ export async function enregistrerIdentite(
 ): Promise<Retour> {
   await exigerSession();
 
-  const debut = dateCible(champs.date, champs.heure);
+  // La date reste saisie en français courant — c'est ce qui est recopié de
+  // l'arrêté fédéral — mais elle n'est plus avalée en silence : une date
+  // illisible vidait `debutLe`, et avec elle le compte à rebours et la date
+  // affichés sur l'écran d'attente.
+  const jour = dateFrancaise(champs.date);
+  if (!jour.ok) return { ok: false, erreur: jour.erreur };
+
+  const ouverture = heureFrancaise(champs.heure);
+  if (!ouverture.ok) return { ok: false, erreur: ouverture.erreur };
+
+  const cloture = heureFrancaise(champs.fin);
+  if (!cloture.ok) return { ok: false, erreur: cloture.erreur };
+
+  const lieu = texteFacultatif(champs.lieu, "Le lieu", 120);
+  if (!lieu.ok) return { ok: false, erreur: lieu.erreur };
+
+  const adresse = texteFacultatif(champs.adresse, "L'adresse", 200);
+  if (!adresse.ok) return { ok: false, erreur: adresse.erreur };
+
+  /** Une heure sans date ne situe rien : les deux vont ensemble ou pas. */
+  const quand = (h: { heures: number; minutes: number } | null) =>
+    jour.valeur && h
+      ? new Date(
+          jour.valeur.annee,
+          jour.valeur.mois,
+          jour.valeur.jour,
+          h.heures,
+          h.minutes,
+        )
+      : null;
+
+  const debut = quand(ouverture.valeur);
+  const fin = quand(cloture.valeur);
+
   // La clôture est le même jour : seule l'heure change. Une compétition qui
-  // déborde après minuit garderait ainsi une fin antérieure à son début —
-  // c'est visible, donc corrigible, alors qu'une date devinée ne l'est pas.
-  const fin = dateCible(champs.date, champs.fin);
+  // déborde après minuit se verrait ici, plutôt que d'être devinée.
+  if (debut && fin && fin <= debut)
+    return {
+      ok: false,
+      erreur: "L'heure de clôture doit suivre l'heure d'ouverture.",
+    };
 
   await db
     .update(competition)
     .set({
-      lieu: champs.lieu.trim() || null,
-      adresse: champs.adresse.trim() || null,
+      lieu: lieu.valeur,
+      adresse: adresse.valeur,
       debutLe: debut,
       finLe: fin,
       majLe: new Date(),
@@ -524,9 +545,11 @@ export async function enregistrerPartenaires(
   partenaires: string,
 ): Promise<Retour> {
   await exigerSession();
+  const r = texteFacultatif(partenaires, "Le bandeau partenaires", 500);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
     .update(competition)
-    .set({ partenaires: partenaires.trim() || null, majLe: new Date() })
+    .set({ partenaires: r.valeur, majLe: new Date() })
     .where(eq(competition.id, competitionId));
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
@@ -561,13 +584,15 @@ const CHAMPS_EPREUVE = {
 
 type ChampEpreuve = keyof typeof CHAMPS_EPREUVE;
 
-/** « 60 s », « 1 min », « Illimité » → secondes, ou `null` si illimité. */
-function versDuree(v: string): number | null {
-  const m = v.match(/\d+/);
-  if (!m) return null;
-  const n = Number.parseInt(m[0], 10);
-  return Number.isFinite(n) && n > 0 ? n : null;
-}
+/** Les mesures reconnues par le barème — cf. `plusPetitGagne()`. */
+const MESURES_ADMISES = [
+  "nb_temps",
+  "poids",
+  "duree",
+  "distance",
+  "chrono",
+  "medley",
+] as const;
 
 export async function modifierEpreuve(
   id: string,
@@ -578,14 +603,38 @@ export async function modifierEpreuve(
   const type = CHAMPS_EPREUVE[champ];
   if (!type) return { ok: false, erreur: "Champ inconnu." };
 
-  const v =
-    type === "booleen"
-      ? Boolean(valeur)
-      : type === "duree"
-        ? versDuree(String(valeur))
-        : type === "entier"
-          ? Math.min(9, Math.max(1, Number.parseInt(String(valeur), 10) || 1))
-          : String(valeur);
+  let v: unknown;
+  if (type === "booleen") {
+    v = Boolean(valeur);
+  } else {
+    const brut = String(valeur);
+    if (champ === "nom") {
+      const r = texteObligatoire(brut, "Le nom de l'épreuve", 60);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+    } else if (champ === "mesure") {
+      const r = parmi(brut, MESURES_ADMISES, "Mesure");
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+    } else if (champ === "passage") {
+      const r = parmi(brut, ["groupe", "melange"] as const, "Passage");
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+    } else if (type === "duree") {
+      const r = tempsImparti(brut);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+    } else if (type === "entier") {
+      const r = entierObligatoire(brut, "Essais par athlète", 1, 9);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+    } else {
+      // Critère, matériel, équipements, ateliers… : du texte libre, mais borné.
+      const r = texteFacultatif(brut, "Ce champ", 2000);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur ?? "";
+    }
+  }
 
   await db
     .update(epreuve)
@@ -639,14 +688,6 @@ export async function supprimerEpreuve(id: string): Promise<Retour> {
 
 /* ── Préparation : groupes de poids ───────────────────────────────────── */
 
-/** « 104,5 » comme « 104.5 » ; vide vaut « pas de limite ». */
-function versPoids(v: string): number | null {
-  const s = v.trim().replace(",", ".");
-  if (!s) return null;
-  const n = Number.parseFloat(s);
-  return Number.isFinite(n) ? n : null;
-}
-
 export async function modifierCategorie(
   id: string,
   champ: "nom" | "poidsMin" | "poidsMax" | "active",
@@ -654,12 +695,35 @@ export async function modifierCategorie(
 ): Promise<Retour> {
   await exigerSession();
 
-  const v =
-    champ === "active"
-      ? Boolean(valeur)
-      : champ === "nom"
-        ? String(valeur)
-        : versPoids(String(valeur));
+  let v: unknown;
+  if (champ === "active") {
+    v = Boolean(valeur);
+  } else if (champ === "nom") {
+    const r = texteObligatoire(String(valeur), "Le nom du groupe", 60);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur;
+  } else {
+    const quoi = champ === "poidsMin" ? "Poids min" : "Poids max";
+    const r = decimalFacultatif(String(valeur), quoi, 20, 400);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur;
+
+    // Une borne basse au-dessus de la borne haute ne décrit aucun athlète :
+    // la catégorie deviendrait vide sans que rien ne le signale.
+    const [actuelle] = await db
+      .select()
+      .from(categorie)
+      .where(eq(categorie.id, id));
+    if (actuelle) {
+      const min = champ === "poidsMin" ? (v as number | null) : actuelle.poidsMin;
+      const max = champ === "poidsMax" ? (v as number | null) : actuelle.poidsMax;
+      if (min !== null && max !== null && min >= max)
+        return {
+          ok: false,
+          erreur: `Bornes impossibles : le poids min (${min}) doit rester sous le poids max (${max}).`,
+        };
+    }
+  }
 
   await db
     .update(categorie)
@@ -725,9 +789,23 @@ export async function modifierOfficiel(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+
+  // Le nom peut rester vide : les postes sont créés d'avance et nommés plus
+  // tard. Le rôle, lui, décide de la place au procès-verbal.
+  let v: string;
+  if (champ === "role") {
+    const r = parmi(valeur, ROLES_ADMIS, "Rôle");
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur;
+  } else {
+    const r = texteFacultatif(valeur, "Le nom de l'officiel", 80);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur ?? "";
+  }
+
   await db
     .update(officiel)
-    .set({ [champ]: valeur })
+    .set({ [champ]: v })
     .where(eq(officiel.id, id));
   revalidatePath("/admin", "layout");
   return { ok: true };
@@ -764,9 +842,17 @@ export async function modifierProgramme(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  // L'heure du programme est lue par un humain, jamais comparée : « 14h00 »
+  // comme « vers midi » sont acceptables. On borne, c'est tout.
+  const r = texteFacultatif(
+    valeur,
+    champ === "heure" ? "L'heure" : "L'intitulé",
+    champ === "heure" ? 20 : 200,
+  );
+  if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
     .update(programme)
-    .set({ [champ]: valeur })
+    .set({ [champ]: r.valeur ?? "" })
     .where(eq(programme.id, id));
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
@@ -810,9 +896,11 @@ export async function modifierRecompense(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  const r = texteFacultatif(valeur, "Ce champ", 120);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
     .update(recompense)
-    .set({ [champ]: valeur })
+    .set({ [champ]: r.valeur ?? "" })
     .where(eq(recompense.id, id));
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
@@ -860,9 +948,22 @@ export async function modifierSortie(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+
+  let v: string;
+  if (champ === "contenu") {
+    // Un contenu inconnu donnerait un écran 404 sur le mur LED.
+    const r = parmi(valeur, CONTENUS_ADMIS, "Contenu diffusé");
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur;
+  } else {
+    const r = texteObligatoire(valeur, "Le nom de la sortie", 60);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    v = r.valeur;
+  }
+
   await db
     .update(sortie)
-    .set({ [champ]: valeur })
+    .set({ [champ]: v })
     .where(eq(sortie.id, id));
   revalidatePath("/admin/regie");
   return { ok: true };
@@ -913,14 +1014,61 @@ export async function modifierAthlete(
 ): Promise<Retour> {
   await exigerSession();
 
-  const v =
-    champ === "dossard" || champ === "tailleCm" || champ === "age"
-      ? valeur.trim() === ""
-        ? null
-        : Number.parseInt(valeur.replace(/\D/g, ""), 10) || null
-      : champ === "nom"
-        ? valeur.toUpperCase()
-        : valeur;
+  let v: unknown;
+  switch (champ) {
+    case "nom": {
+      // Le nom part en capitales sur le mur LED ; vide, l'athlète y devient
+      // une ligne anonyme que le speaker ne peut pas annoncer.
+      const r = texteObligatoire(valeur, "Le nom", 60);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur.toUpperCase();
+      break;
+    }
+    case "prenoms": {
+      const r = texteFacultatif(valeur, "Les prénoms", 80);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur ?? "";
+      break;
+    }
+    case "club": {
+      const r = texteFacultatif(valeur, "Le club", 60);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    case "note": {
+      const r = texteFacultatif(valeur, "La note", 300);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    case "pays": {
+      const r = parmi(valeur, PAYS_ADMIS, "Nationalité");
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    case "dossard": {
+      const r = entierFacultatif(valeur, "Le dossard", 1, 9999);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    case "tailleCm": {
+      const r = entierFacultatif(valeur, "La taille (en cm)", 100, 250);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    case "age": {
+      const r = entierFacultatif(valeur, "L'âge", 10, 99);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur;
+      break;
+    }
+    default:
+      return { ok: false, erreur: "Champ inconnu." };
+  }
 
   try {
     await db
@@ -933,7 +1081,7 @@ export async function modifierAthlete(
     // l'appel au micro ambigus.
     return {
       ok: false,
-      erreur: "Ce dossard est déjà attribué à un autre athlète.",
+      erreur: `Le dossard ${valeur} est déjà attribué à un autre athlète.`,
     };
   }
 
@@ -1262,16 +1410,14 @@ export async function enregistrerPoids(
   poids: string,
 ): Promise<Retour> {
   await exigerSession();
-  const v = poids.trim().replace(",", ".");
-  const n = v === "" ? null : Number.parseFloat(v);
-  if (v !== "" && (!Number.isFinite(n) || n! <= 0 || n! > 400))
-    return { ok: false, erreur: "Poids invalide." };
+  const r = decimalFacultatif(poids, "Le poids", 20, 400);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
 
   await db
     .update(athlete)
-    .set({ poidsCorps: n === null ? null : String(n) })
+    .set({ poidsCorps: r.valeur === null ? null : String(r.valeur) })
     .where(eq(athlete.id, id));
-  await tracer("pesee.poids", "athlete", id, { poids: n });
+  await tracer("pesee.poids", "athlete", id, { poids: r.valeur });
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
   return { ok: true };

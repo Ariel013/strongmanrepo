@@ -28,10 +28,16 @@ export function CartesIdentite({
   };
 }) {
   const [v, setV] = useState(initial);
+  const [erreur, setErreur] = useState("");
   const [, demarrer] = useTransition();
 
   const pousser = () => {
-    demarrer(async () => void (await enregistrerIdentite(competitionId, v)));
+    demarrer(async () => {
+      const r = await enregistrerIdentite(competitionId, v);
+      // Une date illisible vidait `debutLe` sans rien dire, et avec elle le
+      // compte à rebours du mur LED. Elle se refuse maintenant, à voix haute.
+      setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
+    });
   };
 
   const champ = (
@@ -44,7 +50,7 @@ export function CartesIdentite({
       title={title}
       onChange={(e) => setV({ ...v, [cle]: e.target.value })}
       onBlur={pousser}
-      style={styleChamp(style)}
+      style={styleChamp({ ...style, borderColor: erreur ? C.rouge : undefined })}
     />
   );
 
@@ -59,6 +65,24 @@ export function CartesIdentite({
     <>
       <div style={carte}>
         <Etiquette>Date et horaires</Etiquette>
+        {erreur ? (
+          <div
+            role="alert"
+            style={{
+              marginBottom: 10,
+              padding: "10px 12px",
+              borderRadius: 9,
+              background: C.rougeFond,
+              border: `1px solid ${C.rougeBord}`,
+              color: C.rougeFonce,
+              fontSize: 13,
+              fontWeight: 600,
+              lineHeight: 1.45,
+            }}
+          >
+            {erreur}
+          </div>
+        ) : null}
         {champ(
           "date",
           { padding: "7px 9px", fontSize: 16, fontWeight: 600 },

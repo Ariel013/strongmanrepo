@@ -34,6 +34,16 @@ import {
 } from "../src/lib/donnees";
 import { classementEpreuve, plusPetitGagne } from "../src/lib/classement";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
+import {
+  dateFrancaise,
+  decimalFacultatif,
+  entierFacultatif,
+  heureFrancaise,
+  parmi,
+  tempsImparti,
+  texteObligatoire,
+  type Verdict,
+} from "../src/lib/validation";
 
 const NOM_TEST = "ZZZ — compétition de test automatique";
 
@@ -435,8 +445,74 @@ async function principal() {
       (await signatureEcrans(comp.id)) !== sig0,
     );
 
-    /* ── 11. Cloisonnement des données personnelles ── */
-    console.log("\n11. Cloisonnement des données personnelles");
+    /* ── 11. Refus des saisies incompréhensibles ── */
+    console.log("\n11. Validation : ce qui est refusé, et ce qui passe");
+
+    const refuse = (intitule: string, r: { ok: boolean; erreur?: string }) =>
+      verifier(
+        intitule,
+        !r.ok && !!r.erreur,
+        r.ok ? "accepté à tort" : undefined,
+      );
+    const accepte = <T,>(
+      intitule: string,
+      r: Verdict<T>,
+      attendu?: unknown,
+    ) =>
+      verifier(
+        intitule,
+        r.ok &&
+          (attendu === undefined ||
+            JSON.stringify(r.valeur) === JSON.stringify(attendu)),
+        r.ok ? undefined : `refusé à tort — ${r.erreur}`,
+      );
+
+    // Temps imparti : le silence d'hier transformait « abc » en « illimité ».
+    refuse("temps imparti « abc » refusé", tempsImparti("abc"));
+    refuse("temps imparti « 0 s » refusé", tempsImparti("0 s"));
+    refuse("temps imparti « 2 jours » refusé", tempsImparti("2 jours"));
+    accepte("temps imparti « 60 s » accepté", tempsImparti("60 s"), 60);
+    accepte("temps imparti « 2 min » compris", tempsImparti("2 min"), 120);
+    accepte("« illimité » vaut bien aucune limite", tempsImparti("illimité"), null);
+    accepte("un champ vide vaut aucune limite", tempsImparti(""), null);
+
+    // Nombres : « 12a » ne doit pas devenir 12.
+    refuse("dossard « 12a » refusé", entierFacultatif("12a", "Le dossard", 1, 9999));
+    refuse("dossard « 0 » refusé", entierFacultatif("0", "Le dossard", 1, 9999));
+    accepte("dossard vide accepté", entierFacultatif("", "Le dossard", 1, 9999), null);
+    accepte("dossard « 12 » accepté", entierFacultatif("12", "Le dossard", 1, 9999), 12);
+
+    refuse("poids « abc » refusé", decimalFacultatif("abc", "Le poids", 20, 400));
+    refuse("poids « 900 » refusé", decimalFacultatif("900", "Le poids", 20, 400));
+    accepte("poids « 104,5 » accepté à la française", decimalFacultatif("104,5", "Le poids", 20, 400), 104.5);
+
+    // Texte obligatoire et bornes de longueur.
+    refuse("nom vide refusé", texteObligatoire("   ", "Le nom", 60));
+    refuse("nom démesuré refusé", texteObligatoire("x".repeat(61), "Le nom", 60));
+    accepte("nom normal accepté", texteObligatoire("  KONÉ  ", "Le nom", 60), "KONÉ");
+
+    // Valeurs contraintes.
+    refuse("mesure inconnue refusée", parmi("cuisson", ["poids", "chrono"] as const, "Mesure"));
+    accepte("mesure connue acceptée", parmi("chrono", ["poids", "chrono"] as const, "Mesure"), "chrono");
+
+    // Date et heure : leur échec silencieux cassait le compte à rebours.
+    refuse("date « le 19 » refusée", dateFrancaise("le 19"));
+    refuse("mois inventé refusé", dateFrancaise("19 brumaire 2026"));
+    refuse("31 février refusé", dateFrancaise("31 février 2026"));
+    accepte("date en toutes lettres acceptée", dateFrancaise("Samedi 19 Septembre 2026"), {
+      jour: 19,
+      mois: 8,
+      annee: 2026,
+    });
+    refuse("heure « midi » refusée", heureFrancaise("midi"));
+    refuse("heure « 25h00 » refusée", heureFrancaise("25h00"));
+    accepte("heure « 14h00 » acceptée", heureFrancaise("14h00"), {
+      heures: 14,
+      minutes: 0,
+    });
+
+    /* ── 12. Cloisonnement des données personnelles ── */
+    console.log("\n12. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(
