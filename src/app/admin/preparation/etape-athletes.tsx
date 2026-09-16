@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   C,
   PAYS_OPTIONS,
@@ -985,22 +986,17 @@ function LigneAthlete({
               </div>
 
               <div>
-                <Etiquette>Poids déclaré</Etiquette>
-                <div
-                  title="Poids annoncé à l'inscription. Indicatif : seule la pesée compte."
-                  style={{
-                    padding: "9px 11px",
-                    border: `1px solid ${C.bordure}`,
-                    borderRadius: 8,
-                    background: C.papier2,
-                    color: C.encre3,
-                    fontSize: 15,
-                  }}
-                >
-                  {a.poidsDeclare === null
-                    ? "—"
-                    : `${virgule(a.poidsDeclare)} kg`}
-                </div>
+                <Etiquette>Poids déclaré (kg)</Etiquette>
+                <ChampTexte
+                  valeur={
+                    a.poidsDeclare === null ? "" : virgule(a.poidsDeclare)
+                  }
+                  placeholder="—"
+                  inputMode="decimal"
+                  title="Poids annoncé à l'inscription. Indicatif : seule la pesée compte, et c'est elle qui décide de la catégorie."
+                  enregistrer={(v) => modifierAthlete(a.id, "poidsDeclare", v)}
+                  style={{ background: C.blanc, fontSize: 15 }}
+                />
               </div>
 
               <div>
@@ -1031,6 +1027,30 @@ function LigneAthlete({
                   {a.poidsCorps === null
                     ? "Pas encore pesé"
                     : `${virgule(a.poidsCorps)} kg`}
+                </div>
+                {/* Le poids de la pesée ne se saisit PAS ici : il engage la
+                    responsabilité d'un officiel à la bascule, et il verrouille
+                    la catégorie. Le dire en clair évite de chercher un champ
+                    qui n'existe pas. */}
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: C.encre4,
+                    marginTop: 4,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {a.peseeValidee
+                    ? "Pesée validée — déverrouillez-la à l'étape Pesée pour corriger."
+                    : "Se relève à la bascule, "}
+                  {a.peseeValidee ? null : (
+                    <Link
+                      href="/admin/preparation?etape=4"
+                      style={{ color: C.vert, fontWeight: 600 }}
+                    >
+                      étape Pesée
+                    </Link>
+                  )}
                 </div>
               </div>
 

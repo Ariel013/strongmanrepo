@@ -12,7 +12,7 @@
  * de réclamation, c'est la seule pièce qui dise ce qui a été saisi et quand.
  */
 
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
@@ -270,12 +270,11 @@ export async function construireFile(
     .filter((p) => p.statut !== "termine")
     .map((p) => p.id);
   if (aSupprimer.length > 0) {
-    await db.delete(passage).where(
-      and(
-        eq(passage.epreuveId, epreuveId),
-        sql`${passage.id} = any(${aSupprimer})`,
-      ),
-    );
+    await db
+      .delete(passage)
+      .where(
+        and(eq(passage.epreuveId, epreuveId), inArray(passage.id, aSupprimer)),
+      );
   }
 
   const aCreer = athleteIdsDansLOrdre
@@ -336,7 +335,7 @@ export async function appelerAuPlateau(passageId: string): Promise<Retour> {
     await db
       .update(passage)
       .set({ statut: "avenir" })
-      .where(sql`${passage.id} = any(${aRenvoyer})`);
+      .where(inArray(passage.id, aRenvoyer));
   }
 
   await db
@@ -1009,7 +1008,8 @@ export async function modifierAthlete(
     | "dossard"
     | "note"
     | "tailleCm"
-    | "age",
+    | "age"
+    | "poidsDeclare",
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
@@ -1064,6 +1064,15 @@ export async function modifierAthlete(
       const r = entierFacultatif(valeur, "L'âge", 10, 99);
       if (!r.ok) return { ok: false, erreur: r.erreur };
       v = r.valeur;
+      break;
+    }
+    case "poidsDeclare": {
+      // Le poids ANNONCÉ à l'inscription. Il ne classe rien et ne décide
+      // d'aucune catégorie : seule la pesée du jour J fait foi. Il sert à
+      // repérer l'écart entre ce qui était annoncé et ce qui est constaté.
+      const r = decimalFacultatif(valeur, "Le poids déclaré", 20, 400);
+      if (!r.ok) return { ok: false, erreur: r.erreur };
+      v = r.valeur === null ? null : String(r.valeur);
       break;
     }
     default:
@@ -1187,10 +1196,7 @@ export async function affecterCategorie(
         ? { categorieId: null, horsClassement: false }
         : { categorieId: cible, horsClassement: false };
 
-  await db
-    .update(athlete)
-    .set(valeurs)
-    .where(sql`${athlete.id} = any(${athleteIds})`);
+  await db.update(athlete).set(valeurs).where(inArray(athlete.id, athleteIds));
   await tracer("categorie.affectee", "athlete", null, {
     nombre: athleteIds.length,
     cible,

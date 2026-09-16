@@ -13,7 +13,7 @@
  * épreuves et ses passages.
  */
 
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../src/lib/db";
 import {
   athlete,
@@ -511,8 +511,94 @@ async function principal() {
       minutes: 0,
     });
 
-    /* ── 12. Cloisonnement des données personnelles ── */
-    console.log("\n12. Cloisonnement des données personnelles");
+    /* ── 12. Les actions d'écriture, exécutées pour de vrai ── */
+    console.log("\n12. Actions d'écriture sur la base");
+
+    // Ces trois chemins passent par `inArray`. Ils ont planté en production
+    // parce que les tests ne couvraient que la logique pure : le barème était
+    // vérifié, mais rien n'écrivait jamais en base par les actions.
+    const [catA] = cats;
+
+    await db
+      .update(athlete)
+      .set({ categorieId: catA.id })
+      .where(inArray(athlete.id, [alpha.id, bravo.id]));
+    const apresAffectation = await db
+      .select()
+      .from(athlete)
+      .where(inArray(athlete.id, [alpha.id, bravo.id]));
+    egal(
+      "affecter une catégorie à plusieurs athlètes",
+      apresAffectation.every((a) => a.categorieId === catA.id),
+      true,
+    );
+
+    await db
+      .update(athlete)
+      .set({ categorieId: catA.id })
+      .where(inArray(athlete.id, [charlie.id]));
+    const [seul] = await db
+      .select()
+      .from(athlete)
+      .where(eq(athlete.id, charlie.id));
+    egal(
+      "affecter une catégorie à un seul athlète",
+      seul.categorieId,
+      catA.id,
+    );
+
+    // Rappeler au plateau : le cas qui plantait dès le deuxième appel.
+    const file = await db
+      .select()
+      .from(passage)
+      .where(
+        and(eq(passage.epreuveId, eps[0].id), eq(passage.statut, "avenir")),
+      );
+    verifier("il reste des passages à venir pour l'essai", file.length > 0);
+    if (file.length > 0) {
+      await db
+        .update(passage)
+        .set({ statut: "plateau" })
+        .where(eq(passage.id, file[0].id));
+      // Puis on le renvoie en file, comme le fait `appelerAuPlateau` quand un
+      // autre athlète de la même catégorie est appelé.
+      await db
+        .update(passage)
+        .set({ statut: "avenir" })
+        .where(inArray(passage.id, [file[0].id]));
+      const [remis] = await db
+        .select()
+        .from(passage)
+        .where(eq(passage.id, file[0].id));
+      egal("renvoyer en file un passage déjà au plateau", remis.statut, "avenir");
+    }
+
+    // Reconstruire l'ordre : la suppression en masse des passages non terminés.
+    const aJeter = (
+      await db
+        .select()
+        .from(passage)
+        .where(
+          and(eq(passage.epreuveId, eps[1].id), eq(passage.statut, "termine")),
+        )
+    ).map((p) => p.id);
+    verifier("des passages terminés existent", aJeter.length > 0);
+    if (aJeter.length > 0) {
+      const avant = aJeter.length;
+      await db.delete(passage).where(inArray(passage.id, aJeter));
+      const restant = await db
+        .select()
+        .from(passage)
+        .where(inArray(passage.id, aJeter));
+      egal(
+        `supprimer ${avant} passages d'un coup`,
+        restant.length,
+        0,
+      );
+    }
+
+    /* ── 13. Cloisonnement des données personnelles ── */
+    console.log("\n13. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(
