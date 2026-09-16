@@ -8,7 +8,7 @@ externes.
 > externe, elle est ajoutée ici **dans la même tâche**, avec la date. On ne
 > laisse aucun prérequis implicite.
 
-Dernière mise à jour : 2026-09-16.
+Dernière mise à jour : 2026-09-16 (déploiement vérifié en ligne).
 
 ---
 
@@ -18,18 +18,23 @@ Dernière mise à jour : 2026-09-16.
 |---|---|---|
 | `DATABASE_URL` | Supabase → Connect → **Transaction pooler (port 6543)** | ✅ en place |
 | `SESSION_SECRET` | `openssl rand -base64 48` | ✅ en place |
-| `ADMIN_PASSWORD_HASH` | `pnpm run motdepasse` | 🔴 **malformée — bloque la connexion** |
+| `ADMIN_PASSWORD_HASH` | `pnpm run motdepasse` | ✅ en ligne · 🟠 malformée **en local** |
 | `BLOB_READ_WRITE_TOKEN` | Vercel → Storage → Blob | ⬜ absente — les photos sont refusées proprement |
 
-### 🔴 `ADMIN_PASSWORD_HASH` — bloquant (relevé le 2026-09-16)
+### 🟠 `ADMIN_PASSWORD_HASH` — en local seulement (relevé le 2026-09-16)
 
-`GET /api/sante` répond :
+**En ligne, tout va bien.** `GET /api/sante` sur la production répond
+`{"etat":"en ordre","problemes":[]}` : la connexion à l'administration
+fonctionne. Vérifié le 2026-09-16 sur https://strongman-pied.vercel.app.
+
+C'est le fichier `.env` **du poste de développement** qui porte une valeur
+malformée ; `pnpm run db:verifier` et le `/api/sante` local répondent :
 
 > `ADMIN_PASSWORD_HASH malformée : attendu « pbkdf2$…$…$… ». Avez-vous collé le
 > mot de passe au lieu de son empreinte ?`
 
-Tant que ce n'est pas corrigé, **personne ne peut ouvrir de session** : ni en
-local, ni en ligne. Les écrans publics et le mode d'emploi restent accessibles.
+Conséquence : impossible d'ouvrir une session **en local**. Sans effet sur la
+compétition. À corriger pour pouvoir tester l'administration sur le poste.
 
 Marche à suivre :
 
@@ -37,12 +42,11 @@ Marche à suivre :
 pnpm run motdepasse          # demande le code, affiche l'empreinte
 ```
 
-Reporter l'empreinte **entière** (elle commence par `pbkdf2$`) dans `.env`, puis
-dans les variables d'environnement Vercel — **sans les guillemets** en ligne.
-Vérifier ensuite avec `GET /api/sante`, qui doit répondre `état: ok`.
+Reporter l'empreinte **entière** (elle commence par `pbkdf2$`) dans `.env`.
+Vérifier ensuite avec `GET /api/sante`, qui doit répondre `etat: en ordre`.
 
-> Changer cette valeur déconnecte immédiatement toutes les sessions ouvertes.
-> À ne pas faire en pleine compétition.
+> ⚠️ **Ne pas toucher à la valeur de Vercel** : elle est correcte, et la
+> changer déconnecterait immédiatement toutes les sessions ouvertes.
 
 ### ⬜ `BLOB_READ_WRITE_TOKEN` — photos des athlètes
 

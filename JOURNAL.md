@@ -33,17 +33,23 @@
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **56/56** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
-- **Branche** : `main` alignée avec `origin/main` sur `f47ae10`, poussée le
+- **Branche** : `main` alignée avec `origin/main` sur `975a3bc`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
-- **Déploiement** : ⬜ **non vérifié en ligne.** Vercel a dû redéployer sur ce
-  push ; personne n'a encore constaté le résultat. À faire dès que le mot de
-  passe est régénéré.
+- **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
+  https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
+  les 7 écrans publics servent du vrai contenu, la garde d'accès renvoie 307
+  et 401, les 5 en-têtes de sécurité sont posés, le manifeste PWA et ses
+  icônes répondent.
+- **Vitesse en ligne** : sur connexion réutilisée, `/ecran/classement` répond
+  en 0,32 s et `/api/ecran/etat` en 0,28 s — soit **~40 ms de travail serveur**
+  au-dessus du plancher réseau. Le reste est le trajet Abidjan → `cpt1` →
+  `dub1`, qui ne se règle pas depuis le code.
 
-- **🔴 Prochaine action** : régénérer `ADMIN_PASSWORD_HASH`
-  (`pnpm run motdepasse`), la reporter dans `.env` et dans Vercel.
-  **Critère de fin** : `GET /api/sante` répond `état: ok`, et la connexion
-  s'ouvre sur `/admin`. Tant que ce n'est pas fait, personne ne peut entrer
-  dans l'administration — voir `A-FAIRE.md` § 1.
+- **Prochaine action** : rien ne bloque la compétition. Le plus utile
+  maintenant est de **se connecter à l'administration en ligne et de dérouler
+  une épreuve de bout en bout** — appel, chrono, validation, mur LED — sur du
+  matériel réel. **Critère de fin** : un passage validé apparaît sur
+  `/ecran/classement` en moins de deux secondes.
 
 ---
 
@@ -78,13 +84,30 @@
   production seulement**. Voir « Leçons » ci-dessous.
 - `pnpm run db:push` ne fonctionne pas sur Supabase. `pnpm run db:migrer` a été
   écrit pour appliquer le SQL versionné.
-- `ADMIN_PASSWORD_HASH` est malformée depuis avant cette session.
+- `ADMIN_PASSWORD_HASH` est malformée **dans le `.env` local** — la valeur de
+  Vercel, elle, est correcte. Voir « Leçons ».
 
 **Reste ouvert**
 
-- Aucune vérification en ligne depuis le portage.
 - Les 4 % de textes de l'original non repris sont les trois écarts assumés ;
   aucun n'est un oubli.
+- Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
+  de la table.
+
+### 2026-09-16 (suite) — Saisies fautives, téléphone, et vérification en ligne
+
+**Fait**
+
+- Couche de validation (`src/lib/validation.ts`) : une saisie incomprise est
+  refusée avec un message qui dit ce qui est attendu, au lieu d'être
+  réinterprétée en silence. 26 tests de plus, total 82.
+- Bug du clavier corrigé : le champ de code portait `inputMode="numeric"`,
+  hérité du PIN de l'original — sur téléphone, aucun mot de passe
+  alphanumérique n'était saisissable.
+- Mise en page téléphone : grilles qui débordaient sous 340 px, zoom
+  automatique de Safari, bandeau qui ne se repliait pas.
+- Manifeste PWA, icônes dérivées du logo fédéral, marges d'encoche.
+- Déploiement vérifié en ligne de bout en bout (voir « État actuel »).
 
 ---
 
@@ -108,6 +131,22 @@ besoin du développement (survivre au rechargement des modules) s'ajoute à celu
 de la production (ne pas rouvrir la connexion), il ne s'y substitue pas. Et une
 lenteur se **mesure** avant d'être expliquée : c'est le compteur de pools, pas
 le raisonnement, qui a tranché.
+
+### Un symptôme local ne se reporte pas en production sans l'avoir mesuré (2026-09-16)
+
+**Symptôme.** J'ai annoncé, dans un rapport et dans `A-FAIRE.md`, que
+`ADMIN_PASSWORD_HASH` était malformée et **bloquait toute connexion, en local
+comme en ligne**. C'était faux : la production répondait `etat: en ordre`.
+
+**Cause.** Le diagnostic venait du `/api/sante` **local**, lu sur le `.env` du
+poste. J'ai étendu la conclusion à la production sans l'interroger — alors
+qu'une requête suffisait, et que l'environnement en ligne a ses propres
+variables, précisément pour cette raison.
+
+**Règle.** Un état de production s'affirme après l'avoir interrogé, jamais par
+extrapolation depuis le poste de développement. C'est la même règle que pour
+la lenteur, qui n'a été comprise qu'une fois comptée : **ne jamais affirmer un
+résultat non mesuré**, et nommer l'environnement mesuré dans l'affirmation.
 
 ### Quand un test échoue, vérifier d'abord le test contre la source (2026-09-16)
 
