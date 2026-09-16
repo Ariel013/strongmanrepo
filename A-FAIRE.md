@@ -122,7 +122,7 @@ Settings → Environment Variables dans le `.env` du poste.
 | Limite | Effet | Contournement |
 |---|---|---|
 | **Essais multiples non gérés** — `epreuve.essais` est enregistré et exporté, mais le plateau ne crée qu'un passage par athlète | une épreuve à 3 essais se comporte comme à 1 essai ; rouvrir un passage **remplace** le résultat au lieu d'ajouter une tentative | saisir directement la meilleure tentative, ou noter les essais sur la feuille papier |
-| **Trou entre catégories** — les bornes actuelles (≤ 105,5 / > 105,6) laissent 105,6 kg sans catégorie | un athlète à ce poids ne peut pas être rangé à la pesée | ⬜ **corriger les bornes** : « Moins de 105 kg » → max **105**, « Plus de 105 kg » → min **105** (l'étape Groupes signale désormais le trou) |
+| ~~Trou entre catégories~~ (≤ 105,5 / > 105,6) | ~~105,6 kg sans catégorie~~ | ✅ **corrigé le 2026-09-17** : bornes à 105 / 105, contrôle sans trou ni recouvrement. L'étape Groupes signalerait toute régression. |
 
 ## 5. Décisions en attente
 
