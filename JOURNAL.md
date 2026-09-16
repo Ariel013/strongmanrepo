@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **95/95** ✓. Les routes répondent 200 sur un build de production local.
+  **122/122** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
@@ -175,6 +175,24 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Un test doit être borné à SA compétition, sans exception (2026-09-17)
+
+**Symptôme.** Un test de l'empreinte de fraîcheur échouait par intermittence.
+
+**Cause.** La requête qui cherchait « un passage à venir » n'était filtrée que
+sur le statut : `where(eq(passage.statut, "avenir"))`. Elle attrapait donc le
+premier passage de TOUTE la base — donc celui de la compétition réelle, qu'elle
+faisait passer au plateau puis revenir. Le test comparait ensuite une empreinte
+calculée sur la compétition jetable, qui n'avait évidemment pas bougé.
+
+L'échec a rendu la faute visible ; sans lui, un test aurait continué à toucher
+les données réelles en silence.
+
+**Règle.** Toute requête d'un test porte `competitionId` — ou un identifiant de
+ligne connu. Le filtre n'est pas une optimisation, c'est la frontière entre le
+bac à sable et la compétition. Vérifié depuis par un contrôle sur le fichier de
+tests lui-même.
 
 ### Un symptôme local ne se reporte pas en production sans l'avoir mesuré (2026-09-16)
 

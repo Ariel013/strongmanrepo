@@ -4,6 +4,7 @@
  */
 
 import { C, nomComplet, uniteCourte, virgule } from "@/lib/charte";
+
 import type { PassageVue } from "@/lib/donnees";
 import { Commun, Message } from "../commun";
 
@@ -36,6 +37,20 @@ export function VueVerdict({
       : dernier.resultatStatut === "forfait"
         ? "FORFAIT"
         : `${virgule(dernier.valeur)}${uniteCourte(mesure)}`;
+
+  /**
+   * Le temps de la dernière répétition, sous le chiffre géant.
+   *
+   * Il ne classe pas — le nombre prime toujours — mais c'est lui qui départage
+   * deux athlètes à égalité. L'afficher évite qu'un ex æquo apparent laisse la
+   * salle sans explication du résultat annoncé au micro.
+   */
+  const departage =
+    dernier.resultatStatut === "ok" && dernier.tempsS !== null
+      ? mesure === "nb_temps"
+        ? `dernière répétition validée à ${virgule(dernier.tempsS)} s`
+        : `${virgule(dernier.tempsS)} s`
+      : "";
   const couleur =
     dernier.resultatStatut === "forfait"
       ? C.rouge
@@ -85,6 +100,11 @@ export function VueVerdict({
       >
         {texte}
       </div>
+      {departage ? (
+        <div style={{ fontSize: "3.2vh", color: t.second, marginTop: "0.5vh" }}>
+          {departage}
+        </div>
+      ) : null}
       <div
         style={{ fontSize: "3vh", color: t.second, marginTop: "1vh" }}
       >

@@ -13,7 +13,7 @@
  * épreuves et ses passages.
  */
 
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "../src/lib/db";
 import {
   athlete,
@@ -33,6 +33,7 @@ import {
   tousLesResultats,
 } from "../src/lib/donnees";
 import { classementEpreuve, plusPetitGagne } from "../src/lib/classement";
+import { performanceLisible, tempsImpartiLisible } from "../src/lib/charte";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
 import { calculerRecadrage, poidsLisible } from "../src/lib/image";
 import {
@@ -416,10 +417,20 @@ async function principal() {
 
     // Appeler un athlète au plateau est LE signal qui doit passer en moins de
     // deux secondes sur le mur LED.
+    //
+    // ⚠️ Le filtre par compétition n'est pas facultatif : sans lui, cette
+    // requête attrape le premier passage « à venir » de TOUTE la base — donc
+    // celui de la compétition réelle. Un test ne doit jamais pouvoir toucher
+    // autre chose que sa compétition jetable.
     const [enFile] = await db
       .select()
       .from(passage)
-      .where(eq(passage.statut, "avenir"))
+      .where(
+        and(
+          eq(passage.competitionId, comp.id),
+          eq(passage.statut, "avenir"),
+        ),
+      )
       .limit(1);
     await db
       .update(passage)
@@ -719,8 +730,101 @@ async function principal() {
     egal("poids lisible en mégaoctets", poidsLisible(2_500_000), "2,4 Mo");
     egal("poids lisible en kilo-octets", poidsLisible(320_000), "313 ko");
 
-    /* ── 15. Cloisonnement des données personnelles ── */
-    console.log("\n15. Cloisonnement des données personnelles");
+    /* ── 15. Règle de classement « nombre, puis temps » ── */
+    console.log("\n15. Nombre, puis temps : la règle telle qu'énoncée");
+
+    // Formulation reçue de la fédération le 2026-09-16 :
+    //   1. Le nombre de répétitions prime — 15 passe devant 10, quel que soit
+    //      le temps. Le temps n'a alors pas à être pris en compte.
+    //   2. À égalité SEULEMENT, le temps intermédiaire départage : la dernière
+    //      charge validée le plus tôt l'emporte.
+    const classable = (id: string) => ({
+      id,
+      poidsCorps: 90,
+      dossard: 1,
+      horsClassement: false,
+    });
+    const perf = (valeur: number, temps: number | null) => ({
+      statut: "ok" as const,
+      valeur,
+      temps,
+    });
+
+    const prime = classementEpreuve(
+      [classable("quinze"), classable("dix")],
+      "nb_temps",
+      new Map([
+        // Beaucoup de répétitions, mais la dernière validée très tard.
+        ["quinze", perf(15, 89)],
+        // Moitié moins, mais terminé très tôt.
+        ["dix", perf(10, 4)],
+      ]),
+    );
+    const rangDe = (l: typeof prime, id: string) =>
+      l.find((x) => x.athleteId === id)?.rang;
+    egal("15 répétitions devancent 10, malgré un temps bien pire", rangDe(prime, "quinze"), 1);
+    egal("… et celui qui en a fait 10 suit", rangDe(prime, "dix"), 2);
+
+    const exaequoTemps = classementEpreuve(
+      [classable("rapide"), classable("lent")],
+      "nb_temps",
+      new Map([
+        ["lent", perf(3, 62)],
+        ["rapide", perf(3, 4)],
+      ]),
+    );
+    egal(
+      "à 3 répétitions chacun, la dernière charge la plus rapide l'emporte",
+      rangDe(exaequoTemps, "rapide"),
+      1,
+    );
+    egal("… et le plus lent suit", rangDe(exaequoTemps, "lent"), 2);
+
+    // Un temps manquant ne doit jamais devancer un temps relevé.
+    const sansTemps = classementEpreuve(
+      [classable("chronometre"), classable("inconnu")],
+      "nb_temps",
+      new Map([
+        ["inconnu", perf(3, null)],
+        ["chronometre", perf(3, 30)],
+      ]),
+    );
+    egal(
+      "à égalité, un temps relevé devance un temps manquant",
+      rangDe(sansTemps, "chronometre"),
+      1,
+    );
+
+    // Les trois variables doivent être lisibles pour justifier le classement.
+    egal(
+      "la performance s'écrit avec le temps de départage",
+      performanceLisible("nb_temps", 3, 4),
+      "3 rép. · dernière à 4 s",
+    );
+    egal(
+      "sans temps relevé, on n'invente rien",
+      performanceLisible("nb_temps", 3, null),
+      "3 rép.",
+    );
+    egal(
+      "le temps imparti s'annonce en tête de tableau",
+      tempsImpartiLisible(90),
+      "90 s imparties",
+    );
+    egal(
+      "une épreuve de tenue n'a pas de temps imparti",
+      tempsImpartiLisible(null),
+      "temps illimité",
+    );
+    egal("une charge s'écrit en kilos", performanceLisible("poids", 120, null), "120 kg");
+    egal(
+      "une distance garde son temps",
+      performanceLisible("distance", 18, 32.1),
+      "18 m · 32,1 s",
+    );
+
+    /* ── 16. Cloisonnement des données personnelles ── */
+    console.log("\n16. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(

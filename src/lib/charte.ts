@@ -245,6 +245,57 @@ export const dossardTexte = (d: number | null | undefined): string =>
 export const fondImage = (url: string | null | undefined): string =>
   url ? `url("${url}")` : "none";
 
+/**
+ * La performance, écrite de façon à JUSTIFIER le classement.
+ *
+ * Le règlement d'une épreuve « nombre, puis temps » repose sur trois
+ * variables : le nombre de répétitions validées, le temps imparti, et
+ * l'instant exact de la dernière répétition valide. Le nombre prime toujours —
+ * quinze répétitions passent devant dix, quel que soit le temps — et l'instant
+ * ne sert qu'à départager une égalité.
+ *
+ * Le tableau n'affichait que le nombre. Deux athlètes à trois répétitions y
+ * apparaissaient donc dans un ordre que rien ne venait expliquer, et un juge
+ * sommé de justifier un départage n'avait rien à montrer. On écrit les deux.
+ */
+export function performanceLisible(
+  mesure: string | null | undefined,
+  valeur: number | null,
+  temps: number | null,
+): string {
+  if (valeur === null) return "—";
+  const v = virgule(valeur);
+
+  switch (mesure) {
+    case "nb_temps":
+      return temps === null
+        ? `${v} rép.`
+        : `${v} rép. · dernière à ${virgule(temps)} s`;
+    case "distance":
+    case "medley":
+      return temps === null ? `${v} m` : `${v} m · ${virgule(temps)} s`;
+    case "poids":
+      return `${v} kg`;
+    case "duree":
+    case "chrono":
+      return `${v} s`;
+    default:
+      return temps === null ? v : `${v} · ${virgule(temps)} s`;
+  }
+}
+
+/**
+ * Le temps imparti, tel qu'il s'annonce en tête de tableau.
+ *
+ * C'est la troisième variable du règlement, et elle est la même pour tout le
+ * monde : elle se dit une fois en en-tête plutôt que de se répéter sur chaque
+ * ligne.
+ */
+export function tempsImpartiLisible(secondes: number | null): string {
+  if (secondes === null) return "temps illimité";
+  return `${secondes} s imparties`;
+}
+
 /* ── Thème des écrans publics ─────────────────────────────────────────── */
 
 export type ThemeEcran = "nuit" | "jour";

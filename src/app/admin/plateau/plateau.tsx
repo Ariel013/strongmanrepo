@@ -12,7 +12,8 @@ import {
   mmss,
   nomComplet,
   pays,
-  uniteCourte,
+  performanceLisible,
+  tempsImpartiLisible,
   uniteValeur,
   virgule,
 } from "@/lib/charte";
@@ -1506,9 +1507,7 @@ export function Plateau({
                 ? "ZÉRO"
                 : p.resultatStatut === "forfait"
                   ? "FORFAIT"
-                  : `${virgule(p.valeur)}${uniteCourte(epreuve.mesure)}${
-                      p.tempsS !== null ? ` · ${virgule(p.tempsS)} s` : ""
-                    }`;
+                  : performanceLisible(epreuve.mesure, p.valeur, p.tempsS);
             return (
               <div
                 key={p.id}
@@ -1761,7 +1760,8 @@ export function Plateau({
             }}
           >
             <EnteteColonne>
-              {epreuve.nom} · {cat.nom}
+              {epreuve.nom} · {cat.nom} ·{" "}
+              {tempsImpartiLisible(epreuve.tempsLimiteS)}
             </EnteteColonne>
             {cat.classementEpreuve.map((l) => (
               <div
@@ -1798,8 +1798,7 @@ export function Plateau({
                 <div
                   style={{ fontSize: 14, color: C.encre3, flex: "none" }}
                 >
-                  {virgule(l.valeur)}
-                  {uniteCourte(epreuve.mesure)}
+                  {performanceLisible(epreuve.mesure, l.valeur, l.temps)}
                 </div>
                 <div
                   style={{

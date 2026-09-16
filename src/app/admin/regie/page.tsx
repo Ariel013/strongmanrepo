@@ -1,4 +1,9 @@
-import { C, couleurCategorie, uniteCourte, virgule } from "@/lib/charte";
+import {
+  C,
+  couleurCategorie,
+  performanceLisible,
+  tempsImpartiLisible,
+} from "@/lib/charte";
 import { FilAriane, TitreSection } from "@/components/chrome";
 import { Encart } from "@/components/ui";
 import {
@@ -63,14 +68,11 @@ export default async function PageRegie() {
             return {
               rang: l.rang!,
               nom: a ? `${a.nom.toUpperCase()} ${a.prenoms}`.trim() : "—",
-              perf:
-                l.resultat === null
-                  ? "—"
-                  : `${virgule(l.resultat.valeur)}${uniteCourte(epreuveCourante.mesure)}${
-                      l.resultat.temps !== null
-                        ? ` · ${virgule(l.resultat.temps)} s`
-                        : ""
-                    }`,
+              perf: performanceLisible(
+                epreuveCourante.mesure,
+                l.resultat?.valeur ?? null,
+                l.resultat?.temps ?? null,
+              ),
               points: l.points,
             };
           }),
@@ -95,7 +97,11 @@ export default async function PageRegie() {
           nom: s.nom,
           contenu: s.contenu,
         }))}
-        nomEpreuveCourante={epreuveCourante?.nom ?? "—"}
+        nomEpreuveCourante={
+          epreuveCourante
+            ? `${epreuveCourante.nom} · ${tempsImpartiLisible(epreuveCourante.tempsLimiteS)}`
+            : "—"
+        }
         parCategorie={parCategorie}
       />
 
