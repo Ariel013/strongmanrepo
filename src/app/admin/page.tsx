@@ -1,155 +1,349 @@
 import Link from "next/link";
+import { C } from "@/lib/charte";
+import { FilAriane } from "@/components/chrome";
+import { Encart, styleBouton } from "@/components/ui";
 import {
   athletesDe,
-  categoriesDe,
   competitionCourante,
   epreuvesDe,
 } from "@/lib/donnees";
+import { CartesIdentite } from "./identite";
 
-export default async function PageAdmin() {
+/**
+ * L'accueil du championnat — la vue « estAccueil » du logiciel d'origine.
+ *
+ * Trois cartes de situation en haut, trois portes en dessous : préparer,
+ * lancer, diffuser. C'est l'écran qu'un officiel voit vingt fois dans la
+ * journée ; il est repris à l'identique, y compris les infobulles.
+ */
+
+/** « samedi 19 septembre 2026 » → « Samedi 19 Septembre 2026 ». */
+const capitaliser = (s: string): string =>
+  s.replace(/(^|\s)([a-zà-ÿ])/g, (_, e, l) => e + l.toUpperCase());
+
+const dateTexte = (d: Date | null): string =>
+  d
+    ? capitaliser(
+        d.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+      )
+    : "";
+
+const heureTexte = (d: Date | null): string =>
+  d
+    ? d
+        .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
+        .replace(":", "h")
+    : "";
+
+export default async function PageAccueil() {
   const comp = await competitionCourante();
+
   if (!comp) {
     return (
-      <p className="rounded-lg border border-bordure bg-white p-6 text-encre-2">
-        Aucune compétition installée. Lancez{" "}
-        <code className="rounded bg-papier-2 px-1.5 py-0.5">pnpm run db:seed</code>{" "}
-        pour créer celle du 19 septembre 2026.
-      </p>
+      <>
+        <FilAriane>Accueil</FilAriane>
+        <Encart ton="ambre">
+          Aucune compétition installée. Lancez <code>pnpm run db:seed</code> pour
+          créer celle du 19 septembre 2026, puis rechargez cette page.
+        </Encart>
+      </>
     );
   }
 
-  const [athletes, epreuves, categories] = await Promise.all([
+  const [athletes, epreuves] = await Promise.all([
     athletesDe(comp.id),
     epreuvesDe(comp.id),
-    categoriesDe(comp.id),
   ]);
-
   const peses = athletes.filter((a) => a.peseeValidee).length;
-  const classes = athletes.filter(
-    (a) => !a.horsClassement && a.categorieId,
-  ).length;
-  const sansCategorie = athletes.filter((a) => !a.categorieId).length;
-
-  /**
-   * Chaque ligne dit ce qui manque et emmène à l'écran qui le corrige. Un
-   * état d'avancement qui ne mène nulle part oblige à chercher soi-même.
-   */
-  const controles = [
-    {
-      fait: athletes.length >= 2,
-      titre: "Athlètes engagés",
-      detail: `${athletes.length} inscrit(s)`,
-      lien: "/admin/athletes",
-    },
-    {
-      fait: athletes.length > 0 && peses === athletes.length,
-      titre: "Pesées validées",
-      detail: `${peses} / ${athletes.length}`,
-      lien: "/admin/athletes",
-    },
-    {
-      fait: athletes.length > 0 && sansCategorie === 0,
-      titre: "Catégories affectées",
-      detail:
-        sansCategorie === 0
-          ? `${classes} athlète(s) classé(s)`
-          : `${sansCategorie} sans catégorie`,
-      lien: "/admin/athletes",
-    },
-    {
-      fait: epreuves.length > 0,
-      titre: "Épreuves au programme",
-      detail: `${epreuves.length} épreuve(s)`,
-      lien: "/admin/plateau",
-    },
-  ];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-titre text-2xl font-bold tracking-tight uppercase">
-          {comp.nom}
-        </h1>
-        <p className="mt-1 text-sm text-encre-3">
-          {comp.lieu}
-          {comp.adresse ? ` — ${comp.adresse}` : ""}
-        </p>
+    <>
+      <FilAriane>Accueil</FilAriane>
+
+      {/* ── Situation ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+          gap: 14,
+          marginBottom: 30,
+        }}
+      >
+        <CartesIdentite
+          competitionId={comp.id}
+          initial={{
+            date: dateTexte(comp.debutLe),
+            heure: heureTexte(comp.debutLe),
+            fin: heureTexte(comp.finLe),
+            lieu: comp.lieu ?? "",
+            adresse: comp.adresse ?? "",
+          }}
+        />
+
+        <div
+          style={{
+            background: C.blanc,
+            border: `1px solid ${C.bordure}`,
+            borderRadius: 14,
+            padding: "18px 20px",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: ".12em",
+              textTransform: "uppercase",
+              color: C.encre4,
+              marginBottom: 6,
+            }}
+          >
+            Engagés
+          </div>
+          <div style={{ fontSize: 19, fontWeight: 600 }}>
+            {athletes.length} athlètes · {epreuves.length} épreuves
+          </div>
+          <div style={{ fontSize: 14, color: C.encre3, marginTop: 2 }}>
+            {peses} pesées validées
+          </div>
+        </div>
       </div>
 
-      <section>
-        <h2 className="mb-3 font-titre text-lg font-semibold uppercase">
-          Avant de commencer
-        </h2>
-        <ul className="divide-y divide-bordure overflow-hidden rounded-xl border border-bordure bg-white">
-          {controles.map((c) => (
-            <li key={c.titre}>
-              <Link
-                href={c.lien}
-                className="flex items-center gap-3 px-4 py-3 transition hover:bg-papier-2"
-              >
-                <span
-                  aria-hidden
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
-                    c.fait ? "bg-vert" : "bg-orange"
-                  }`}
-                >
-                  {c.fait ? "✓" : "!"}
-                </span>
-                <span className="font-medium">{c.titre}</span>
-                <span className="ml-auto text-sm text-encre-3">{c.detail}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* ── Les trois portes ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+          gap: 16,
+        }}
+      >
+        <CartePorte
+          pastille="Étape par étape"
+          pastilleFond="rgba(236,109,35,.12)"
+          pastilleEncre={C.orangeFonce}
+          titre="Préparer la compétition"
+          texte="Épreuves, groupes de poids, officiels, athlètes, pesée et programme. Enregistrez à tout moment, revenez plus tard : un récapitulatif indique ce qui manque."
+        >
+          <Link
+            href="/admin/preparation"
+            title="Ouvre le parcours guidé en 6 étapes : épreuves, groupes, officiels, athlètes, pesée, programme"
+            style={styleBouton("vert", {
+              padding: "13px 22px",
+              borderRadius: 11,
+              fontSize: 15,
+            })}
+          >
+            {epreuves.length > 0 && athletes.length > 0
+              ? "Reprendre la préparation"
+              : "Commencer la préparation"}
+          </Link>
+          <Link
+            href="/admin/recapitulatif"
+            title="Liste ce qui est prêt et ce qui manque avant le jour J"
+            style={styleBouton("creme", {
+              padding: "13px 20px",
+              borderRadius: 11,
+              fontSize: 15,
+              fontWeight: 500,
+            })}
+          >
+            Récapitulatif
+          </Link>
+        </CartePorte>
 
-      <section>
-        <h2 className="mb-3 font-titre text-lg font-semibold uppercase">
-          Écrans du public
-        </h2>
-        <p className="mb-3 text-sm text-encre-2">
-          Ouvrez ces adresses en plein écran sur le mur LED. Elles se mettent à
-          jour toutes seules et ne demandent aucun code.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {[
-            ["plateau", "Athlète au plateau"],
-            ["ordre", "Ordre de passage"],
-            ["classement", "Classement"],
-            ["podium", "Podium"],
-            ["attente", "Écran d'attente"],
-          ].map(([cle, libelle]) => (
-            <a
-              key={cle}
-              href={`/ecran/${cle}`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg border border-bordure-2 bg-white px-3 py-2 text-sm transition hover:border-encre"
-            >
-              {libelle}
-            </a>
-          ))}
-        </div>
-      </section>
+        <CartePorte
+          pastille="Jour J"
+          pastilleFond="rgba(11,146,55,.12)"
+          pastilleEncre={C.vertFonce}
+          titre="Lancer / reprendre"
+          texte="Plateau, athlète au plateau, chronomètre deux appuis, saisie des performances par la table, régie et mur LED, impressions et procès-verbal."
+        >
+          <Link
+            href="/admin/plateau"
+            title="Ouvre le plateau : ordre de passage, chronomètre, saisie et validation des performances"
+            style={styleBouton("noir", {
+              padding: "13px 22px",
+              borderRadius: 11,
+              fontSize: 15,
+            })}
+          >
+            Ouvrir le plateau
+          </Link>
+        </CartePorte>
 
-      <section>
-        <h2 className="mb-3 font-titre text-lg font-semibold uppercase">
-          Catégories
-        </h2>
-        <ul className="flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <li
-              key={c.id}
-              className="rounded-lg border border-bordure bg-white px-3 py-2 text-sm"
-            >
-              <span className="font-medium">{c.nom}</span>
-              <span className="ml-2 text-encre-3">
-                {athletes.filter((a) => a.categorieId === c.id).length} athlète(s)
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+        <CartePorte
+          sombre
+          pastille="Écrans géants"
+          pastilleFond="rgba(236,109,35,.22)"
+          pastilleEncre={C.orangeClair}
+          titre="Régie de diffusion"
+          texte="Déclarez vos sorties vidéo, choisissez ce que chaque mur LED affiche, réglez la lisibilité avec la mire, puis ouvrez les fenêtres à glisser sur les écrans."
+        >
+          <Link
+            href="/admin/regie"
+            title="Paramétrer la régie : sorties, contenus, jour/nuit"
+            style={styleBouton("vert", {
+              padding: "13px 22px",
+              borderRadius: 11,
+              fontSize: 15,
+              background: C.orange,
+            })}
+          >
+            Paramétrer la régie
+          </Link>
+          <a
+            href="/ecran/mire"
+            target="_blank"
+            rel="noreferrer"
+            title="Ouvre la mire de lisibilité pour régler le mur LED"
+            style={{
+              padding: "13px 20px",
+              borderRadius: 11,
+              border: "1px solid rgba(252,250,246,.28)",
+              background: "transparent",
+              color: C.papier,
+              fontSize: 15,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Mire de réglage
+          </a>
+        </CartePorte>
+      </div>
+
+      {/* ── Exports ── */}
+      <div
+        style={{
+          marginTop: 28,
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        <a
+          href="/api/admin/export?format=athletes"
+          title="Liste des athlètes en CSV, à ouvrir dans Excel"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Exporter les athlètes (Excel)
+        </a>
+        <a
+          href="/api/admin/export"
+          title="Sauvegarde complète de la compétition : athlètes, catégories, épreuves, résultats et classements"
+          style={styleBouton("vert", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+            background: C.vertFonce,
+          })}
+        >
+          Exporter la compétition
+        </a>
+        <a
+          href="/api/admin/export?format=classements"
+          title="Classements par groupe et par épreuve en CSV"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Exporter les classements (Excel)
+        </a>
+      </div>
+    </>
+  );
+}
+
+/** Une des trois grandes cartes d'action. */
+function CartePorte({
+  pastille,
+  pastilleFond,
+  pastilleEncre,
+  titre,
+  texte,
+  sombre = false,
+  children,
+}: {
+  pastille: string;
+  pastilleFond: string;
+  pastilleEncre: string;
+  titre: string;
+  texte: string;
+  sombre?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        background: sombre ? C.encre : C.blanc,
+        border: `1px solid ${sombre ? C.encre : C.bordure}`,
+        borderRadius: 16,
+        padding: 26,
+        display: "flex",
+        flexDirection: "column",
+        color: sombre ? C.papier : undefined,
+      }}
+    >
+      <div
+        style={{
+          display: "inline-flex",
+          alignSelf: "flex-start",
+          padding: "5px 11px",
+          borderRadius: 999,
+          background: pastilleFond,
+          color: pastilleEncre,
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: ".12em",
+          textTransform: "uppercase",
+          marginBottom: 14,
+        }}
+      >
+        {pastille}
+      </div>
+      <div
+        style={{
+          fontSize: 24,
+          fontWeight: 700,
+          letterSpacing: "-.01em",
+          marginBottom: 8,
+        }}
+      >
+        {titre}
+      </div>
+      <div
+        style={{
+          fontSize: 15,
+          lineHeight: 1.55,
+          color: sombre ? "#C9C2B6" : C.encre2,
+          marginBottom: 20,
+          textWrap: "pretty",
+        }}
+      >
+        {texte}
+      </div>
+      <div
+        style={{
+          marginTop: "auto",
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

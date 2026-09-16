@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 /**
- * Aucune police distante n'est chargée : `next/font` télécharge les fichiers
- * au moment du build, et un build qui dépend du réseau échoue là où le réseau
- * est mauvais. Les polices système suffisent, et elles s'affichent
- * instantanément — ce qui compte sur un mur LED.
+ * Aucune police distante n'est chargée.
+ *
+ * Clash Display — la typographie du logiciel d'origine — est servie depuis
+ * `public/polices`, en woff2, avec les polices système en repli. Un build ou
+ * un jour J sans réseau doit afficher exactement la même chose : c'est tout
+ * l'intérêt d'avoir extrait les fichiers du poste autonome plutôt que de les
+ * appeler chez Google Fonts.
  */
 
 export const metadata: Metadata = {
@@ -16,8 +19,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className="h-full antialiased">
-      <body className="flex min-h-full flex-col">{children}</body>
+    <html lang="fr">
+      <body>{children}</body>
     </html>
   );
 }

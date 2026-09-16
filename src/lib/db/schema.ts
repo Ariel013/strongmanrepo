@@ -50,6 +50,37 @@ export const competition = pgTable("competition", {
   suspendue: boolean("suspendue").notNull().default(false),
   motifSuspension: text("motif_suspension"),
 
+  /**
+   * Bandeau partenaires, défilant sur l'écran d'attente : une simple liste de
+   * noms séparés par des virgules, comme sur le poste d'origine. Rien
+   * n'impose de la structurer tant que rien n'est calculé dessus.
+   */
+  partenaires: text("partenaires"),
+
+  /** Réglage du mur LED : `nuit` (défaut, extérieur) ou `jour`. */
+  themeEcran: text("theme_ecran").notNull().default("nuit"),
+
+  /**
+   * État du chronomètre, partagé avec le mur LED.
+   *
+   * Le poste autonome gardait le chrono dans le navigateur, et ses fenêtres
+   * écrans le lisaient parce qu'elles tournaient sur la même machine. Ici les
+   * écrans sont sur d'autres postes : le chrono doit donc vivre en base, ou
+   * le mur LED afficherait un compteur figé pendant que l'athlète travaille.
+   *
+   * Seul l'INSTANT DE DÉPART est enregistré, jamais le temps écoulé : chaque
+   * écran calcule l'affichage depuis `chronoDebutLe`, et reste juste au
+   * dixième même s'il n'est rafraîchi que toutes les deux secondes.
+   *
+   * `chronoPhase` : pret | encours | arrete
+   */
+  chronoPhase: text("chrono_phase").notNull().default("pret"),
+  chronoDebutLe: timestamp("chrono_debut_le", { withTimezone: true }),
+  /** Décompte préparé, en secondes. 0 = chronomètre montant. */
+  chronoDureeS: integer("chrono_duree_s").notNull().default(0),
+  /** Temps figé à l'arrêt, en secondes — ce que le mur LED doit garder. */
+  chronoArretS: real("chrono_arret_s"),
+
   creeLe: timestamp("cree_le", { withTimezone: true }).notNull().defaultNow(),
   majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -101,6 +132,33 @@ export const epreuve = pgTable(
     critere: text("critere"),
     materiel: text("materiel"),
     equipements: text("equipements"),
+
+    /**
+     * Ordre de passage : `groupe` (une catégorie après l'autre) ou `melange`
+     * (tout le monde dans un seul ordre). Les classements restent séparés
+     * par catégorie dans les deux cas — c'est le passage qui change, pas le
+     * barème.
+     */
+    passage: text("passage").notNull().default("groupe"),
+
+    /**
+     * Épreuve à niveaux : chaque athlète déclare le sien (hauteur de prise,
+     * cran, palier). `niveauxOptions` porte les intitulés proposés, séparés
+     * par des virgules, tels qu'ils sont saisis par la table.
+     */
+    niveau: boolean("niveau").notNull().default(false),
+    niveauxOptions: text("niveaux_options"),
+
+    /** Le juge compte les répétitions au bouton « Tour » pendant le passage. */
+    tours: boolean("tours").notNull().default(false),
+
+    /* ── Medley : parcours à ateliers enchaînés ── */
+    /** Un atelier par ligne, dans l'ordre de passage. */
+    ateliers: text("ateliers"),
+    distanceTotale: text("distance_totale"),
+    /** Ce qui est retenu si l'athlète n'achève pas le parcours. */
+    regleFin: text("regle_fin"),
+
     /** Ordre au programme : fixe aussi l'ordre de passage (cf. classement.ts). */
     position: integer("position").notNull().default(0),
   },
@@ -147,6 +205,22 @@ export const athlete = pgTable(
     tailleCm: integer("taille_cm"),
     age: integer("age"),
     note: text("note"),
+
+    /**
+     * Niveau déclaré par épreuve, en JSON `{ epreuveId: "Niveau 2" }`.
+     *
+     * Une table dédiée serait plus orthodoxe, mais rien n'est jamais calculé
+     * ni classé là-dessus : le niveau ne sert qu'à être affiché sur la fiche,
+     * dans la file d'attente et sur le mur LED. Une colonne JSON dit la
+     * vérité sur cet usage, une table ferait croire à un lien exploité.
+     */
+    niveaux: text("niveaux"),
+
+    /**
+     * Fiche importée dont une donnée a été devinée : elle est marquée « À
+     * vérifier » tant qu'un officiel ne l'a pas relue.
+     */
+    aVerifier: boolean("a_verifier").notNull().default(false),
 
     creeLe: timestamp("cree_le", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -237,6 +311,94 @@ export const officiel = pgTable(
   (t) => [index("officiel_competition_idx").on(t.competitionId)],
 );
 
+/* ── Programme de la journée ──────────────────────────────────────────── */
+
+/**
+ * Les moments de la journée, tels qu'ils s'affichent sur l'écran d'attente et
+ * sur la fiche du speaker. L'heure reste du texte libre (« 14h00 ») : elle est
+ * lue par un humain, jamais comparée ni calculée.
+ */
+export const programme = pgTable(
+  "programme",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    competitionId: uuid("competition_id")
+      .notNull()
+      .references(() => competition.id, { onDelete: "cascade" }),
+    heure: text("heure").notNull().default(""),
+    texte: text("texte").notNull().default(""),
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [index("programme_competition_idx").on(t.competitionId)],
+);
+
+/* ── Récompenses ──────────────────────────────────────────────────────── */
+
+/**
+ * Titre, prime et lot de chaque place. Affiché sur l'écran Podium et repris
+ * au procès-verbal. Modifiable pendant la compétition : une dotation annoncée
+ * la veille change parfois le matin même.
+ */
+export const recompense = pgTable(
+  "recompense",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    competitionId: uuid("competition_id")
+      .notNull()
+      .references(() => competition.id, { onDelete: "cascade" }),
+    /** 1 = première place. Fixe aussi la couleur affichée (or, argent, bronze). */
+    rang: integer("rang").notNull().default(1),
+    titre: text("titre").notNull().default(""),
+    prime: text("prime").notNull().default(""),
+    lot: text("lot").notNull().default(""),
+  },
+  (t) => [index("recompense_competition_idx").on(t.competitionId)],
+);
+
+/* ── Régie : sorties vidéo ────────────────────────────────────────────── */
+
+/**
+ * Une ligne par écran branché. `contenu` désigne la page publique diffusée :
+ * attente | plateau | ordre | verdict | classement | podium | mire.
+ *
+ * La régie ne pilote PAS les écrans à distance : chaque écran ouvre son
+ * adresse et s'y tient. Cette table dit seulement ce que la régie a décidé
+ * d'afficher, pour que la liste des sorties survive à un redémarrage du poste.
+ */
+export const sortie = pgTable(
+  "sortie",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    competitionId: uuid("competition_id")
+      .notNull()
+      .references(() => competition.id, { onDelete: "cascade" }),
+    nom: text("nom").notNull().default("Nouvelle sortie"),
+    contenu: text("contenu").notNull().default("attente"),
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [index("sortie_competition_idx").on(t.competitionId)],
+);
+
+/* ── Logos des clubs ──────────────────────────────────────────────────── */
+
+/**
+ * Un logo par club engagé, rapproché par le nom du club tel qu'il est saisi
+ * sur les fiches. Le club n'a pas de table à lui : il n'est qu'un libellé sur
+ * la fiche de l'athlète, et en faire une entité obligerait à le créer avant
+ * de pouvoir inscrire quelqu'un.
+ */
+export const clubLogo = pgTable(
+  "club_logo",
+  {
+    competitionId: uuid("competition_id")
+      .notNull()
+      .references(() => competition.id, { onDelete: "cascade" }),
+    club: text("club").notNull(),
+    logoUrl: text("logo_url"),
+  },
+  (t) => [primaryKey({ columns: [t.competitionId, t.club] })],
+);
+
 /* ── Journal d'audit ──────────────────────────────────────────────────── */
 
 /**
@@ -272,3 +434,7 @@ export type Epreuve = typeof epreuve.$inferSelect;
 export type Athlete = typeof athlete.$inferSelect;
 export type Passage = typeof passage.$inferSelect;
 export type Officiel = typeof officiel.$inferSelect;
+export type Programme = typeof programme.$inferSelect;
+export type Recompense = typeof recompense.$inferSelect;
+export type Sortie = typeof sortie.$inferSelect;
+export type ClubLogo = typeof clubLogo.$inferSelect;

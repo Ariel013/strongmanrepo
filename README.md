@@ -13,9 +13,21 @@ L'application est en trois parties, aux accès distincts :
 
 | Chemin | Qui | Accès |
 |---|---|---|
-| `/admin` | Table de marque | code d'accès |
+| `/admin` | Accueil du championnat | code d'accès |
+| `/admin/preparation?etape=0…5` | Épreuves, groupes, officiels, athlètes, pesée, programme | code d'accès |
+| `/admin/recapitulatif` | Ce qui est prêt, ce qui manque | code d'accès |
+| `/admin/plateau` | Jour J : appel, chronomètre, saisie, validation | code d'accès |
+| `/admin/regie` | Sorties vidéo et contenu des écrans géants | code d'accès |
 | `/ecran/…` | Mur LED, public | libre, lecture seule |
 | `/aide` | Officiels en formation | libre |
+
+Sept écrans publics : `plateau`, `ordre`, `verdict`, `classement`, `podium`,
+`attente`, `mire`. Chacun s'ouvre en plein écran sur sa sortie vidéo ; la régie
+dit seulement lequel va où.
+
+L'interface est le portage fidèle du poste autonome d'origine
+(`docs/reference/`) : la charte, les compositions et les libellés sont repris
+valeur par valeur, et `docs/cartographie-ui.md` sert de pièce de comparaison.
 
 Les écrans publics se rafraîchissent seuls toutes les deux secondes. Ils ne
 lisent jamais les coordonnées personnelles : celles-ci vivent dans une table
@@ -47,8 +59,8 @@ Le détail complet des règles est dans `docs/regles-metier.md`.
 pnpm install
 cp .env.example .env     # puis renseigner les valeurs
 pnpm run motdepasse      # génère ADMIN_PASSWORD_HASH
-pnpm exec drizzle-kit migrate
-pnpm run db:seed         # épreuves officielles et catégories
+pnpm run db:migrer       # applique les migrations de drizzle/
+pnpm run db:seed         # épreuves, catégories, programme, récompenses
 pnpm run dev
 ```
 
@@ -68,7 +80,11 @@ guillemets** qui les entourent dans le fichier `.env`.
 
 ```bash
 pnpm run db:verifier     # la base répond-elle ?
+pnpm run test            # le barème et l'ordre de passage sont-ils justes ?
 ```
+
+`pnpm run test` travaille sur une compétition jetable, créée puis supprimée :
+il ne touche jamais la compétition réelle.
 
 En ligne, `GET /api/sante` nomme ce qui manque — variables absentes, base
 injoignable, erreurs de copie courantes. Elle n'expose aucune valeur de secret.
@@ -82,8 +98,10 @@ injoignable, erreurs de copie courantes. Elle n'expose aucune valeur de secret.
 | `pnpm run motdepasse` | Génère l'empreinte du code d'accès |
 | `pnpm run db:verifier` | Teste la connexion à la base |
 | `pnpm run db:motdepasse` | Met à jour le mot de passe dans `DATABASE_URL` |
-| `pnpm run db:seed` | Installe épreuves et catégories |
+| `pnpm run db:seed` | Installe la compétition ; relancé, complète seulement ce qui manque |
 | `pnpm run db:generate` | Génère une migration après modification du schéma |
+| `pnpm run db:migrer` | Applique les migrations de `drizzle/` (`db:push` échoue sur Supabase) |
+| `pnpm run test` | Vérifie le barème, l'ordre de passage et la lecture des listes |
 
 ## Sécurité
 

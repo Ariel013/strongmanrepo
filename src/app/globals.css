@@ -1,7 +1,13 @@
 @import "tailwindcss";
 
 /**
- * Charte FIBDA — reprise du logiciel d'arbitrage d'origine.
+ * Charte FIBDA — reprise à l'identique du logiciel d'arbitrage d'origine
+ * (« Arbitrage Strongman 2026 big fred - autonome.html »).
+ *
+ * Les écrans portés reprennent les styles en ligne du fichier d'origine : ils
+ * ne passent pas par Tailwind. Ce qui suit est donc uniquement la base
+ * commune — polices, corps de page, liens — telle qu'elle était écrite dans
+ * l'en-tête du fichier d'origine.
  *
  * Deux univers distincts, à ne pas mélanger :
  *  · l'administration, sur papier crème, lisible en plein jour sur un
@@ -12,6 +18,47 @@
  * même si l'ordinateur est réglé en sombre, sinon les officiels changent de
  * repères d'un poste à l'autre.
  */
+
+/* ── Clash Display ──────────────────────────────────────────────────────
+ * Les cinq graisses sont extraites du fichier d'origine et servies depuis
+ * `public/polices`. Aucun appel réseau : un build ou un jour J sans réseau
+ * doit afficher exactement la même typographie.
+ */
+@font-face {
+  font-family: "Clash Display";
+  src: url("/polices/clash-display-300.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/polices/clash-display-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/polices/clash-display-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/polices/clash-display-600.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Clash Display";
+  src: url("/polices/clash-display-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
 
 @theme {
   /* ── Fonds et encres (administration) ── */
@@ -32,8 +79,8 @@
   --color-rouge-fonce: #a6371c;
 
   /* ── Écrans publics (mur LED) ── */
-  --color-nuit: #0a0908;
-  --color-nuit-2: #17150f;
+  --color-nuit: #0a0d0b;
+  --color-nuit-2: #141a16;
   --color-nuit-encre: #fcfaf6;
 
   /* ── Catégories : une couleur par catégorie, dans l'ordre ── */
@@ -46,32 +93,48 @@
   --color-cat-7: #0f8b8d;
 
   /* ── Podium ── */
-  --color-or: #d4a017;
-  --color-argent: #9ba1a6;
-  --color-bronze: #a9713b;
+  --color-or: #d9a441;
+  --color-argent: #9aa0a6;
+  --color-bronze: #b4692f;
 
-  --font-titre: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-titre: "Clash Display", "Barlow Condensed", system-ui, sans-serif;
+  --font-sans: "Clash Display", "Barlow Condensed", system-ui, sans-serif;
 }
 
+/* ── Base reprise mot pour mot du fichier d'origine ── */
 body {
-  background: var(--color-papier);
-  color: var(--color-encre);
-  font-family: var(--font-sans);
-  /* Les chiffres d'un chrono ou d'un classement ne doivent pas sautiller
-     quand ils changent : chasse fixe sur tous les nombres. */
-  font-variant-numeric: tabular-nums;
+  margin: 0;
+  background: #fcfaf6;
+  color: #141210;
+  font-family: "Clash Display", "Barlow Condensed", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-
-/** Clignotement des dernières secondes du chronomètre. */
+* {
+  box-sizing: border-box;
+}
+a {
+  color: #0b9237;
+  text-decoration: none;
+}
+a:hover {
+  color: #03562a;
+  text-decoration: underline;
+}
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
 @keyframes clignote {
-  50% {
-    opacity: 0.25;
+  0%,
+  49% {
+    opacity: 1;
   }
-}
-
-.clignote {
-  animation: clignote 0.6s steps(1, end) infinite;
+  50%,
+  100% {
+    opacity: 0.2;
+  }
 }
 
 /**
@@ -79,8 +142,6 @@ body {
  * pas de sélection accidentelle par un régisseur qui frôle la souris.
  */
 .mur-led {
-  background: var(--color-nuit);
-  color: var(--color-nuit-encre);
   cursor: none;
   user-select: none;
   overflow: hidden;

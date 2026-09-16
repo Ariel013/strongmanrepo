@@ -8,7 +8,19 @@
 
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
-import { athlete, categorie, competition, epreuve, passage } from "./db/schema";
+import {
+  athlete,
+  athleteContact,
+  categorie,
+  clubLogo,
+  competition,
+  epreuve,
+  officiel,
+  passage,
+  programme,
+  recompense,
+  sortie,
+} from "./db/schema";
 import {
   classementEpreuve,
   classementGeneral,
@@ -158,47 +170,75 @@ const versClassable = (a: AthletePublic): AthleteClassable => ({
 });
 
 /**
- * Le meilleur résultat de chaque athlète sur une épreuve.
+ * Tous les résultats exploitables de la compétition, en UNE requête.
  *
- * Une épreuve peut compter plusieurs essais : on ne garde que le meilleur,
- * départagé comme l'épreuve elle-même. Les passages « zéro » et « forfait »
- * sont écartés — ce ne sont pas des performances.
+ * Indexés par épreuve, puis par athlète. Charger l'ensemble d'un coup peut
+ * sembler excessif ; c'est en réalité le contraire. Interroger la base une
+ * fois par épreuve et par catégorie multipliait les allers-retours — dix
+ * requêtes en série pour un classement, soit plusieurs secondes de latence
+ * cumulée sur un écran qui se rafraîchit toutes les deux secondes.
+ *
+ * Le volume reste dérisoire : quelques centaines de lignes pour une
+ * compétition entière. Le calcul se fait ensuite en mémoire, instantanément.
  */
-async function meilleursResultats(
-  epreuveId: string,
-  mesure: Mesure,
-): Promise<Map<string, Resultat | null>> {
+export type ResultatsParEpreuve = Map<string, Map<string, Resultat>>;
+
+export async function tousLesResultats(
+  competitionId: string,
+  epreuves: EpreuveVue[],
+): Promise<ResultatsParEpreuve> {
   const lignes = await db
     .select()
     .from(passage)
-    .where(and(eq(passage.epreuveId, epreuveId), eq(passage.statut, "termine")));
+    .where(
+      and(
+        eq(passage.competitionId, competitionId),
+        eq(passage.statut, "termine"),
+      ),
+    );
 
-  const parAthlete = new Map<string, Resultat[]>();
+  const sens = new Map(epreuves.map((e) => [e.id, e.mesure === "chrono"]));
+  const brut = new Map<string, Map<string, Resultat[]>>();
+
   for (const p of lignes) {
+    // « zéro » et « forfait » ne sont pas des performances : ils closent le
+    // passage sans valeur, et ne doivent pas concourir au meilleur essai.
     if (p.resultatStatut !== "ok" || p.valeur === null) continue;
-    const liste = parAthlete.get(p.athleteId) ?? [];
-    liste.push({
-      statut: "ok",
-      valeur: p.valeur,
-      temps: p.tempsS,
-    });
-    parAthlete.set(p.athleteId, liste);
+    const parAthlete = brut.get(p.epreuveId) ?? new Map<string, Resultat[]>();
+    const essais = parAthlete.get(p.athleteId) ?? [];
+    essais.push({ statut: "ok", valeur: p.valeur, temps: p.tempsS });
+    parAthlete.set(p.athleteId, essais);
+    brut.set(p.epreuveId, parAthlete);
   }
 
-  const asc_ = mesure === "chrono";
-  const sortie = new Map<string, Resultat | null>();
-  for (const [id, liste] of parAthlete) {
-    const meilleur = [...liste].sort((a, b) => {
-      const av = a.valeur as number;
-      const bv = b.valeur as number;
-      if (av !== bv) return asc_ ? av - bv : bv - av;
-      const at = a.temps ?? Infinity;
-      const bt = b.temps ?? Infinity;
-      return at - bt;
-    })[0];
-    sortie.set(id, meilleur);
+  // Une épreuve peut compter plusieurs essais : on ne retient que le meilleur,
+  // départagé selon le même critère que l'épreuve elle-même.
+  const sortie: ResultatsParEpreuve = new Map();
+  for (const [epreuveId, parAthlete] of brut) {
+    const croissant = sens.get(epreuveId) ?? false;
+    const retenus = new Map<string, Resultat>();
+    for (const [athleteId, essais] of parAthlete) {
+      retenus.set(
+        athleteId,
+        [...essais].sort((a, b) => {
+          const av = a.valeur as number;
+          const bv = b.valeur as number;
+          if (av !== bv) return croissant ? av - bv : bv - av;
+          return (a.temps ?? Infinity) - (b.temps ?? Infinity);
+        })[0],
+      );
+    }
+    sortie.set(epreuveId, retenus);
   }
   return sortie;
+}
+
+/** Les résultats d'une épreuve, sous la forme attendue par le barème. */
+function pourEpreuve(
+  resultats: ResultatsParEpreuve,
+  epreuveId: string,
+): Map<string, Resultat | null> {
+  return (resultats.get(epreuveId) ?? new Map()) as Map<string, Resultat | null>;
 }
 
 export interface TableauEpreuve {
@@ -207,21 +247,27 @@ export interface TableauEpreuve {
   lignes: LigneEpreuve[];
 }
 
-/** Classement d'une épreuve dans une catégorie. */
-export async function tableauEpreuve(
+/**
+ * Classement d'une épreuve dans une catégorie.
+ *
+ * Les résultats sont fournis par l'appelant — chargés une seule fois via
+ * `tousLesResultats` — plutôt que requêtés ici : c'est ce qui évite de
+ * multiplier les allers-retours vers la base à chaque affichage.
+ */
+export function tableauEpreuve(
   ep: EpreuveVue,
   categorieId: string,
   athletes: AthletePublic[],
-): Promise<TableauEpreuve> {
+  resultats: ResultatsParEpreuve,
+): TableauEpreuve {
   const duGroupe = athletes.filter((a) => a.categorieId === categorieId);
-  const resultats = await meilleursResultats(ep.id, ep.mesure);
   return {
     epreuve: ep,
     categorieId,
     lignes: classementEpreuve(
       duGroupe.map(versClassable),
       ep.mesure,
-      resultats,
+      pourEpreuve(resultats, ep.id),
     ),
   };
 }
@@ -239,19 +285,23 @@ export interface TableauGeneral {
  * Recalculé à chaque appel, jamais mis en cache : c'est la seule façon qu'une
  * disqualification se répercute immédiatement sur le mur LED.
  */
-export async function tableauGeneral(
+export function tableauGeneral(
   cat: CategorieVue,
   epreuves: EpreuveVue[],
   athletes: AthletePublic[],
-): Promise<TableauGeneral> {
+  resultats: ResultatsParEpreuve,
+): TableauGeneral {
   const duGroupe = athletes.filter((a) => a.categorieId === cat.id);
   const classables = duGroupe.map(versClassable);
 
   const tableaux: LigneEpreuve[][] = [];
   const parEpreuve = new Map<string, Map<string, number>>();
   for (const ep of epreuves) {
-    const resultats = await meilleursResultats(ep.id, ep.mesure);
-    const lignes = classementEpreuve(classables, ep.mesure, resultats);
+    const lignes = classementEpreuve(
+      classables,
+      ep.mesure,
+      pourEpreuve(resultats, ep.id),
+    );
     tableaux.push(lignes);
     parEpreuve.set(ep.id, new Map(lignes.map((l) => [l.athleteId, l.points])));
   }
@@ -269,12 +319,13 @@ export async function tableauGeneral(
  * Première épreuve : dossards croissants. Ensuite, le moins de points passe
  * en premier — le leader ferme la marche.
  */
-export async function ordrePour(
+export function ordrePour(
   ep: EpreuveVue,
   categorieId: string,
   epreuves: EpreuveVue[],
   athletes: AthletePublic[],
-): Promise<AthletePublic[]> {
+  resultats: ResultatsParEpreuve,
+): AthletePublic[] {
   const duGroupe = athletes.filter((a) => a.categorieId === categorieId);
   const index = epreuves.findIndex((e) => e.id === ep.id);
 
@@ -282,8 +333,11 @@ export async function ordrePour(
   if (index > 0) {
     const classables = duGroupe.map(versClassable);
     for (const precedente of epreuves.slice(0, index)) {
-      const resultats = await meilleursResultats(precedente.id, precedente.mesure);
-      for (const l of classementEpreuve(classables, precedente.mesure, resultats)) {
+      for (const l of classementEpreuve(
+        classables,
+        precedente.mesure,
+        pourEpreuve(resultats, precedente.id),
+      )) {
         acquis.set(l.athleteId, (acquis.get(l.athleteId) ?? 0) + l.points);
       }
     }
@@ -335,4 +389,161 @@ export async function passagesDe(
     tours: p.tours,
     valideLe: p.valideLe,
   }));
+}
+
+/* ── Lectures de préparation ──────────────────────────────────────────── */
+
+/**
+ * Les épreuves telles que la préparation les édite : la vue publique
+ * (`EpreuveVue`) ne porte que ce dont les écrans ont besoin, la préparation a
+ * besoin de tout.
+ */
+export type EpreuveComplete = typeof epreuve.$inferSelect;
+
+export async function epreuvesCompletes(
+  competitionId: string,
+): Promise<EpreuveComplete[]> {
+  return db
+    .select()
+    .from(epreuve)
+    .where(eq(epreuve.competitionId, competitionId))
+    .orderBy(asc(epreuve.position));
+}
+
+export async function officielsDe(competitionId: string) {
+  return db
+    .select()
+    .from(officiel)
+    .where(eq(officiel.competitionId, competitionId))
+    .orderBy(asc(officiel.position));
+}
+
+export async function programmeDe(competitionId: string) {
+  return db
+    .select()
+    .from(programme)
+    .where(eq(programme.competitionId, competitionId))
+    .orderBy(asc(programme.position));
+}
+
+export async function recompensesDe(competitionId: string) {
+  return db
+    .select()
+    .from(recompense)
+    .where(eq(recompense.competitionId, competitionId))
+    .orderBy(asc(recompense.rang));
+}
+
+export async function sortiesDe(competitionId: string) {
+  return db
+    .select()
+    .from(sortie)
+    .where(eq(sortie.competitionId, competitionId))
+    .orderBy(asc(sortie.position));
+}
+
+/** Les logos de clubs, indexés par nom de club exactement tel que saisi. */
+export async function logosDe(
+  competitionId: string,
+): Promise<Map<string, string>> {
+  const lignes = await db
+    .select()
+    .from(clubLogo)
+    .where(eq(clubLogo.competitionId, competitionId));
+  const m = new Map<string, string>();
+  for (const l of lignes) if (l.logoUrl) m.set(l.club, l.logoUrl);
+  return m;
+}
+
+/**
+ * La fiche complète d'un athlète, contact compris.
+ *
+ * Réservée à l'administration : c'est la seule lecture qui joigne
+ * `athleteContact`, et elle ne doit jamais être appelée depuis `/ecran`.
+ * Le cloisonnement décrit en tête de `schema.ts` tient à cette discipline.
+ */
+export interface FicheAthlete extends AthletePublic {
+  poidsDeclare: number | null;
+  tailleCm: number | null;
+  age: number | null;
+  note: string | null;
+  niveaux: Record<string, string>;
+  aVerifier: boolean;
+  telephone: string | null;
+  contactUrgence: string | null;
+  commune: string | null;
+}
+
+export async function fichesAthletes(
+  competitionId: string,
+): Promise<FicheAthlete[]> {
+  const lignes = await db
+    .select()
+    .from(athlete)
+    .leftJoin(athleteContact, eq(athleteContact.athleteId, athlete.id))
+    .where(eq(athlete.competitionId, competitionId))
+    .orderBy(asc(athlete.dossard), asc(athlete.nom));
+
+  return lignes.map(({ athlete: a, athlete_contact: c }) => {
+    let niveaux: Record<string, string> = {};
+    try {
+      niveaux = a.niveaux ? JSON.parse(a.niveaux) : {};
+    } catch {
+      // Une colonne JSON illisible ne doit pas faire tomber la liste des
+      // engagés : on repart d'un niveau vide, la table le ressaisira.
+      niveaux = {};
+    }
+    return {
+      id: a.id,
+      nom: a.nom,
+      prenoms: a.prenoms,
+      club: a.club,
+      pays: a.pays,
+      dossard: a.dossard,
+      poidsCorps: nombre(a.poidsCorps),
+      categorieId: a.categorieId,
+      horsClassement: a.horsClassement,
+      peseeValidee: a.peseeValidee,
+      photoUrl: a.photoUrl,
+      poidsDeclare: nombre(a.poidsDeclare),
+      tailleCm: a.tailleCm,
+      age: a.age,
+      note: a.note,
+      niveaux,
+      aVerifier: a.aVerifier,
+      telephone: c?.telephone ?? null,
+      contactUrgence: c?.contactUrgence ?? null,
+      commune: c?.commune ?? null,
+    };
+  });
+}
+
+/**
+ * Les niveaux déclarés pour une épreuve, indexés par athlète.
+ *
+ * Lecture à part plutôt qu'un champ de plus dans `AthletePublic` : le niveau
+ * n'intéresse que le plateau et le mur LED d'une épreuve à niveaux, et la vue
+ * publique reste ainsi ce qu'elle promet — le strict nécessaire aux écrans.
+ */
+export async function niveauxPour(
+  competitionId: string,
+  epreuveId: string,
+): Promise<Record<string, string>> {
+  const lignes = await db
+    .select({ id: athlete.id, niveaux: athlete.niveaux })
+    .from(athlete)
+    .where(eq(athlete.competitionId, competitionId));
+
+  const m: Record<string, string> = {};
+  for (const l of lignes) {
+    if (!l.niveaux) continue;
+    try {
+      const n = JSON.parse(l.niveaux)[epreuveId];
+      if (n) m[l.id] = n;
+    } catch {
+      // Colonne illisible : l'athlète passe sans niveau affiché plutôt que
+      // de faire tomber tout le plateau.
+    }
+  }
+  return m;
 }

@@ -26,6 +26,7 @@ import {
   competitionCourante,
   epreuvesDe,
   tableauGeneral,
+  tousLesResultats,
 } from "@/lib/donnees";
 
 type Cellule = string | number | null;
@@ -52,7 +53,21 @@ function feuille(nom: string, entetes: string[], lignes: Cellule[][]): string {
   );
 }
 
-export async function GET() {
+/**
+ * `?format=` restreint le classeur à une rubrique.
+ *
+ * Trois exports existaient sur le poste d'origine : la liste des athlètes, les
+ * classements, et la sauvegarde complète. Ils partent d'ici, d'un seul
+ * générateur — trois routes qui recalculeraient les mêmes classements
+ * finiraient par diverger.
+ */
+type Format = "tout" | "athletes" | "classements";
+
+export async function GET(requete: Request) {
+  const demande = new URL(requete.url).searchParams.get("format");
+  const format: Format =
+    demande === "athletes" || demande === "classements" ? demande : "tout";
+
   const comp = await competitionCourante();
   if (!comp) {
     return new Response("Aucune compétition.", { status: 404 });
@@ -122,9 +137,10 @@ export async function GET() {
   });
 
   /* ── Classements ── */
+  const resultats = await tousLesResultats(comp.id, epreuves);
   const feuilleClassements: Cellule[][] = [];
   for (const cat of categories.filter((c) => c.active)) {
-    const t = await tableauGeneral(cat, epreuves, athletes);
+    const t = tableauGeneral(cat, epreuves, athletes, resultats);
     for (const l of t.lignes) {
       const a = athletes.find((x) => x.id === l.athleteId);
       feuilleClassements.push([
@@ -138,10 +154,7 @@ export async function GET() {
     }
   }
 
-  const xml =
-    `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n` +
-    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ` +
-    `xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">` +
+  const feuilleAthletesXml =
     feuille(
       "Athletes",
       [
@@ -150,7 +163,8 @@ export async function GET() {
         "Contact urgence",
       ],
       feuilleAthletes,
-    ) +
+    );
+  const feuilleEpreuvesXml =
     feuille(
       "Epreuves",
       ["Ordre", "Epreuve", "Mesure", "Temps limite (s)", "Essais", "Critere"],
@@ -158,7 +172,8 @@ export async function GET() {
         e.position + 1, e.nom, e.mesure, e.tempsLimiteS ?? "", e.essais,
         e.critere ?? "",
       ]),
-    ) +
+    );
+  const feuilleResultatsXml =
     feuille(
       "Resultats",
       [
@@ -166,19 +181,37 @@ export async function GET() {
         "Resultat", "Valeur", "Temps", "Tours", "Valide le",
       ],
       feuilleResultats,
-    ) +
+    );
+  const feuilleClassementsXml =
     feuille(
       "Classements",
       ["Categorie", "Rang", "Dossard", "Athlete", "Total", ...epreuves.map((e) => e.nom)],
       feuilleClassements,
-    ) +
+    );
+
+  const contenu =
+    format === "athletes"
+      ? feuilleAthletesXml
+      : format === "classements"
+        ? feuilleClassementsXml
+        : feuilleAthletesXml +
+          feuilleEpreuvesXml +
+          feuilleResultatsXml +
+          feuilleClassementsXml;
+
+  const xml =
+    `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n` +
+    `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ` +
+    `xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">` +
+    contenu +
     `</Workbook>`;
 
   const jour = new Date().toISOString().slice(0, 10);
+  const suffixe = format === "tout" ? "" : `-${format}`;
   return new Response(xml, {
     headers: {
       "Content-Type": "application/vnd.ms-excel; charset=utf-8",
-      "Content-Disposition": `attachment; filename="strongman-2026-${jour}.xls"`,
+      "Content-Disposition": `attachment; filename="strongman-2026${suffixe}-${jour}.xls"`,
       // Un classement exporté ne doit jamais être servi depuis un cache :
       // il changerait sous les yeux du secrétaire au passage suivant.
       "Cache-Control": "no-store",

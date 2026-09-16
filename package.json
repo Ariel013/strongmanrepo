@@ -13,7 +13,9 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx --env-file=.env scripts/seed.ts"
+    "db:seed": "tsx --env-file=.env scripts/seed.ts",
+    "db:migrer": "tsx --env-file=.env scripts/migrer.ts",
+    "test": "tsx --env-file=.env scripts/tests-fonctionnels.ts"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.0",

@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { competitionCourante } from "@/lib/donnees";
+import { C } from "@/lib/charte";
+import { Bandeau, Conteneur } from "@/components/chrome";
 import { seDeconnecter } from "../connexion/actions";
 
 /**
@@ -12,61 +12,52 @@ import { seDeconnecter } from "../connexion/actions";
  */
 export const dynamic = "force-dynamic";
 
-const ONGLETS = [
-  { href: "/admin", libelle: "Accueil" },
-  { href: "/admin/athletes", libelle: "Athlètes" },
-  { href: "/admin/plateau", libelle: "Plateau" },
-  { href: "/admin/classement", libelle: "Classement" },
-];
-
-export default async function LayoutAdmin({
-  children,
-}: LayoutProps<"/admin">) {
-  const comp = await competitionCourante();
-
+/** Les deux actions de droite du bandeau, comme sur le poste d'origine. */
+function Actions() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-bordure bg-vert-fonce text-papier">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
-          <span className="font-titre text-lg font-bold tracking-wide uppercase">
-            Strongman 2026
-          </span>
-          <nav className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
-            {ONGLETS.map((o) => (
-              <Link
-                key={o.href}
-                href={o.href}
-                className="opacity-80 transition hover:opacity-100"
-              >
-                {o.libelle}
-              </Link>
-            ))}
-          </nav>
-          <form action={seDeconnecter} className="ml-auto">
-            <button
-              type="submit"
-              className="text-sm opacity-70 underline transition hover:opacity-100"
-            >
-              Quitter
-            </button>
-          </form>
-        </div>
-      </header>
-
-      {/* Une compétition suspendue doit se voir depuis n'importe quel écran :
-          c'est l'information qui conditionne toutes les autres. */}
-      {comp?.suspendue && (
-        <div
-          role="status"
-          className="bg-rouge px-4 py-2.5 text-center text-sm font-medium text-white"
+    <>
+      <form action={seDeconnecter}>
+        <button
+          type="submit"
+          title="Fermer la session et revenir à l'écran de connexion"
+          style={{
+            padding: "8px 13px",
+            borderRadius: 9,
+            border: "1px solid rgba(252,250,246,.22)",
+            background: "transparent",
+            color: "#9AA79E",
+            fontSize: 12,
+            fontWeight: 500,
+            cursor: "pointer",
+          }}
         >
-          Compétition suspendue — {comp.motifSuspension}
-        </div>
-      )}
+          Fermer la session
+        </button>
+      </form>
+      <a
+        href="/api/admin/export"
+        title="Télécharge le fichier de sauvegarde à conserver hors du poste : clé USB, second ordinateur. À faire avant la compétition et après chaque épreuve."
+        style={{
+          padding: "10px 16px",
+          borderRadius: 9,
+          border: "1px solid rgba(252,250,246,.28)",
+          background: "rgba(252,250,246,.08)",
+          color: C.papier,
+          fontSize: 13,
+          fontWeight: 600,
+        }}
+      >
+        Exporter la sauvegarde
+      </a>
+    </>
+  );
+}
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
-        {children}
-      </main>
-    </div>
+export default function LayoutAdmin({ children }: LayoutProps<"/admin">) {
+  return (
+    <Conteneur>
+      <Bandeau actions={<Actions />} />
+      {children}
+    </Conteneur>
   );
 }

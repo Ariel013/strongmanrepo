@@ -8,6 +8,20 @@
       "when": 1789520539786,
       "tag": "0000_quiet_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789541189060,
+      "tag": "0001_graceful_ben_grimm",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789542402276,
+      "tag": "0002_clean_marrow",
+      "breakpoints": true
     }
   ]
 }

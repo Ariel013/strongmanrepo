@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Le code du poste autonome, conservé en référence pour le portage : il
+    // n'est ni compilé ni exécuté, et le corriger n'aurait aucun sens — c'est
+    // la pièce à comparer, elle doit rester telle qu'elle était.
+    "docs/reference/**",
   ]),
 ]);
 
