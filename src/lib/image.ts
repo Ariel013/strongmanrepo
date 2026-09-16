@@ -80,11 +80,23 @@ export function calculerRecadrage(
   };
 }
 
+/**
+ * En dessous de cette largeur, la photo sera visiblement pixellisée sur le mur
+ * LED, où elle occupe 19 vw de large. Mieux vaut le dire au moment du dépôt
+ * qu'au moment du passage, devant la salle.
+ */
+const LARGEUR_CONFORTABLE = 600;
+
 export interface ImagePreparee {
   fichier: File;
   /** Pour dire à l'officiel ce qui s'est passé, plutôt que de le taire. */
   avant: number;
   apres: number;
+  /** Dimensions finales, ou `null` si l'image n'a pas pu être lue. */
+  largeur: number | null;
+  hauteur: number | null;
+  /** Non bloquant : la photo est acceptée, mais elle sera de piètre qualité. */
+  tropPetite: boolean;
 }
 
 /**
@@ -98,8 +110,16 @@ export async function preparerImage(
   fichier: File,
   mode: ModeImage = "portrait",
 ): Promise<ImagePreparee> {
-  if (!fichier.type.startsWith("image/"))
-    return { fichier, avant: fichier.size, apres: fichier.size };
+  const tel = (f: File): ImagePreparee => ({
+    fichier: f,
+    avant: fichier.size,
+    apres: f.size,
+    largeur: null,
+    hauteur: null,
+    tropPetite: false,
+  });
+
+  if (!fichier.type.startsWith("image/")) return tel(fichier);
 
   try {
     // `from-image` applique la rotation EXIF : sans elle, une photo prise en
@@ -117,7 +137,7 @@ export async function preparerImage(
     const ctx = toile.getContext("2d");
     if (!ctx) {
       source.close();
-      return { fichier, avant: fichier.size, apres: fichier.size };
+      return tel(fichier);
     }
     ctx.drawImage(
       source,
@@ -135,23 +155,27 @@ export async function preparerImage(
     const blob = await new Promise<Blob | null>((r) =>
       toile.toBlob(r, "image/jpeg", 0.82),
     );
-    if (!blob) return { fichier, avant: fichier.size, apres: fichier.size };
+    const tropPetite = largeur < LARGEUR_CONFORTABLE;
+    if (!blob) return { ...tel(fichier), largeur, hauteur, tropPetite };
 
     // Si la recompression n'a rien gagné — petite image déjà optimisée — on
     // garde l'originale, qui est de meilleure qualité.
     if (blob.size >= fichier.size)
-      return { fichier, avant: fichier.size, apres: fichier.size };
+      return { ...tel(fichier), largeur, hauteur, tropPetite };
 
     const nom = fichier.name.replace(/\.[^.]+$/, "") + ".jpg";
     return {
       fichier: new File([blob], nom, { type: "image/jpeg" }),
       avant: fichier.size,
       apres: blob.size,
+      largeur,
+      hauteur,
+      tropPetite,
     };
   } catch {
     // Navigateur sans `createImageBitmap`, image corrompue, mémoire
     // insuffisante : on laisse passer l'originale et le serveur décidera.
-    return { fichier, avant: fichier.size, apres: fichier.size };
+    return tel(fichier);
   }
 }
 

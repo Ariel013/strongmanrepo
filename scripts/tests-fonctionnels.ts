@@ -705,6 +705,17 @@ async function principal() {
     );
     egal("un logo large est seulement réduit", l1.largeur, 1200);
 
+    // Une image trop petite est acceptée, mais elle sera pixellisée sur un mur
+    // LED où elle occupe 19 vw : on veut le savoir au dépôt.
+    egal(
+      "une image de 218 px reste en 3/4 et n'est pas agrandie",
+      [
+        calculerRecadrage(218, 400, "portrait").largeur,
+        calculerRecadrage(218, 400, "portrait").hauteur,
+      ],
+      [218, 291],
+    );
+
     egal("poids lisible en mégaoctets", poidsLisible(2_500_000), "2,4 Mo");
     egal("poids lisible en kilo-octets", poidsLisible(320_000), "313 ko");
 

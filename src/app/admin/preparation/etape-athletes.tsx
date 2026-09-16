@@ -1163,6 +1163,8 @@ function ChoixFichier({
 }) {
   const [etat, setEtat] = useState("");
   const [echec, setEchec] = useState(false);
+  /** Accepté, mais avec une réserve : ni vert, ni rouge. */
+  const [avertir, setAvertir] = useState(false);
   const [, demarrer] = useTransition();
 
   return (
@@ -1187,9 +1189,11 @@ function ChoixFichier({
             if (!f) return;
             e.target.value = "";
             setEchec(false);
+            setAvertir(false);
             setEtat("Préparation…");
             try {
-              const { fichier, avant, apres } = await preparerImage(f, mode);
+              const { fichier, avant, apres, largeur, hauteur, tropPetite } =
+                await preparerImage(f, mode);
               const fd = new FormData();
               fd.set("fichier", fichier);
               const reduite = apres < avant;
@@ -1198,7 +1202,22 @@ function ChoixFichier({
                 try {
                   const r = await envoyer(fd);
                   setEchec(!r.ok);
-                  setEtat(r.ok ? "" : (r.erreur ?? "Envoi refusé."));
+                  if (!r.ok) {
+                    setEtat(r.erreur ?? "Envoi refusé.");
+                  } else if (tropPetite && mode === "portrait") {
+                    // Acceptée, mais on le dit : sur le mur LED elle occupe
+                    // 19 vw de large, et une image de 218 px y est franchement
+                    // pixellisée. Le constater au dépôt vaut mieux que devant
+                    // la salle, au moment du passage.
+                    setAvertir(true);
+                    setEtat(
+                      `Photo enregistrée, mais petite (${largeur}×${hauteur} px). ` +
+                        "Elle sera pixellisée sur le mur LED : une image d'au " +
+                        "moins 600 px de large donnerait un bien meilleur rendu.",
+                    );
+                  } else {
+                    setEtat("");
+                  }
                 } catch {
                   // Une Server Action qui échoue au transport fait autrement
                   // tomber toute la page sur l'écran d'erreur. On dit ce qui a
@@ -1223,7 +1242,11 @@ function ChoixFichier({
         <div
           style={{
             fontSize: 11,
-            color: echec ? C.rougeFonce : C.encre4,
+            color: echec
+              ? C.rougeFonce
+              : avertir
+                ? C.ambreEncre
+                : C.encre4,
             lineHeight: 1.4,
             marginTop: 3,
           }}
