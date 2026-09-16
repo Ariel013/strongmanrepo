@@ -32,7 +32,12 @@ import {
   tableauGeneral,
   tousLesResultats,
 } from "../src/lib/donnees";
-import { classementEpreuve, plusPetitGagne } from "../src/lib/classement";
+import {
+  classementEpreuve,
+  incoherencesCategories,
+  plusPetitGagne,
+  versMesure,
+} from "../src/lib/classement";
 import { performanceLisible, tempsImpartiLisible } from "../src/lib/charte";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
 import { calculerRecadrage, poidsLisible } from "../src/lib/image";
@@ -823,8 +828,56 @@ async function principal() {
       "18 m · 32,1 s",
     );
 
-    /* ── 16. Cloisonnement des données personnelles ── */
-    console.log("\n16. Cloisonnement des données personnelles");
+    /* ── 16. Cohérence des bornes de catégories ── */
+    console.log("\n16. Bornes de catégories : trous et recouvrements");
+
+    // Relevé sur la compétition réelle le 2026-09-17 : « Moins de 105 kg »
+    // s'arrêtait à 105,5 et « Plus de 105 kg » ne commençait qu'au-delà de
+    // 105,6. Un athlète de 105,6 kg n'entrait donc dans aucune catégorie — et
+    // rien ne le signalait avant la pesée.
+    egal(
+      "deux bornes qui se touchent ne posent aucun problème",
+      incoherencesCategories([
+        { nom: "−105", poidsMin: null, poidsMax: 105 },
+        { nom: "+105", poidsMin: 105, poidsMax: null },
+      ]).length,
+      0,
+    );
+    verifier(
+      "un trou entre deux bornes est signalé",
+      incoherencesCategories([
+        { nom: "Moins de 105 kg", poidsMin: null, poidsMax: 105.5 },
+        { nom: "Plus de 105 kg", poidsMin: 105.6, poidsMax: null },
+      ]).some((x) => x.includes("Aucune catégorie")),
+    );
+    verifier(
+      "un recouvrement est signalé",
+      incoherencesCategories([
+        { nom: "A", poidsMin: null, poidsMax: 110 },
+        { nom: "B", poidsMin: 100, poidsMax: null },
+      ]).some((x) => x.includes("recouvrent")),
+    );
+    egal(
+      "des extrémités fermées laissent les poids extrêmes sans catégorie",
+      incoherencesCategories([
+        { nom: "A", poidsMin: 60, poidsMax: 105 },
+        { nom: "B", poidsMin: 105, poidsMax: 140 },
+      ]).length,
+      2,
+    );
+
+    // La mesure lue en base ne doit jamais fausser un classement en silence.
+    egal("une mesure connue passe telle quelle", versMesure("medley"), "medley");
+    egal("« chrono » se classe à l'envers", plusPetitGagne(versMesure("chrono")), true);
+    egal("« medley » se classe à l'endroit", plusPetitGagne(versMesure("medley")), false);
+    egal(
+      "une mesure inconnue retombe sur un défaut sûr",
+      versMesure("cuisson"),
+      "nb_temps",
+    );
+
+    /* ── 17. Cloisonnement des données personnelles ── */
+    console.log("\n17. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(

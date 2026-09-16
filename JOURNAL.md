@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **122/122** ✓. Les routes répondent 200 sur un build de production local.
+  **130/130** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
@@ -93,6 +93,32 @@
   aucun n'est un oubli.
 - Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
   de la table.
+
+### 2026-09-17 — Audit de cohérence à la demande de Kevin
+
+Toutes les données en base sont de test. Quatre incohérences trouvées :
+
+- **`medley` absent du type `Mesure`** — la mesure est proposée partout, mais
+  les pages la faisaient passer par un `as Mesure`. Le classement était juste
+  par accident. Type complété, et `versMesure()` remplace les casts aveugles :
+  une valeur inconnue retombe sur un défaut sûr et le dit dans les journaux.
+- **Trou entre catégories** — les bornes saisies (≤ 105,5 / > 105,6) laissent
+  105,6 kg sans catégorie. Rien ne le signalait avant la pesée. Détecteur
+  ajouté (`incoherencesCategories`), affiché à l'étape Groupes et au
+  récapitulatif. Les bornes elles-mêmes restent à corriger → `A-FAIRE.md`.
+- **`essais` sans effet** — enregistré, modifiable, exporté, jamais lu. Le
+  plateau ne crée qu'un passage par athlète. Pas de fonction ajoutée à deux
+  jours de l'épreuve : l'interface dit maintenant la vérité, et la limite est
+  consignée.
+- **Compteur de tours désactivé** sur les quatre épreuves en répétitions — la
+  base avait été installée avant que le seed le renseigne. Or c'est ce bouton
+  qui relève le temps de départage que la fédération vient de souligner.
+  Rétabli selon la configuration d'origine, tracé au journal ; l'étape
+  Épreuves avertit désormais quand une épreuve en répétitions n'a pas de
+  compteur.
+
+Et une correction de ma part : un test de l'empreinte cherchait « un passage à
+venir » **sans filtrer par compétition** — voir la leçon du 2026-09-17.
 
 ### 2026-09-16 (3) — Premiers retours du terrain
 

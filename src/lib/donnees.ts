@@ -30,6 +30,7 @@ import {
   type LigneGenerale,
   type Mesure,
   type Resultat,
+  versMesure,
 } from "./classement";
 
 /* ── Vues publiques ───────────────────────────────────────────────────── */
@@ -103,7 +104,7 @@ export async function epreuvesDe(competitionId: string): Promise<EpreuveVue[]> {
   return lignes.map((e) => ({
     id: e.id,
     nom: e.nom,
-    mesure: e.mesure as Mesure,
+    mesure: versMesure(e.mesure),
     tempsLimiteS: e.tempsLimiteS,
     essais: e.essais,
     critere: e.critere,

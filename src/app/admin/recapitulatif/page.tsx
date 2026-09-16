@@ -10,6 +10,7 @@ import {
   officielsDe,
   programmeDe,
 } from "@/lib/donnees";
+import { incoherencesCategories } from "@/lib/classement";
 
 /**
  * Le récapitulatif de préparation — la vue « estRecap » du logiciel d'origine.
@@ -51,6 +52,13 @@ export default async function PageRecapitulatif() {
       (a.horsClassement || a.categorieId),
   ).length;
   const retenus = categories.filter((c) => c.active).length;
+  // Un trou entre deux bornes empêche de ranger un athlète à la pesée : c'est
+  // un manque au même titre qu'une catégorie absente.
+  const bornes = incoherencesCategories(
+    categories
+      .filter((c) => c.active)
+      .map((c) => ({ nom: c.nom, poidsMin: c.poidsMin, poidsMax: c.poidsMax })),
+  );
 
   const lignes = [
     {
@@ -60,9 +68,12 @@ export default async function PageRecapitulatif() {
       etape: 0,
     },
     {
-      ok: retenus >= 1,
+      ok: retenus >= 1 && bornes.length === 0,
       titre: "Groupes de poids",
-      detail: `${categories.length} groupe(s), dont ${retenus} retenu(s) au plateau`,
+      detail:
+        bornes.length > 0
+          ? bornes[0]
+          : `${categories.length} groupe(s), dont ${retenus} retenu(s) au plateau`,
       etape: 1,
     },
     {

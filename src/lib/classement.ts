@@ -18,11 +18,50 @@ export type Mesure =
   | "poids" // charge maximale en kg
   | "duree" // temps de maintien, le plus long gagne
   | "distance" // distance parcourue, départagée par le temps
-  | "chrono"; // temps sur distance, le plus court gagne
+  | "chrono" // temps sur distance, le plus court gagne
+  | "medley"; // parcours à ateliers : distance parcourue, départagée par le temps
 
-/** Seule `chrono` se classe à l'envers : la plus petite valeur gagne. */
+/**
+ * Seule `chrono` se classe à l'envers : la plus petite valeur gagne.
+ *
+ * `medley` figure bien dans ce type. Il en était absent alors que la mesure
+ * est proposée partout ailleurs — les pages la faisaient passer par un
+ * `as Mesure` qui faisait taire le compilateur. Le comportement était juste
+ * par accident : rien ne garantissait qu'il le reste.
+ */
 export function plusPetitGagne(mesure: Mesure): boolean {
   return mesure === "chrono";
+}
+
+/** Les mesures reconnues, dans l'ordre du menu de l'étape Épreuves. */
+export const MESURES_CONNUES: readonly Mesure[] = [
+  "nb_temps",
+  "poids",
+  "duree",
+  "distance",
+  "chrono",
+  "medley",
+];
+
+/**
+ * Lit la mesure d'une épreuve venue de la base.
+ *
+ * La colonne est du texte : un `as Mesure` y fait passer n'importe quoi. Une
+ * valeur inattendue — saisie à la main en base, ou restée d'une version
+ * précédente — donnerait alors un classement silencieusement faux, puisque
+ * `plusPetitGagne` la traiterait comme « le plus grand gagne ».
+ *
+ * On retombe donc sur `nb_temps`, la mesure la plus courante, ET on le signale
+ * dans les journaux du serveur : un classement douteux doit laisser une trace.
+ */
+export function versMesure(valeur: string): Mesure {
+  if ((MESURES_CONNUES as readonly string[]).includes(valeur))
+    return valeur as Mesure;
+  console.warn(
+    `[classement] mesure inconnue « ${valeur} » : traitée comme « nb_temps ». ` +
+      "Corrigez l'épreuve à l'étape Épreuves.",
+  );
+  return "nb_temps";
 }
 
 export type StatutResultat = "ok" | "zero" | "forfait";
@@ -245,4 +284,70 @@ export function ordreDePassage(
     if (pa !== pb) return pa - pb;
     return dossard(a) - dossard(b);
   });
+}
+
+/* ── Cohérence des catégories de poids ────────────────────────────────── */
+
+export interface BornesCategorie {
+  nom: string;
+  poidsMin: number | null;
+  poidsMax: number | null;
+}
+
+/**
+ * Cherche les poids qu'aucune catégorie n'accepte, et ceux que deux
+ * accepteraient.
+ *
+ * Les bornes se lisent `poidsMin < poids <= poidsMax`. Deux catégories saisies
+ * « moins de 105,5 » et « plus de 105,6 » laissent donc un athlète de 105,6 kg
+ * SANS catégorie : il ne peut ni être rangé à la pesée, ni figurer à un
+ * classement. Le défaut ne se voit pas en lisant les deux lignes — il faut
+ * comparer la borne haute de l'une à la borne basse de l'autre.
+ *
+ * Rien n'interdit ces bornes : c'est la fédération qui décide. Mais le jour de
+ * la pesée est un mauvais moment pour le découvrir.
+ */
+export function incoherencesCategories(cats: BornesCategorie[]): string[] {
+  const soucis: string[] = [];
+  // Ordonnées par borne basse, les catégories doivent se toucher exactement.
+  const triees = [...cats].sort(
+    (a, b) => (a.poidsMin ?? -Infinity) - (b.poidsMin ?? -Infinity),
+  );
+
+  for (let i = 0; i < triees.length - 1; i++) {
+    const basse = triees[i];
+    const haute = triees[i + 1];
+    if (basse.poidsMax === null || haute.poidsMin === null) continue;
+
+    if (haute.poidsMin > basse.poidsMax)
+      soucis.push(
+        `Aucune catégorie n'accepte les poids strictement supérieurs à ` +
+          `${basse.poidsMax} kg et jusqu'à ${haute.poidsMin} kg inclus : ` +
+          `« ${basse.nom} » s'arrête à ${basse.poidsMax} et ` +
+          `« ${haute.nom} » ne commence qu'au-delà de ${haute.poidsMin}.`,
+      );
+    if (haute.poidsMin < basse.poidsMax)
+      soucis.push(
+        `« ${basse.nom} » et « ${haute.nom} » se recouvrent entre ` +
+          `${haute.poidsMin} et ${basse.poidsMax} kg : un athlète de ce poids ` +
+          `pourrait être rangé dans l'une ou l'autre.`,
+      );
+  }
+
+  // Les extrémités : sans borne ouverte, les poids extrêmes sont exclus.
+  if (triees.length > 0) {
+    if (triees[0].poidsMin !== null)
+      soucis.push(
+        `Aucune catégorie n'accepte les poids de ${triees[0].poidsMin} kg ou ` +
+          `moins : « ${triees[0].nom} », la plus légère, commence au-dessus.`,
+      );
+    const derniere = triees[triees.length - 1];
+    if (derniere.poidsMax !== null)
+      soucis.push(
+        `Aucune catégorie n'accepte les poids supérieurs à ` +
+          `${derniere.poidsMax} kg : « ${derniere.nom} », la plus lourde, ` +
+          `s'arrête là.`,
+      );
+  }
+  return soucis;
 }

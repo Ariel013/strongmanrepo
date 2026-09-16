@@ -28,7 +28,7 @@ import {
   type EpreuveVue,
   type PassageVue,
 } from "@/lib/donnees";
-import type { Mesure } from "@/lib/classement";
+import { versMesure } from "@/lib/classement";
 import { Cadre, Message } from "./commun";
 import { VuePlateau } from "./vues/plateau";
 import { VueOrdre } from "./vues/ordre";
@@ -107,7 +107,7 @@ export default async function PageEcran({
   const epreuves: EpreuveVue[] = epreuvesCompl.map((e) => ({
     id: e.id,
     nom: e.nom,
-    mesure: e.mesure as Mesure,
+    mesure: versMesure(e.mesure),
     tempsLimiteS: e.tempsLimiteS,
     essais: e.essais,
     critere: e.critere,

@@ -117,7 +117,14 @@ Settings → Environment Variables dans le `.env` du poste.
 > trébuche sur les contraintes CHECK des schémas internes. Utiliser
 > `pnpm run db:migrer`, qui applique le SQL versionné de `drizzle/`.
 
-## 4. Décisions en attente
+## 4. Limites connues du logiciel
+
+| Limite | Effet | Contournement |
+|---|---|---|
+| **Essais multiples non gérés** — `epreuve.essais` est enregistré et exporté, mais le plateau ne crée qu'un passage par athlète | une épreuve à 3 essais se comporte comme à 1 essai ; rouvrir un passage **remplace** le résultat au lieu d'ajouter une tentative | saisir directement la meilleure tentative, ou noter les essais sur la feuille papier |
+| **Trou entre catégories** — les bornes actuelles (≤ 105,5 / > 105,6) laissent 105,6 kg sans catégorie | un athlète à ce poids ne peut pas être rangé à la pesée | ⬜ **corriger les bornes** : « Moins de 105 kg » → max **105**, « Plus de 105 kg » → min **105** (l'étape Groupes signale désormais le trou) |
+
+## 5. Décisions en attente
 
 | Question | Qui tranche | Échéance | Impact si non tranché |
 |---|---|---|---|
@@ -125,7 +132,7 @@ Settings → Environment Variables dans le `.env` du poste.
 | Import Word / PDF nécessaire, ou CSV suffit-il ? | Kevin, selon le format reçu de la fédération | avant les engagements | La liste devra être recopiée à la main dans le cadre « coller la liste » |
 | Noms des officiels et codes du jury | Direction de compétition | avant le procès-verbal | Le PV ne peut pas être signé |
 
-## 5. Ops et sauvegardes
+## 6. Ops et sauvegardes
 
 - **Sauvegarde applicative** : bouton « Exporter la sauvegarde » du bandeau
   (`/api/admin/export`), qui produit un classeur Excel complet — athlètes,

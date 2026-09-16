@@ -14,7 +14,7 @@ import {
   tousLesResultats,
   type EpreuveVue,
 } from "@/lib/donnees";
-import type { Mesure } from "@/lib/classement";
+import { versMesure } from "@/lib/classement";
 import { Plateau, type CategoriePlateau } from "./plateau";
 
 /**
@@ -94,7 +94,7 @@ export default async function PagePlateau({
   const vuePublique: EpreuveVue[] = epreuves.map((e) => ({
     id: e.id,
     nom: e.nom,
-    mesure: e.mesure as Mesure,
+    mesure: versMesure(e.mesure),
     tempsLimiteS: e.tempsLimiteS,
     essais: e.essais,
     critere: e.critere,
@@ -183,7 +183,7 @@ export default async function PagePlateau({
         epreuve={{
           id: epreuveCourante.id,
           nom: epreuveCourante.nom,
-          mesure: epreuveCourante.mesure as Mesure,
+          mesure: versMesure(epreuveCourante.mesure),
           tempsLimiteS: epreuveCourante.tempsLimiteS,
           critere: epreuveCourante.critere,
           niveau: epreuveCourante.niveau,

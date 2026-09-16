@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { C, couleurCategorie, virgule } from "@/lib/charte";
 import { TitreSection } from "@/components/chrome";
-import { Etiquette, styleBouton } from "@/components/ui";
+import { Encart, Etiquette, styleBouton } from "@/components/ui";
 import { BoutonAction, ChampTexte } from "@/components/saisie";
 import {
   ajouterCategorie,
@@ -11,6 +11,7 @@ import {
   supprimerCategorie,
 } from "@/lib/actions";
 import type { CategorieVue } from "@/lib/donnees";
+import { incoherencesCategories } from "@/lib/classement";
 
 /**
  * Étape 2 — les groupes de poids.
@@ -29,6 +30,15 @@ export function EtapeGroupes({
   categories: CategorieVue[];
   effectifs: Record<string, number>;
 }) {
+  // Un trou entre deux bornes ne se voit pas en lisant les lignes une à une :
+  // il faut comparer la borne haute de l'une à la borne basse de l'autre. Le
+  // jour de la pesée est un mauvais moment pour le découvrir.
+  const soucis = incoherencesCategories(
+    categories
+      .filter((c) => c.active)
+      .map((c) => ({ nom: c.nom, poidsMin: c.poidsMin, poidsMax: c.poidsMax })),
+  );
+
   return (
     <div>
       <TitreSection
@@ -36,6 +46,16 @@ export function EtapeGroupes({
         suite="de poids"
         chapeau="Championnat réservé aux hommes. Deux groupes : moins de 100 kg et plus de 100 kg. Chaque groupe a son propre classement, même quand le passage se fait tout le monde mélangé. Seules les catégories retenues sont proposées au plateau et affichées sur les écrans géants."
       />
+
+      {soucis.length > 0 ? (
+        <div style={{ marginBottom: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+          {soucis.map((x) => (
+            <Encart key={x} ton="ambre">
+              {x}
+            </Encart>
+          ))}
+        </div>
+      ) : null}
 
       <div
         style={{

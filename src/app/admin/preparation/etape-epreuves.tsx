@@ -2,7 +2,7 @@
 
 import { BANDES, C, MESURES, aideMesure } from "@/lib/charte";
 import { TitreSection } from "@/components/chrome";
-import { Etiquette } from "@/components/ui";
+import { Encart, Etiquette } from "@/components/ui";
 import { BoutonAction, ChampTexte, ChoixListe } from "@/components/saisie";
 import {
   ajouterEpreuve,
@@ -203,10 +203,26 @@ function FicheEpreuve({ ep, rang }: { ep: EpreuveComplete; rang: number }) {
             <ChampTexte
               valeur={String(ep.essais)}
               type="number"
-              title="Nombre de tentatives autorisées ; le meilleur essai est retenu"
+              title="Nombre de tentatives autorisées. Enregistré et exporté, mais le plateau ne crée qu'un passage par athlète : les essais multiples ne sont pas encore gérés."
               enregistrer={(v) => modifierEpreuve(ep.id, "essais", v)}
               style={{ padding: "10px 12px", borderRadius: 9 }}
             />
+            {ep.essais > 1 ? (
+              // Ne pas laisser croire à une fonction qui n'existe pas : le
+              // plateau ne crée qu'un passage par athlète, et rouvrir un
+              // passage REMPLACE le résultat au lieu d'ajouter un essai.
+              <div
+                style={{
+                  fontSize: 12,
+                  color: C.ambreEncre,
+                  marginTop: 5,
+                  lineHeight: 1.4,
+                }}
+              >
+                Consigné au procès-verbal, mais pas encore géré au plateau :
+                un seul passage par athlète est créé.
+              </div>
+            ) : null}
           </div>
 
           <div>
@@ -276,6 +292,18 @@ function FicheEpreuve({ ep, rang }: { ep: EpreuveComplete; rang: number }) {
             </div>
           ) : null}
         </div>
+
+        {ep.mesure === "nb_temps" && !ep.tours ? (
+          <div style={{ marginTop: 14 }}>
+            <Encart ton="ambre">
+              Cette épreuve se classe au nombre de répétitions, et le temps de
+              la dernière répétition départage les ex æquo — mais le comptage
+              des tours est désactivé. Le juge devra saisir le nombre et ce
+              temps à la main. Activez-le ci-dessous pour qu&apos;ils se remplissent
+              seuls à chaque appui.
+            </Encart>
+          </div>
+        ) : null}
 
         {/* ── Comptage des répétitions ── */}
         <div
