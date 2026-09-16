@@ -5,12 +5,7 @@ import { useFormStatus } from "react-dom";
 import { C } from "@/lib/charte";
 import { seConnecter, type EtatConnexion } from "./actions";
 
-/**
- * La carte de compte du fichier d'origine : on clique sur la ligne, le champ
- * de code se déplie dessous. Rien n'est saisi tant que le compte n'est pas
- * choisi — c'est ce qui évite qu'un code parte dans le mauvais champ quand
- * deux postes sont ouverts côte à côte.
- */
+/** Le bouton d'envoi, désarmé le temps de la vérification. */
 function Bouton() {
   const { pending } = useFormStatus();
   return (
@@ -35,6 +30,19 @@ function Bouton() {
   );
 }
 
+/**
+ * La carte de compte du fichier d'origine : on clique sur la ligne, le champ
+ * de code se déplie dessous. Rien n'est saisi tant que le compte n'est pas
+ * choisi — c'est ce qui évite qu'un code parte dans le mauvais champ quand
+ * deux postes sont ouverts côte à côte.
+ *
+ * Un point où l'on NE suit PAS l'original : il posait `inputMode="numeric"`,
+ * parce que son code d'accès était un PIN à quatre chiffres rangé dans le
+ * fichier. Ici le code est un vrai mot de passe, choisi librement et vérifié
+ * par le serveur. Garder le clavier numérique rendait tout mot de passe
+ * alphanumérique **impossible à saisir sur téléphone** — l'appareil n'affiche
+ * alors qu'un pavé de chiffres.
+ */
 export function FormulaireConnexion({ suite }: { suite?: string }) {
   const [etat, action] = useActionState<EtatConnexion, FormData>(
     seConnecter,
@@ -124,7 +132,6 @@ export function FormulaireConnexion({ suite }: { suite?: string }) {
                 id="motdepasse"
                 name="motdepasse"
                 type="password"
-                inputMode="numeric"
                 autoComplete="current-password"
                 autoFocus
                 required

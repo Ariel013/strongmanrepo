@@ -535,7 +535,7 @@ export function EtapeAthletes({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+            gridTemplateColumns: "repeat(auto-fit,minmax(min(200px,100%),1fr))",
             gap: 12,
           }}
         >
@@ -798,9 +798,11 @@ function LigneAthlete({
             <div
               style={{
                 flex: 1,
-                minWidth: 260,
+                // `min(260px, 100%)` : la fiche passe sur une colonne au lieu
+                // de forcer un défilement latéral sur un téléphone étroit.
+                minWidth: "min(260px, 100%)",
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))",
+                gridTemplateColumns: "repeat(auto-fit,minmax(min(160px,100%),1fr))",
                 gap: "14px 12px",
                 alignItems: "end",
               }}

@@ -104,6 +104,11 @@
 /* ── Base reprise mot pour mot du fichier d'origine ── */
 body {
   margin: 0;
+  /* `viewport-fit=cover` étend la page sous l'encoche et la barre gestuelle :
+     sans ces marges, un bouton du bas tombe sous la barre du téléphone et
+     devient intouchable. Zéro partout ailleurs. */
+  padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
   background: #fcfaf6;
   color: #141210;
   font-family: "Clash Display", "Barlow Condensed", system-ui, sans-serif;
@@ -138,6 +143,27 @@ button {
 }
 
 /**
+ * Écrans tactiles — téléphone et tablette.
+ *
+ * Safari sur iOS **zoome la page** dès qu'un champ de moins de 16 px reçoit le
+ * focus, et ne dézoome pas en sortant : la table se retrouve à faire glisser
+ * l'écran latéralement après chaque saisie. Les champs du portage sont à
+ * 13-15 px, fidèles à l'original conçu pour un ordinateur.
+ *
+ * On relève donc la taille au seuil d'iOS, et seulement là où le pointeur est
+ * grossier : l'affichage sur ordinateur, lui, reste exactement celui de
+ * l'original. Le `!important` est nécessaire — les tailles viennent de styles
+ * en ligne, qui l'emportent sur toute règle de feuille.
+ */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/**
  * Les écrans publics sont lus de loin et jamais touchés : pas de curseur,
  * pas de sélection accidentelle par un régisseur qui frôle la souris.
  */
@@ -145,4 +171,11 @@ button {
   cursor: none;
   user-select: none;
   overflow: hidden;
+  /* L'écran public est posé en `fixed inset: 0` : les marges du corps de page
+     ne l'atteignent pas. Sur un mur LED les encoches valent zéro ; sur le
+     téléphone d'un régisseur qui vérifie une sortie, elles comptent. */
+  padding-top: max(3vh, env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: max(3vh, env(safe-area-inset-bottom, 0px)) !important;
+  padding-left: max(4vw, env(safe-area-inset-left, 0px)) !important;
+  padding-right: max(4vw, env(safe-area-inset-right, 0px)) !important;
 }

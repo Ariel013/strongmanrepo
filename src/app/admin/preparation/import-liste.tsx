@@ -160,7 +160,7 @@ export function PanneauImport({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(260px,100%),1fr))",
               gap: 16,
             }}
           >
@@ -477,7 +477,7 @@ export function PanneauImport({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(130px,100%),1fr))",
               gap: 12,
               marginBottom: 16,
             }}

@@ -662,7 +662,7 @@ export function Plateau({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(240px,100%),1fr))",
               gap: 12,
             }}
           >
@@ -748,7 +748,7 @@ export function Plateau({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(300px,100%),1fr))",
           gap: 16,
           alignItems: "start",
         }}
@@ -1258,7 +1258,7 @@ export function Plateau({
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(min(140px,100%),1fr))",
                       gap: 10,
                       marginTop: 14,
                       alignItems: "end",
@@ -1551,7 +1551,7 @@ export function Plateau({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gridTemplateColumns: "repeat(auto-fit,minmax(min(260px,100%),1fr))",
               gap: 14,
             }}
           >
@@ -1679,7 +1679,7 @@ export function Plateau({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(320px,100%),1fr))",
           gap: 16,
           marginTop: 22,
         }}

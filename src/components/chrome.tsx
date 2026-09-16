@@ -13,7 +13,15 @@ import { C } from "@/lib/charte";
 /** La colonne de 1180 px du fichier d'origine, avec sa marge basse de 80 px. */
 export function Conteneur({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 20px 80px" }}>
+    <div
+      style={{
+        maxWidth: 1180,
+        margin: "0 auto",
+        // La marge latérale se resserre sur téléphone : 20 px de chaque côté
+        // sur un écran de 360 px, c'est 11 % de la largeur perdus.
+        padding: "0 clamp(12px, 4vw, 20px) 80px",
+      }}
+    >
       {children}
     </div>
   );
@@ -54,6 +62,10 @@ export function Bandeau({ actions }: { actions?: React.ReactNode }) {
         style={{
           display: "flex",
           alignItems: "center",
+          // Sur téléphone, le logo, l'intitulé et les deux actions ne tiennent
+          // pas sur une ligne : ils s'empilent au lieu de se comprimer jusqu'à
+          // rendre le titre illisible.
+          flexWrap: "wrap",
           gap: 20,
           padding: "22px 26px",
           marginTop: 20,
@@ -107,7 +119,7 @@ export function Bandeau({ actions }: { actions?: React.ReactNode }) {
             display: "flex",
             gap: 10,
             alignItems: "center",
-            flex: "none",
+            flexWrap: "wrap",
           }}
         >
           {actions}
