@@ -63,6 +63,9 @@ ni pour les athlètes, ni pour les logos des clubs.
 Marche à suivre, entièrement sur vercel.com :
 
 1. Projet **strongman** → onglet **Storage** → **Create Database** → **Blob**.
+   ⚠️ **Choisir l'accès PUBLIC.** Le mode se fixe à la création. Un magasin
+   privé exige une authentification pour *lire* chaque image — or le mur LED
+   n'a pas de session : les photos y resteraient invisibles.
 2. Nommer le magasin, puis **Connect to Project** en cochant les trois
    environnements (Production, Preview, Development).
    Vercel écrit alors `BLOB_READ_WRITE_TOKEN` tout seul dans les variables.
@@ -77,6 +80,10 @@ Marche à suivre, entièrement sur vercel.com :
 > ⚠️ Le magasin Blob crée **trois** variables : `BLOB_READ_WRITE_TOKEN`,
 > `BLOB_STORE_ID` et `BLOB_WEBHOOK_PUBLIC_KEY`. Seule la première sert au
 > dépôt des photos — elle commence par `vercel_blob_rw_`.
+
+**Constaté le 2026-09-16 (2) :** le premier magasin créé l'était en accès
+**privé**, d'où « Cannot use public access on a private store ». Il faut un
+magasin **public** — voir l'avertissement de l'étape 1.
 
 **Constaté le 2026-09-16 :** les trois variables existaient bien dans le
 déploiement, mais `BLOB_READ_WRITE_TOKEN` avait une **valeur vide**. Côté code

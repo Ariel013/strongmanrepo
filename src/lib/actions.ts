@@ -1285,6 +1285,19 @@ async function deposer(
       cause: msg.slice(0, 200),
     });
 
+    // Le magasin a été créé en mode privé. Un blob privé exige une
+    // authentification pour être LU — or les écrans du mur LED n'ont aucune
+    // session : la photo y resterait invisible même déposée. C'est donc le
+    // magasin qu'il faut changer, pas le code.
+    if (/private store|private access|public access on a private/i.test(msg))
+      return {
+        erreur:
+          "Le magasin d'images est configuré en accès PRIVÉ. Les photos " +
+          "s'affichent sur le mur LED, qui n'a pas de session : elles doivent " +
+          "être lisibles par URL. Créez un magasin Blob en accès PUBLIC " +
+          "(le mode se choisit à la création), reliez-le au projet, puis " +
+          "redéployez.",
+      };
     if (/access denied|unauthorized|invalid token|forbidden/i.test(msg))
       return {
         erreur:
