@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { C, nomComplet } from "@/lib/charte";
 import { styleBouton, styleChamp } from "@/components/ui";
 import { televerserPhoto } from "@/lib/actions";
+import { poidsLisible, preparerImage } from "@/lib/image";
 import type { FicheAthlete } from "@/lib/donnees";
 
 const sansAcc = (s: string): string =>
@@ -91,17 +92,32 @@ export function PhotosGroupees({
   function appliquer() {
     demarrer(async () => {
       let ok = 0;
+      let economise = 0;
       const echecs: string[] = [];
-      for (const c of retenues) {
-        const fd = new FormData();
-        fd.set("fichier", c.fichier);
-        const r = await televerserPhoto(c.athleteId, fd);
-        if (r.ok) ok++;
-        else echecs.push(`${c.fichier.name} : ${r.erreur ?? "refusée"}`);
+      for (const [i, c] of retenues.entries()) {
+        setEtat(`Envoi ${i + 1} / ${retenues.length}…`);
+        try {
+          // Chaque image est réduite avant de partir : dix photos de
+          // téléphone d'affilée, c'est vingt mégaoctets sur le réseau de la
+          // salle, et un refus `413` à la première.
+          const { fichier, avant, apres } = await preparerImage(
+            c.fichier,
+            "portrait",
+          );
+          economise += avant - apres;
+          const fd = new FormData();
+          fd.set("fichier", fichier);
+          const r = await televerserPhoto(c.athleteId, fd);
+          if (r.ok) ok++;
+          else echecs.push(`${c.fichier.name} : ${r.erreur ?? "refusée"}`);
+        } catch {
+          echecs.push(`${c.fichier.name} : envoi impossible`);
+        }
       }
       setEtat(
         echecs.length === 0
-          ? `${ok} photo(s) enregistrée(s).`
+          ? `${ok} photo(s) enregistrée(s)` +
+              (economise > 0 ? `, ${poidsLisible(economise)} économisés.` : ".")
           : `${ok} enregistrée(s). ${echecs.join(" · ")}`,
       );
       if (echecs.length === 0) setCorresp([]);

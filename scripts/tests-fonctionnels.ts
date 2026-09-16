@@ -34,6 +34,7 @@ import {
 } from "../src/lib/donnees";
 import { classementEpreuve, plusPetitGagne } from "../src/lib/classement";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
+import { calculerRecadrage, poidsLisible } from "../src/lib/image";
 import {
   affecterCategorieA,
   placerAuPlateau,
@@ -665,8 +666,50 @@ async function principal() {
     ]);
     egal("une fois les catégories affectées, la file se remplit", avecCat.crees, 2);
 
-    /* ── 14. Cloisonnement des données personnelles ── */
-    console.log("\n14. Cloisonnement des données personnelles");
+    /* ── 14. Préparation des photos avant envoi ── */
+    console.log("\n14. Photos : recadrage et réduction");
+
+    // Une photo de téléphone dépasse la limite de corps d'une Server Action et
+    // se faisait refuser par un 413 brut, qui cassait l'écran.
+    const p1 = calculerRecadrage(4000, 3000, "portrait");
+    egal("photo paysage → recadrée en portrait 3/4", [p1.largeur, p1.hauteur], [1200, 1600]);
+    verifier(
+      "le recadrage paysage est centré horizontalement",
+      p1.xSource > 0 && p1.ySource === 0,
+      `x=${p1.xSource} y=${p1.ySource}`,
+    );
+
+    // Déjà exactement au format : rien à retirer.
+    const p2 = calculerRecadrage(3000, 4000, "portrait");
+    egal("une image déjà en 3/4 garde tout", [p2.xSource, p2.ySource], [0, 0]);
+    egal("… et sort aux dimensions voulues", [p2.largeur, p2.hauteur], [1200, 1600]);
+
+    // Plus haute que le 3/4 : on rogne en haut et en bas, à parts égales.
+    const p2b = calculerRecadrage(3000, 5000, "portrait");
+    verifier(
+      "une image trop haute est rognée verticalement, au centre",
+      p2b.ySource > 0 && p2b.xSource === 0,
+      `x=${p2b.xSource} y=${p2b.ySource}`,
+    );
+    egal("le rognage vertical est symétrique", p2b.ySource, 500);
+    egal("et le résultat retombe en 3/4", [p2b.largeur, p2b.hauteur], [1200, 1600]);
+
+    const p3 = calculerRecadrage(300, 400, "portrait");
+    egal("une petite image n'est jamais agrandie", [p3.largeur, p3.hauteur], [300, 400]);
+
+    const l1 = calculerRecadrage(2000, 500, "entier");
+    verifier(
+      "un logo n'est jamais recadré",
+      l1.xSource === 0 && l1.ySource === 0,
+      `x=${l1.xSource} y=${l1.ySource}`,
+    );
+    egal("un logo large est seulement réduit", l1.largeur, 1200);
+
+    egal("poids lisible en mégaoctets", poidsLisible(2_500_000), "2,4 Mo");
+    egal("poids lisible en kilo-octets", poidsLisible(320_000), "313 ko");
+
+    /* ── 15. Cloisonnement des données personnelles ── */
+    console.log("\n15. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(

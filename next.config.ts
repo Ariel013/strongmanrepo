@@ -43,6 +43,20 @@ const ENTETES = [
 ];
 
 const nextConfig: NextConfig = {
+  /**
+   * Corps des Server Actions : 1 Mo par défaut, ce qui refusait toute photo de
+   * téléphone par un `413` brut — avant même d'atteindre le code qui vérifie
+   * la taille, si bien que l'écran tombait sans un mot.
+   *
+   * Les images sont désormais réduites dans le navigateur (`src/lib/image.ts`)
+   * et pèsent quelques centaines de kilo-octets. Ces 4 Mo ne sont donc qu'un
+   * filet, pour le poste ancien où la réduction n'a pas pu se faire : au-delà,
+   * c'est la plateforme elle-même qui refuse, vers 4,5 Mo.
+   */
+  experimental: {
+    serverActions: { bodySizeLimit: "4mb" },
+  },
+
   async headers() {
     return [{ source: "/:chemin*", headers: ENTETES }];
   },

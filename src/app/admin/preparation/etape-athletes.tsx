@@ -30,6 +30,7 @@ import {
   viderDossards,
 } from "@/lib/actions";
 import type { CategorieVue, FicheAthlete } from "@/lib/donnees";
+import { poidsLisible, preparerImage, type ModeImage } from "@/lib/image";
 import { PanneauImport } from "./import-liste";
 import { PhotosGroupees } from "./photos-groupees";
 
@@ -574,6 +575,7 @@ export function EtapeAthletes({
                 <ChoixFichier
                   libelle="Choisir un logo"
                   title="Choisir l'image du logo"
+                  mode="entier"
                   envoyer={(fd) => televerserLogo(competitionId, nom, fd)}
                 />
               </div>
@@ -1142,17 +1144,25 @@ function Champ({
  * Le choix de fichier discret du fichier d'origine : un simple libellé vert,
  * l'`input type=file` caché derrière. L'envoi part dès que le fichier est
  * choisi — aucun bouton « Envoyer » à cliquer en plus.
+ *
+ * L'image est réduite dans le navigateur avant de partir : une photo de
+ * téléphone dépasse la limite de corps d'une Server Action et se faisait
+ * refuser par un `413` brut, qui cassait l'écran au lieu de dire quoi que ce
+ * soit.
  */
 function ChoixFichier({
   libelle,
   title,
   envoyer,
+  mode = "portrait",
 }: {
   libelle: string;
   title?: string;
   envoyer: (donnees: FormData) => Promise<{ ok: boolean; erreur?: string }>;
+  mode?: ModeImage;
 }) {
   const [etat, setEtat] = useState("");
+  const [echec, setEchec] = useState(false);
   const [, demarrer] = useTransition();
 
   return (
@@ -1172,16 +1182,39 @@ function ChoixFichier({
           type="file"
           accept="image/*"
           style={{ display: "none" }}
-          onChange={(e) => {
+          onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
-            const fd = new FormData();
-            fd.set("fichier", f);
-            setEtat("Envoi…");
-            demarrer(async () => {
-              const r = await envoyer(fd);
-              setEtat(r.ok ? "" : (r.erreur ?? "Envoi refusé."));
-            });
+            e.target.value = "";
+            setEchec(false);
+            setEtat("Préparation…");
+            try {
+              const { fichier, avant, apres } = await preparerImage(f, mode);
+              const fd = new FormData();
+              fd.set("fichier", fichier);
+              setEtat(
+                apres < avant
+                  ? `Envoi de ${poidsLisible(apres)}…`
+                  : "Envoi…",
+              );
+              demarrer(async () => {
+                try {
+                  const r = await envoyer(fd);
+                  setEchec(!r.ok);
+                  setEtat(r.ok ? "" : (r.erreur ?? "Envoi refusé."));
+                } catch {
+                  // Une Server Action qui échoue au niveau du transport fait
+                  // autrement tomber toute la page sur l'écran d'erreur.
+                  setEchec(true);
+                  setEtat(
+                    "Envoi impossible. Réessayez, ou choisissez une image plus légère.",
+                  );
+                }
+              });
+            } catch {
+              setEchec(true);
+              setEtat("Cette image n'a pas pu être lue.");
+            }
           }}
         />
       </label>
@@ -1189,7 +1222,7 @@ function ChoixFichier({
         <div
           style={{
             fontSize: 11,
-            color: C.rougeFonce,
+            color: echec ? C.rougeFonce : C.encre4,
             lineHeight: 1.4,
             marginTop: 3,
           }}
