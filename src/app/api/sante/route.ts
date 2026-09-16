@@ -76,6 +76,42 @@ export async function GET() {
    * distinguer, c'est la différence entre « redéployez » et « collez la
    * valeur ».
    */
+  /**
+   * Le jeton est-il seulement PRÉSENT, ou réellement utilisable ?
+   *
+   * Un jeton qui pointe vers un magasin supprimé reste une chaîne non vide :
+   * la présence ne prouve rien. On interroge donc le magasin pour de bon —
+   * une lecture d'un seul élément, sans rien écrire. Sans cela, la seule
+   * façon de découvrir la panne est de tenter un envoi depuis
+   * l'administration, c'est-à-dire derrière un code d'accès.
+   */
+  let stockage = "non testé";
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      const { list } = await import("@vercel/blob");
+      const { blobs } = await list({ limit: 1 });
+      stockage = `joignable — ${blobs.length === 0 ? "aucune image déposée" : "au moins une image"}`;
+    } catch (e) {
+      const m = (e as Error).message ?? "";
+      stockage = "injoignable";
+      if (/not found|no such store|store.*exist/i.test(m))
+        avertissements.push(
+          "Le jeton d'images pointe vers un magasin QUI N'EXISTE PLUS. Si " +
+            "vous venez d'en créer un autre, reliez-le au projet puis " +
+            "REDÉPLOYEZ : le déploiement en cours garde l'ancien jeton.",
+        );
+      else if (/unauthorized|access denied|invalid token|forbidden/i.test(m))
+        avertissements.push(
+          "Le magasin d'images refuse le jeton : il appartient à un autre " +
+            "projet, ou il a été régénéré. Recopiez-le et redéployez.",
+        );
+      else
+        avertissements.push(
+          `Magasin d'images injoignable : ${m.slice(0, 140)}`,
+        );
+    }
+  }
+
   const jetonDefini = "BLOB_READ_WRITE_TOKEN" in process.env;
   if (!variables.BLOB_READ_WRITE_TOKEN) {
     if (jetonDefini) {
@@ -155,6 +191,7 @@ export async function GET() {
       variables,
       environnement,
       variablesBlob,
+      stockageImages: stockage,
       base,
       problemes,
       // Ce qui n'empêche pas la compétition, mais prive d'une fonction.

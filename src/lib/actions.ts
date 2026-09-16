@@ -1308,8 +1308,9 @@ async function deposer(
     if (/not found|no such store|store.*exist/i.test(msg))
       return {
         erreur:
-          "Magasin d'images introuvable : il a peut-être été supprimé, ou le " +
-          "jeton pointe vers un autre projet.",
+          "Le jeton d'images pointe vers un magasin qui n'existe plus. Si " +
+          "vous venez d'en créer un autre, reliez-le au projet puis " +
+          "REDÉPLOYEZ : le déploiement en cours garde encore l'ancien jeton.",
       };
     if (/quota|limit exceeded|too large|payload/i.test(msg))
       return {
