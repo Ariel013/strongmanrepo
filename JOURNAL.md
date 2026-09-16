@@ -33,9 +33,11 @@
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **56/56** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
-- **Déploiement** : ⬜ **non vérifié en ligne depuis le portage.**
-- **Branche** : `main`, plusieurs commits d'avance sur `origin/main` — **non poussés**
-  (le push attend une confirmation explicite, à chaque fois).
+- **Branche** : `main` alignée avec `origin/main` sur `f47ae10`, poussée le
+  2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
+- **Déploiement** : ⬜ **non vérifié en ligne.** Vercel a dû redéployer sur ce
+  push ; personne n'a encore constaté le résultat. À faire dès que le mot de
+  passe est régénéré.
 
 - **🔴 Prochaine action** : régénérer `ADMIN_PASSWORD_HASH`
   (`pnpm run motdepasse`), la reporter dans `.env` et dans Vercel.
