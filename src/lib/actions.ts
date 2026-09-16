@@ -12,7 +12,7 @@
  * de réclamation, c'est la seule pièce qui dise ce qui a été saisi et quand.
  */
 
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
@@ -32,6 +32,12 @@ import {
 } from "./db/schema";
 import { NOM_COOKIE, lireSession } from "./auth";
 import { cleRapprochement } from "./import-liste";
+import {
+  affecterCategorieA,
+  placerAuPlateau,
+  reconstruireFile,
+  remettreEnFile,
+} from "./plateau";
 import {
   dateFrancaise,
   decimalFacultatif,
@@ -257,40 +263,12 @@ export async function construireFile(
   athleteIdsDansLOrdre: string[],
 ): Promise<Retour> {
   await exigerSession();
-
-  const existants = await db
-    .select()
-    .from(passage)
-    .where(eq(passage.epreuveId, epreuveId));
-  const termines = new Set(
-    existants.filter((p) => p.statut === "termine").map((p) => p.athleteId),
+  const r = await reconstruireFile(
+    competitionId,
+    epreuveId,
+    athleteIdsDansLOrdre,
   );
-
-  const aSupprimer = existants
-    .filter((p) => p.statut !== "termine")
-    .map((p) => p.id);
-  if (aSupprimer.length > 0) {
-    await db
-      .delete(passage)
-      .where(
-        and(eq(passage.epreuveId, epreuveId), inArray(passage.id, aSupprimer)),
-      );
-  }
-
-  const aCreer = athleteIdsDansLOrdre
-    .filter((id) => !termines.has(id))
-    .map((athleteId, i) => ({
-      competitionId,
-      epreuveId,
-      athleteId,
-      ordre: i + 1,
-      statut: "avenir",
-    }));
-
-  if (aCreer.length > 0) await db.insert(passage).values(aCreer);
-  await tracer("file.construite", "epreuve", epreuveId, {
-    passages: aCreer.length,
-  });
+  await tracer("file.construite", "epreuve", epreuveId, { passages: r.crees });
 
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
@@ -308,40 +286,8 @@ export async function construireFile(
  */
 export async function appelerAuPlateau(passageId: string): Promise<Retour> {
   await exigerSession();
-
-  const [cible] = await db.select().from(passage).where(eq(passage.id, passageId));
-  if (!cible) return { ok: false, erreur: "Passage introuvable." };
-
-  const [athleteAppele] = await db
-    .select({ categorieId: athlete.categorieId })
-    .from(athlete)
-    .where(eq(athlete.id, cible.athleteId));
-
-  // Celui qui occupait le plateau DANS LA MÊME CATÉGORIE retourne dans la
-  // file : deux athlètes d'une même catégorie fausseraient le chronomètre et
-  // l'affichage public.
-  const dejaAuPlateau = await db
-    .select({ id: passage.id, categorieId: athlete.categorieId })
-    .from(passage)
-    .innerJoin(athlete, eq(athlete.id, passage.athleteId))
-    .where(
-      and(eq(passage.epreuveId, cible.epreuveId), eq(passage.statut, "plateau")),
-    );
-
-  const aRenvoyer = dejaAuPlateau
-    .filter((p) => p.categorieId === (athleteAppele?.categorieId ?? null))
-    .map((p) => p.id);
-  if (aRenvoyer.length > 0) {
-    await db
-      .update(passage)
-      .set({ statut: "avenir" })
-      .where(inArray(passage.id, aRenvoyer));
-  }
-
-  await db
-    .update(passage)
-    .set({ statut: "plateau" })
-    .where(eq(passage.id, passageId));
+  const r = await placerAuPlateau(passageId);
+  if (!r.ok) return r;
 
   await tracer("passage.appele", "passage", passageId);
   revalidatePath("/admin/plateau");
@@ -352,17 +298,7 @@ export async function appelerAuPlateau(passageId: string): Promise<Retour> {
 /** Remet au plateau un passage appelé par erreur, sans résultat. */
 export async function renvoyerEnFile(passageId: string): Promise<Retour> {
   await exigerSession();
-  await db
-    .update(passage)
-    .set({
-      statut: "avenir",
-      resultatStatut: null,
-      valeur: null,
-      tempsS: null,
-      tours: [],
-      valideLe: null,
-    })
-    .where(eq(passage.id, passageId));
+  await remettreEnFile(passageId);
   await tracer("passage.renvoye", "passage", passageId);
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
@@ -1169,10 +1105,6 @@ export async function affecterCategorie(
   if (athleteIds.length === 0)
     return { ok: false, erreur: "Aucun athlète sélectionné." };
 
-  // Trois cibles, et trois seulement : une catégorie, « indépendant », ou
-  // « à déterminer par la pesée » (chaîne vide) — qui remet l'athlète dans la
-  // liste des sans-catégorie plutôt que de le sortir des classements.
-  //
   // La catégorie est relue en base avant d'être écrite. Sans cette lecture,
   // une valeur quelconque venue du navigateur partirait dans la colonne :
   // au mieux une erreur de format en pleine pesée, au pire un athlète
@@ -1189,14 +1121,8 @@ export async function affecterCategorie(
     if (!cat) return { ok: false, erreur: "Catégorie inconnue." };
   }
 
-  const valeurs =
-    cible === "hors"
-      ? { categorieId: null, horsClassement: true }
-      : cible === ""
-        ? { categorieId: null, horsClassement: false }
-        : { categorieId: cible, horsClassement: false };
-
-  await db.update(athlete).set(valeurs).where(inArray(athlete.id, athleteIds));
+  const r = await affecterCategorieA(athleteIds, cible);
+  if (!r.ok) return r;
   await tracer("categorie.affectee", "athlete", null, {
     nombre: athleteIds.length,
     cible,

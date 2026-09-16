@@ -13,7 +13,7 @@
  * épreuves et ses passages.
  */
 
-import { and, eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { db } from "../src/lib/db";
 import {
   athlete,
@@ -34,6 +34,12 @@ import {
 } from "../src/lib/donnees";
 import { classementEpreuve, plusPetitGagne } from "../src/lib/classement";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
+import {
+  affecterCategorieA,
+  placerAuPlateau,
+  reconstruireFile,
+  remettreEnFile,
+} from "../src/lib/plateau";
 import {
   dateFrancaise,
   decimalFacultatif,
@@ -511,91 +517,124 @@ async function principal() {
       minutes: 0,
     });
 
-    /* ── 12. Les actions d'écriture, exécutées pour de vrai ── */
-    console.log("\n12. Actions d'écriture sur la base");
+    /* ── 12. Les écritures du plateau, exécutées pour de vrai ── */
+    console.log("\n12. Plateau : appel, retour en file, reconstruction");
 
-    // Ces trois chemins passent par `inArray`. Ils ont planté en production
-    // parce que les tests ne couvraient que la logique pure : le barème était
-    // vérifié, mais rien n'écrivait jamais en base par les actions.
+    // Ces fonctions SONT celles qu'appellent les Server Actions. Elles ont
+    // planté en production sous 82 tests au vert, parce que la suite
+    // vérifiait le barème sans jamais écrire. Elles sont donc exécutées ici,
+    // et surtout dans l'état où elles font quelque chose : le premier appel
+    // sur une file vide ne prouvait rien.
     const [catA] = cats;
 
-    await db
-      .update(athlete)
-      .set({ categorieId: catA.id })
-      .where(inArray(athlete.id, [alpha.id, bravo.id]));
-    const apresAffectation = await db
+    await affecterCategorieA([alpha.id, bravo.id, charlie.id], catA.id);
+    const affectes = await db
       .select()
       .from(athlete)
-      .where(inArray(athlete.id, [alpha.id, bravo.id]));
-    egal(
+      .where(inArray(athlete.id, [alpha.id, bravo.id, charlie.id]));
+    verifier(
       "affecter une catégorie à plusieurs athlètes",
-      apresAffectation.every((a) => a.categorieId === catA.id),
-      true,
+      affectes.every((a) => a.categorieId === catA.id),
     );
 
-    await db
-      .update(athlete)
-      .set({ categorieId: catA.id })
-      .where(inArray(athlete.id, [charlie.id]));
-    const [seul] = await db
+    const horsC = await affecterCategorieA([delta.id], "hors");
+    const [indep] = await db
       .select()
       .from(athlete)
-      .where(eq(athlete.id, charlie.id));
-    egal(
-      "affecter une catégorie à un seul athlète",
-      seul.categorieId,
-      catA.id,
+      .where(eq(athlete.id, delta.id));
+    verifier(
+      "déclarer un athlète indépendant",
+      horsC.ok && indep.horsClassement && indep.categorieId === null,
     );
 
-    // Rappeler au plateau : le cas qui plantait dès le deuxième appel.
+    // Reconstruction : d'abord sur une file vierge, puis SUR UNE FILE
+    // EXISTANTE — le cas qui plantait.
+    await db.delete(passage).where(eq(passage.epreuveId, eps[0].id));
+    const r1 = await reconstruireFile(comp.id, eps[0].id, [
+      alpha.id,
+      bravo.id,
+      charlie.id,
+    ]);
+    egal("construire la file (1re fois)", r1.crees, 3);
+
+    const r2 = await reconstruireFile(comp.id, eps[0].id, [
+      charlie.id,
+      bravo.id,
+      alpha.id,
+    ]);
+    egal("RECONSTRUIRE sur une file existante", r2.crees, 3);
+    const apresRebuild = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id));
+    egal("aucun doublon après reconstruction", apresRebuild.length, 3);
+
+    // Appels successifs : le deuxième est celui qui plantait.
     const file = await db
       .select()
       .from(passage)
-      .where(
-        and(eq(passage.epreuveId, eps[0].id), eq(passage.statut, "avenir")),
-      );
-    verifier("il reste des passages à venir pour l'essai", file.length > 0);
-    if (file.length > 0) {
-      await db
-        .update(passage)
-        .set({ statut: "plateau" })
-        .where(eq(passage.id, file[0].id));
-      // Puis on le renvoie en file, comme le fait `appelerAuPlateau` quand un
-      // autre athlète de la même catégorie est appelé.
-      await db
-        .update(passage)
-        .set({ statut: "avenir" })
-        .where(inArray(passage.id, [file[0].id]));
-      const [remis] = await db
-        .select()
-        .from(passage)
-        .where(eq(passage.id, file[0].id));
-      egal("renvoyer en file un passage déjà au plateau", remis.statut, "avenir");
-    }
+      .where(eq(passage.epreuveId, eps[0].id))
+      .orderBy(asc(passage.ordre));
 
-    // Reconstruire l'ordre : la suppression en masse des passages non terminés.
-    const aJeter = (
-      await db
-        .select()
-        .from(passage)
-        .where(
-          and(eq(passage.epreuveId, eps[1].id), eq(passage.statut, "termine")),
-        )
-    ).map((p) => p.id);
-    verifier("des passages terminés existent", aJeter.length > 0);
-    if (aJeter.length > 0) {
-      const avant = aJeter.length;
-      await db.delete(passage).where(inArray(passage.id, aJeter));
-      const restant = await db
-        .select()
-        .from(passage)
-        .where(inArray(passage.id, aJeter));
-      egal(
-        `supprimer ${avant} passages d'un coup`,
-        restant.length,
-        0,
-      );
-    }
+    await placerAuPlateau(file[0].id);
+    let etat = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id));
+    egal(
+      "1er appel : un athlète au plateau",
+      etat.filter((p) => p.statut === "plateau").length,
+      1,
+    );
+
+    const deuxieme = await placerAuPlateau(file[1].id);
+    etat = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id));
+    verifier("2e appel accepté (le cas qui plantait)", deuxieme.ok);
+    egal(
+      "toujours UN SEUL athlète au plateau",
+      etat.filter((p) => p.statut === "plateau").length,
+      1,
+    );
+    egal(
+      "c'est bien le dernier appelé",
+      etat.find((p) => p.statut === "plateau")?.id,
+      file[1].id,
+    );
+    egal(
+      "le précédent est revenu en file",
+      etat.find((p) => p.id === file[0].id)?.statut,
+      "avenir",
+    );
+
+    await placerAuPlateau(file[2].id);
+    etat = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id));
+    egal(
+      "3e appel : encore un seul au plateau",
+      etat.filter((p) => p.statut === "plateau").length,
+      1,
+    );
+
+    await remettreEnFile(file[2].id);
+    etat = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id));
+    egal(
+      "retour en file : plateau vide",
+      etat.filter((p) => p.statut === "plateau").length,
+      0,
+    );
+    egal(
+      "et aucun passage perdu",
+      etat.filter((p) => p.statut === "avenir").length,
+      3,
+    );
 
     /* ── 13. Cloisonnement des données personnelles ── */
     console.log("\n13. Cloisonnement des données personnelles");

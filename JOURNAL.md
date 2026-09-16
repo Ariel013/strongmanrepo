@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **88/88** ✓. Les routes répondent 200 sur un build de production local.
+  **95/95** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
@@ -103,7 +103,9 @@
   en paramètres séparés. Le même motif servait à deux autres endroits jamais
   signalés et pires — `appelerAuPlateau` plantait à **chaque appel sauf le
   premier**, et « Reconstruire l'ordre » dès qu'une file existait. Corrigé par
-  `inArray()` aux trois endroits.
+  `inArray()` aux trois endroits, et les écritures sont sorties dans
+  `src/lib/plateau.ts` pour être enfin testables — 13 tests couvrent
+  maintenant l'appel au plateau, le retour en file et la reconstruction.
 - Le poids déclaré n'était saisissable nulle part : il n'arrivait que par
   l'import. Rendu modifiable. Le poids de la pesée reste en lecture seule —
   il engage un officiel — mais la fiche dit maintenant où le saisir.
@@ -166,6 +168,13 @@ cessait d'être vide : même un essai manuel rapide les aurait manqués.
 vérifier ce qui les précède — et les exécuter dans l'état où elles font
 vraiment quelque chose : file déjà remplie, plateau déjà occupé. Le cas
 intéressant n'est jamais le premier appel sur une base vide.
+
+**Conséquence sur la structure** : une Server Action commence par
+`exigerSession()`, qui lit les cookies de la requête — hors requête, elle ne
+s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
+vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
+actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
+qui décide de l'état de la compétition doit pouvoir être appelé par un test.
 
 ### Un symptôme local ne se reporte pas en production sans l'avoir mesuré (2026-09-16)
 
