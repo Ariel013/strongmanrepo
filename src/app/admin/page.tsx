@@ -250,6 +250,17 @@ export default async function PageAccueil() {
         >
           Exporter la compétition
         </a>
+        <Link
+          href="/admin/impression/fiches"
+          title="Une fiche de notation par athlète, à imprimer pour les juges"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer les fiches de notation
+        </Link>
         <a
           href="/api/admin/export?format=classements"
           title="Classements par groupe et par épreuve en CSV"

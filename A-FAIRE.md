@@ -145,5 +145,7 @@ Settings → Environment Variables dans le `.env` du poste.
   logos des clubs, qui vivent sur Vercel Blob et n'entrent pas dans l'export.
 - **Coupure réseau le jour J** : les écrans publics et la table dépendent tous
   du serveur. Il n'y a pas de repli hors ligne — c'est le principal écart avec
-  le poste autonome d'origine. ⬜ Prévoir une procédure papier (feuille de
-  notation) en cas de panne prolongée.
+  le poste autonome d'origine. ✅ **Procédure papier en place le 2026-09-17** :
+  `/admin/impression/fiches` imprime une fiche de notation par athlète, dont
+  les cases portent exactement les intitulés du plateau. ⬜ **À imprimer la
+  veille**, un jeu complet, et à garder à la table.

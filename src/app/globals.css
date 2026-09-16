@@ -164,6 +164,39 @@ button {
 }
 
 /**
+ * Impression.
+ *
+ * Le bandeau et le fil d'Ariane sont faits pour l'écran ; sur une feuille de
+ * notation, ils volent trois centimètres au juge. Ce qui porte `.chrome-admin`
+ * disparaît donc à l'impression, et `.ne-pas-imprimer` retire les boutons qui
+ * n'ont de sens que sous la souris.
+ */
+@media print {
+  .chrome-admin,
+  .ne-pas-imprimer {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    padding: 0;
+  }
+  /* Une fiche par feuille : la coupure tombe entre deux athlètes, jamais au
+     milieu d'une case à remplir. */
+  .fiche-papier {
+    break-after: page;
+    page-break-after: always;
+  }
+  .fiche-papier:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+/**
  * Les écrans publics sont lus de loin et jamais touchés : pas de curseur,
  * pas de sélection accidentelle par un régisseur qui frôle la souris.
  */

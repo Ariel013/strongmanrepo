@@ -59,6 +59,7 @@ export function Bandeau({ actions }: { actions?: React.ReactNode }) {
   return (
     <>
       <div
+        className="chrome-admin"
         style={{
           display: "flex",
           alignItems: "center",
@@ -125,7 +126,9 @@ export function Bandeau({ actions }: { actions?: React.ReactNode }) {
           {actions}
         </div>
       </div>
-      <Tricolore />
+      <div className="chrome-admin">
+        <Tricolore />
+      </div>
     </>
   );
 }
@@ -140,6 +143,7 @@ export function Bandeau({ actions }: { actions?: React.ReactNode }) {
 export function FilAriane({ children }: { children: React.ReactNode }) {
   return (
     <div
+      className="chrome-admin"
       style={{
         display: "flex",
         gap: 8,

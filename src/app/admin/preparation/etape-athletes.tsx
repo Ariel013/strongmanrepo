@@ -156,6 +156,13 @@ export function EtapeAthletes({
         >
           Photos groupées
         </button>
+        <Link
+          href="/admin/impression/fiches"
+          title="Une fiche de notation par athlète, à imprimer pour les juges : ils y notent sur le terrain, la table reporte ensuite"
+          style={styleBouton("blanc", { padding: "11px 18px", fontWeight: 600 })}
+        >
+          Fiches de notation
+        </Link>
         <BoutonAction
           ton="blanc"
           title="Ajoute une fiche athlète vierge, à compléter dans la liste"
@@ -1089,6 +1096,13 @@ function LigneAthlete({
               vérifier ». Le bouton ci-contre retire cette marque une fois la
               fiche relue.
             </div>
+            <Link
+              href={`/admin/impression/fiches?athlete=${a.id}`}
+              title="Imprimer la fiche de notation de cet athlète"
+              style={styleBouton("blanc", { padding: "9px 14px", borderRadius: 9, fontSize: 13 })}
+            >
+              Fiche papier
+            </Link>
             <BoutonAction
               ton="blanc"
               title="Retire la marque « À vérifier » de cette fiche"

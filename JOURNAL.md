@@ -94,6 +94,22 @@
 - Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
   de la table.
 
+### 2026-09-17 (2) — Fiches de notation papier
+
+Demande de Kevin : imprimer une fiche par athlète, avec des cases vides que
+les juges remplissent sur le terrain, la table reportant ensuite. C'est aussi
+le repli hors ligne que `A-FAIRE.md` réclamait depuis le portage.
+
+`/admin/impression/fiches` (toutes) ou `?athlete=<id>` (une seule). Une feuille
+A4 par athlète. **Règle de conception : le papier demande exactement ce que
+l'écran demandera à la ressaisie, avec les mêmes mots** — « Nombre validé »,
+« Temps du dernier tour (s) », « Durée tenue (s) »… tirés des mêmes fonctions
+que le plateau (`uniteValeur`, `libelleTemps`, `mesureMixte`). Un juge n'a rien
+à traduire. Vingt cases à barrer par épreuve à répétitions, verdict à cocher,
+juge et heure par ligne, signatures et « reporté le … par … » en pied.
+
+Le bandeau et le fil d'Ariane disparaissent à l'impression (`.chrome-admin`).
+
 ### 2026-09-17 — Audit de cohérence à la demande de Kevin
 
 Toutes les données en base sont de test. Quatre incohérences trouvées :
