@@ -16,6 +16,9 @@
 
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+// L'export lit la base à chaque appel : aucune tentative de prérendu, sans
+// quoi la compilation chercherait à joindre la base pour figer un résultat.
+export const dynamic = "force-dynamic";
 import { athlete, athleteContact, passage } from "@/lib/db/schema";
 import {
   athletesDe,
