@@ -28,6 +28,7 @@ import {
   epreuvesDe,
   ordrePour,
   tableauEpreuve,
+  signatureEcrans,
   tableauGeneral,
   tousLesResultats,
 } from "../src/lib/donnees";
@@ -385,8 +386,57 @@ async function principal() {
       cleRapprochement("KONÉ", "Ibrahim") !== cleRapprochement("KONÉ", "Awa"),
     );
 
-    /* ── 10. Cloisonnement des données personnelles ── */
-    console.log("\n10. Cloisonnement des données personnelles");
+    /* ── 10. Empreinte de fraîcheur des écrans ── */
+    console.log("\n10. Empreinte de fraîcheur des écrans publics");
+
+    const sig0 = await signatureEcrans(comp.id);
+    egal(
+      "toutes les positions sont conservées, NULL compris",
+      sig0.split("|").length,
+      14,
+    );
+    egal("relue sans rien changer, elle est identique", await signatureEcrans(comp.id), sig0);
+
+    // Appeler un athlète au plateau est LE signal qui doit passer en moins de
+    // deux secondes sur le mur LED.
+    const [enFile] = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.statut, "avenir"))
+      .limit(1);
+    await db
+      .update(passage)
+      .set({ statut: "plateau" })
+      .where(eq(passage.id, enFile.id));
+    const sig1 = await signatureEcrans(comp.id);
+    verifier("un appel au plateau la fait bouger", sig1 !== sig0);
+
+    await db
+      .update(passage)
+      .set({ statut: "avenir" })
+      .where(eq(passage.id, enFile.id));
+    egal("le retour en file la ramène à l'identique", await signatureEcrans(comp.id), sig0);
+
+    await db
+      .update(competition)
+      .set({ chronoPhase: "encours", chronoDebutLe: new Date() })
+      .where(eq(competition.id, comp.id));
+    verifier(
+      "un chronomètre lancé la fait bouger",
+      (await signatureEcrans(comp.id)) !== sig0,
+    );
+
+    await db
+      .update(competition)
+      .set({ suspendue: true, motifSuspension: "Essai" })
+      .where(eq(competition.id, comp.id));
+    verifier(
+      "une suspension la fait bouger",
+      (await signatureEcrans(comp.id)) !== sig0,
+    );
+
+    /* ── 11. Cloisonnement des données personnelles ── */
+    console.log("\n11. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(

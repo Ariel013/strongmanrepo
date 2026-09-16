@@ -6,7 +6,7 @@
  * jamais un téléphone ni un contact d'urgence.
  */
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   athlete,
@@ -546,4 +546,56 @@ export async function niveauxPour(
     }
   }
   return m;
+}
+
+/* ── Signature de fraîcheur des écrans publics ────────────────────────── */
+
+/**
+ * Une empreinte courte de tout ce qui change l'affichage du mur LED.
+ *
+ * Elle existe pour une seule raison : un écran public se rafraîchit toutes les
+ * deux secondes, et refaire le rendu complet de la page à chaque fois revient
+ * à recalculer des classements identiques des heures durant. L'écran demande
+ * d'abord cette empreinte — une requête, quelques octets — et ne redemande la
+ * page que si elle a bougé.
+ *
+ * Ce qu'elle couvre : l'épreuve et la catégorie courantes, la suspension, le
+ * thème, l'état du chronomètre, et surtout **qui est au plateau** — le signal
+ * qui doit passer en moins de deux secondes. Les retouches plus rares (un nom
+ * corrigé, une photo déposée) n'y figurent pas : l'écran les rattrape par le
+ * rafraîchissement complet périodique décrit dans `rafraichir.tsx`.
+ */
+export async function signatureEcrans(
+  /** Par défaut, la compétition courante. Renseigné par les tests. */
+  competitionId?: string,
+): Promise<string> {
+  // Chaque champ est ramené à un texte non nul : `concat_ws` SAUTE les NULL,
+  // si bien que « épreuve choisie, catégorie nulle » et « épreuve nulle,
+  // catégorie choisie » rendraient la même chaîne. Un tiret garde la position.
+  const t = (x: unknown) => sql`coalesce(${x}::text, '-')`;
+
+  const [ligne] = await db.execute<{ signature: string }>(sql`
+    select concat_ws('|',
+      ${t(sql`c.maj_le`)}, ${t(sql`c.epreuve_courante_id`)},
+      ${t(sql`c.categorie_courante_id`)}, ${t(sql`c.suspendue`)},
+      ${t(sql`c.motif_suspension`)}, ${t(sql`c.theme_ecran`)},
+      ${t(sql`c.chrono_phase`)}, ${t(sql`c.chrono_debut_le`)},
+      ${t(sql`c.chrono_duree_s`)}, ${t(sql`c.chrono_arret_s`)},
+      ${t(sql`(select count(*) from passage p where p.competition_id = c.id)`)},
+      ${t(sql`(select max(p.valide_le) from passage p where p.competition_id = c.id)`)},
+      ${t(sql`(select string_agg(p.id::text, ',' order by p.id)
+                 from passage p
+                where p.competition_id = c.id and p.statut = 'plateau')`)},
+      ${t(sql`(select string_agg(p.id::text, ',' order by p.ordre)
+                 from passage p
+                where p.competition_id = c.id and p.statut = 'avenir')`)}
+    ) as signature
+    from competition c
+    ${
+      competitionId
+        ? sql`where c.id = ${competitionId}`
+        : sql`order by c.cree_le asc limit 1`
+    }
+  `);
+  return ligne?.signature ?? "";
 }

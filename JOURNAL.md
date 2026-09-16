@@ -31,10 +31,10 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **50/50** ✓. Les 12 routes répondent 200 sur un build de production local.
+  **56/56** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Déploiement** : ⬜ **non vérifié en ligne depuis le portage.**
-- **Branche** : `main`, 4 commits d'avance sur `origin/main` — **non poussés**
+- **Branche** : `main`, plusieurs commits d'avance sur `origin/main` — **non poussés**
   (le push attend une confirmation explicite, à chaque fois).
 
 - **🔴 Prochaine action** : régénérer `ADMIN_PASSWORD_HASH`
@@ -60,10 +60,15 @@
   des tours et les classements par catégorie.
 - Schéma étendu : `programme`, `recompense`, `sortie`, `club_logo`, plus les
   colonnes de niveaux, de medley et l'état du chronomètre.
-- Suite de tests fonctionnels (`pnpm run test`) : 50 vérifications sur le
-  barème, les départages, l'ordre de passage et la lecture des listes.
+- Suite de tests fonctionnels (`pnpm run test`) : 56 vérifications sur le
+  barème, les départages, l'ordre de passage, la lecture des listes et
+  l'empreinte de fraîcheur.
 - En-têtes de sécurité ajoutés (il n'y en avait aucun), nom de fichier
   téléversé assaini, catégorie d'affectation relue en base.
+- Les écrans LED n'interrogent plus qu'une empreinte de fraîcheur
+  (`/api/ecran/etat`, 60 octets, une requête) et ne redemandent la page que si
+  elle a bougé — avec un rafraîchissement complet toutes les 30 s en filet.
+  Entre deux passages, un écran ne recalcule plus les classements.
 
 **Découvert**
 
@@ -75,11 +80,9 @@
 
 **Reste ouvert**
 
-- Les écrans LED refont **tout le rendu serveur toutes les 2 secondes**. Les
-  faire interroger une route JSON légère diviserait le nombre d'invocations
-  Vercel. Levier identifié, non pris : il touche l'architecture du rendu, pas
-  le front.
 - Aucune vérification en ligne depuis le portage.
+- Les 4 % de textes de l'original non repris sont les trois écarts assumés ;
+  aucun n'est un oubli.
 
 ---
 
