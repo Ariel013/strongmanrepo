@@ -22,9 +22,7 @@ import * as schema from "./schema";
 type BaseDrizzle = ReturnType<typeof drizzle<typeof schema>>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __sm_pg: ReturnType<typeof postgres> | undefined;
-  // eslint-disable-next-line no-var
   var __sm_db: BaseDrizzle | undefined;
 }
 
@@ -42,7 +40,16 @@ function ouvrir(): BaseDrizzle {
   const client =
     globalThis.__sm_pg ??
     postgres(url, {
-      max: 5,
+      /**
+       * Quatre connexions par conteneur.
+       *
+       * Une page en lit jusqu'à quatre tables d'un coup (`Promise.all` dans
+       * `donnees.ts`) : en dessous de quatre, ces lectures se remettent
+       * bêtement à la file. Au-dessus, on ne gagne plus rien et on rapproche
+       * le pooler Supabase de sa limite, chaque instance serverless ayant son
+       * propre pool.
+       */
+      max: 4,
       idle_timeout: 20,
       connect_timeout: 10,
       // Le pooler Supabase en mode transaction ne conserve pas les requêtes
@@ -52,12 +59,20 @@ function ouvrir(): BaseDrizzle {
 
   const base = drizzle(client, { schema });
 
-  // En développement, Next recharge les modules à chaque édition ; sans ce
-  // cache, chaque sauvegarde de fichier ouvrirait un pool de plus.
-  if (process.env.NODE_ENV !== "production") {
-    globalThis.__sm_pg = client;
-    globalThis.__sm_db = base;
-  }
+  /**
+   * Le cache est posé DANS TOUS LES CAS, production comprise.
+   *
+   * C'est tout l'objet de l'exigence n° 1 ci-dessus. Réservé au
+   * développement, il laissait `ouvrir()` recréer un pool — donc rouvrir une
+   * connexion TLS vers Supabase — à chaque accès à une propriété de `db`,
+   * c'est-à-dire à chaque requête. Une page qui lit cinq tables payait cinq
+   * poignées de main TLS, et abandonnait cinq pools derrière elle.
+   *
+   * En développement, le cache sert en plus à survivre au rechargement des
+   * modules par Next à chaque édition.
+   */
+  globalThis.__sm_pg = client;
+  globalThis.__sm_db = base;
   return base;
 }
 
