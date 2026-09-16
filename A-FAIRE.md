@@ -78,6 +78,12 @@ Marche à suivre, entièrement sur vercel.com :
 > `BLOB_STORE_ID` et `BLOB_WEBHOOK_PUBLIC_KEY`. Seule la première sert au
 > dépôt des photos — elle commence par `vercel_blob_rw_`.
 
+**Constaté le 2026-09-16 :** les trois variables existaient bien dans le
+déploiement, mais `BLOB_READ_WRITE_TOKEN` avait une **valeur vide**. Côté code
+c'est indiscernable d'une variable absente, alors que l'interface de Vercel la
+montre comme présente — on cherche un problème de déploiement là où il faut
+simplement coller la valeur. `GET /api/sante` distingue maintenant les deux.
+
 Pour travailler en local avec les photos, recopier la valeur depuis
 Settings → Environment Variables dans le `.env` du poste.
 

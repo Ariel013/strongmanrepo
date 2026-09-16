@@ -67,18 +67,37 @@ export async function GET() {
    * dernier déploiement n'existe pas encore pour le code qui tourne.
    */
   const avertissements: string[] = [];
+  /**
+   * Trois états, et non deux.
+   *
+   * Une variable DÉFINIE MAIS VIDE se comporte comme une variable absente
+   * côté code, alors qu'elle se voit dans l'interface de la plateforme — on
+   * cherche alors un problème de déploiement là où il n'y en a pas. Les
+   * distinguer, c'est la différence entre « redéployez » et « collez la
+   * valeur ».
+   */
+  const jetonDefini = "BLOB_READ_WRITE_TOKEN" in process.env;
   if (!variables.BLOB_READ_WRITE_TOKEN) {
-    avertissements.push(
-      variablesBlob.length > 0
-        ? `Le magasin Blob est bien relié (${variablesBlob.join(", ")}), mais ` +
-          "BLOB_READ_WRITE_TOKEN manque à l'appel — c'est la SEULE des trois " +
-          "qui autorise le dépôt. Dans Vercel → Settings → Environment " +
-          `Variables, vérifiez qu'elle existe pour l'environnement « ${environnement} » ` +
-          "et qu'elle a bien une valeur."
-        : "Aucune variable BLOB_* visible : le magasin Blob n'est pas relié à " +
-          "ce projet. Storage → votre magasin → Connect Project, puis " +
-          "redéployez.",
-    );
+    if (jetonDefini) {
+      avertissements.push(
+        "BLOB_READ_WRITE_TOKEN existe dans ce déploiement mais sa VALEUR EST " +
+          "VIDE : aucune photo ne peut être déposée. Vercel → Storage → votre " +
+          "magasin Blob → onglet des identifiants, copiez le jeton entier " +
+          "(il commence par « vercel_blob_rw_ ») dans Settings → Environment " +
+          `Variables pour l'environnement « ${environnement} », puis redéployez.`,
+      );
+    } else if (variablesBlob.length > 0) {
+      avertissements.push(
+        `Magasin Blob partiellement relié (${variablesBlob.join(", ")}) : ` +
+          "BLOB_READ_WRITE_TOKEN est absente, et c'est la SEULE des trois qui " +
+          "autorise le dépôt des photos.",
+      );
+    } else {
+      avertissements.push(
+        "Aucune variable BLOB_* : le magasin Blob n'est pas relié à ce " +
+          "projet. Storage → votre magasin → Connect Project, puis redéployez.",
+      );
+    }
   } else if (!/^vercel_blob_rw_/.test(process.env.BLOB_READ_WRITE_TOKEN ?? "")) {
     avertissements.push(
       "BLOB_READ_WRITE_TOKEN présente mais de forme inattendue : " +
