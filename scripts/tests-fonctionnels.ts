@@ -636,8 +636,37 @@ async function principal() {
       3,
     );
 
-    /* ── 13. Cloisonnement des données personnelles ── */
-    console.log("\n13. Cloisonnement des données personnelles");
+    /* ── 13. Les refus disent la bonne raison ── */
+    console.log("\n13. Messages : la raison exacte, jamais une autre");
+
+    // Le message « toutes les épreuves avaient déjà un ordre » s'affichait
+    // quelle que soit la cause. La table a cliqué quatre fois, l'a cru, et
+    // s'est retrouvée devant un plateau vide.
+    await db.delete(passage).where(eq(passage.competitionId, comp.id));
+    await db
+      .update(athlete)
+      .set({ categorieId: null, horsClassement: false })
+      .where(eq(athlete.competitionId, comp.id));
+
+    const sansCat = await reconstruireFile(comp.id, eps[0].id, []);
+    egal("reconstruire sans athlète ne crée rien", sansCat.crees, 0);
+
+    const restants = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.competitionId, comp.id));
+    egal("et n'a rien laissé derrière", restants.length, 0);
+
+    // Avec des athlètes rattachés, la file se remplit pour de bon.
+    await affecterCategorieA([alpha.id, bravo.id], catA.id);
+    const avecCat = await reconstruireFile(comp.id, eps[0].id, [
+      alpha.id,
+      bravo.id,
+    ]);
+    egal("une fois les catégories affectées, la file se remplit", avecCat.crees, 2);
+
+    /* ── 14. Cloisonnement des données personnelles ── */
+    console.log("\n14. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
     for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
       verifier(

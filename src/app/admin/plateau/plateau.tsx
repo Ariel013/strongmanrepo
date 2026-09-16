@@ -112,6 +112,9 @@ export function Plateau({
   const router = useRouter();
   const [, demarrer] = useTransition();
   const [message, setMessage] = useState("");
+  /** Un refus s'affiche en rouge : le vert dirait qu'il ne s'est rien passé
+   *  d'anormal, alors que la file est restée vide. */
+  const [messageOk, setMessageOk] = useState(true);
 
   const parId = new Map(athletes.map((a) => [a.id, a]));
   const catDe = (athleteId: string) =>
@@ -432,10 +435,12 @@ export function Plateau({
                 : (parCategorie[0]?.ordre ?? []);
               const r = await construireFile(competitionId, epreuve.id, ordre);
               setMessage(
-                r.ok
-                  ? "Ordre de passage reconstruit. Les passages déjà validés sont conservés."
-                  : (r.erreur ?? "Reconstruction impossible."),
+                r.erreur ??
+                  (r.ok
+                    ? `Ordre de passage reconstruit : ${ordre.length} athlète(s). Les passages déjà validés sont conservés.`
+                    : "Reconstruction impossible."),
               );
+              setMessageOk(r.ok);
             })
           }
           style={styleBouton("creme")}
@@ -455,6 +460,7 @@ export function Plateau({
                     ? "Toutes les épreuves sont préchargées."
                     : "Préchargement impossible."),
               );
+              setMessageOk(r.ok);
             })
           }
           style={styleBouton("noir")}
@@ -586,9 +592,9 @@ export function Plateau({
             marginBottom: 18,
             padding: "12px 16px",
             borderRadius: 11,
-            background: "rgba(11,146,55,.07)",
-            border: "1px solid rgba(11,146,55,.18)",
-            color: C.vertFonce,
+            background: messageOk ? "rgba(11,146,55,.07)" : C.rougeFond,
+            border: `1px solid ${messageOk ? "rgba(11,146,55,.18)" : C.rougeBord}`,
+            color: messageOk ? C.vertFonce : C.rougeFonce,
             fontSize: 13,
             lineHeight: 1.5,
             fontWeight: 600,
@@ -866,8 +872,31 @@ export function Plateau({
                 lineHeight: 1.5,
               }}
             >
-              Aucun passage en attente. Construisez l&apos;ordre de passage pour
-              cette épreuve.
+              {/* Une file vide n'est pas une information : sans elle, il n'y a
+                  aucun bouton « Appeler » nulle part, et rien ne le dit. On
+                  nomme donc la cause la plus probable et le geste qui la
+                  corrige. */}
+              {athletes.length === 0 ? (
+                <>
+                  Aucun athlète n&apos;est rattaché à une catégorie retenue :
+                  il n&apos;y a donc personne à appeler.{" "}
+                  <Link
+                    href="/admin/preparation?etape=3"
+                    style={{ fontWeight: 600 }}
+                  >
+                    Affectez les catégories
+                  </Link>
+                  , puis revenez construire l&apos;ordre.
+                </>
+              ) : (
+                <>
+                  Aucun passage en attente pour cette épreuve. Cliquez{" "}
+                  <strong>Reconstruire l&apos;ordre</strong> ci-dessus pour
+                  placer les {athletes.length} athlète(s) de cette sélection —
+                  ou <strong>Précharger toutes les épreuves</strong> pour faire
+                  la même chose partout d&apos;un coup.
+                </>
+              )}
             </div>
           ) : null}
         </div>

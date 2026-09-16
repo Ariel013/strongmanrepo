@@ -263,6 +263,18 @@ export async function construireFile(
   athleteIdsDansLOrdre: string[],
 ): Promise<Retour> {
   await exigerSession();
+
+  // Reconstruire avec une liste vide EFFACE la file sans rien remettre. Le
+  // cas arrive quand aucun athlète n'est rattaché à une catégorie retenue :
+  // mieux vaut refuser et le dire que rendre un plateau vide en annonçant
+  // « ordre reconstruit ».
+  if (athleteIdsDansLOrdre.length === 0)
+    return {
+      ok: false,
+      erreur:
+        "Aucun athlète à placer dans cette épreuve : vérifiez que les engagés sont rattachés à une catégorie retenue.",
+    };
+
   const r = await reconstruireFile(
     competitionId,
     epreuveId,
@@ -272,7 +284,14 @@ export async function construireFile(
 
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
-  return { ok: true };
+
+  return {
+    ok: true,
+    erreur:
+      r.crees === 0
+        ? "Tous les passages de cette épreuve sont déjà validés : l'ordre n'a pas été touché."
+        : undefined,
+  };
 }
 
 /**
@@ -1384,13 +1403,31 @@ export async function preparerToutes(competitionId: string): Promise<Retour> {
     .where(eq(athlete.competitionId, competitionId))
     .orderBy(asc(athlete.dossard), asc(athlete.nom));
 
+  const placables = tous.filter((a) =>
+    actives.some((c) => c.id === a.categorieId),
+  );
+
+  /**
+   * Les raisons de ne rien faire sont comptées séparément.
+   *
+   * Elles se ressemblent à l'écran — « rien ne s'est passé » — mais elles
+   * appellent des gestes opposés : refaire l'ordre, ou aller affecter des
+   * catégories. Les confondre dans un seul message a déjà coûté une
+   * après-midi : la table a cliqué quatre fois, lu « tout avait déjà un ordre
+   * de passage », et trouvé le plateau vide.
+   */
   let preparees = 0;
+  let dejaFaites = 0;
+
   for (const ep of eps) {
     const [{ compte }] = await db
       .select({ compte: sql<number>`count(*)::int` })
       .from(passage)
       .where(eq(passage.epreuveId, ep.id));
-    if (compte > 0) continue;
+    if (compte > 0) {
+      dejaFaites++;
+      continue;
+    }
 
     // Ordre de départ : dossards croissants, catégorie par catégorie. Les
     // épreuves suivantes seront reconstruites depuis le plateau, où les
@@ -1413,16 +1450,40 @@ export async function preparerToutes(competitionId: string): Promise<Retour> {
 
   await tracer("epreuves.prechargees", "competition", competitionId, {
     preparees,
+    dejaFaites,
+    placables: placables.length,
   });
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
 
+  if (preparees > 0)
+    return {
+      ok: true,
+      erreur:
+        dejaFaites > 0
+          ? `${preparees} épreuve(s) préchargée(s). ${dejaFaites} avaient déjà un ordre : elles n'ont pas été touchées.`
+          : undefined,
+    };
+
+  // Rien n'a été créé : dire POURQUOI, et quoi faire ensuite.
+  if (eps.length === 0)
+    return { ok: false, erreur: "Aucune épreuve au programme (étape 1)." };
+  if (actives.length === 0)
+    return {
+      ok: false,
+      erreur: "Aucune catégorie retenue : sélectionnez-en une à l'étape 2.",
+    };
+  if (tous.length === 0)
+    return { ok: false, erreur: "Aucun athlète engagé (étape 4)." };
+  if (placables.length === 0)
+    return {
+      ok: false,
+      erreur: `Aucun des ${tous.length} athlètes n'est rattaché à une catégorie retenue : affectez-les à l'étape Athlètes, ou validez la pesée.`,
+    };
   return {
     ok: true,
     erreur:
-      preparees === 0
-        ? "Toutes les épreuves avaient déjà un ordre de passage : rien n'a été touché."
-        : undefined,
+      "Toutes les épreuves avaient déjà un ordre de passage : rien n'a été touché.",
   };
 }
 
