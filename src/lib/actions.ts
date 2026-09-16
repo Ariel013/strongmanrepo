@@ -1262,12 +1262,52 @@ async function deposer(
       .replace(/^[.-]+/, "")
       .slice(-60) || "image";
 
-  const { put } = await import("@vercel/blob");
-  const depot = await put(`${prefixe}/${Date.now()}-${nomSur}`, fichier, {
-    access: "public",
-    addRandomSuffix: true,
-  });
-  return { url: depot.url };
+  /**
+   * Le dépôt lui-même est gardé.
+   *
+   * Sans ce `try`, une erreur de Vercel Blob — jeton invalide, magasin
+   * introuvable, quota, réseau — remontait en exception hors de la Server
+   * Action. Le navigateur n'en recevait qu'un échec de transport opaque, et
+   * l'officiel un « Envoi impossible » qui ne disait rien de la cause. Une
+   * panne de stockage doit se nommer, comme le reste.
+   */
+  try {
+    const { put } = await import("@vercel/blob");
+    const depot = await put(`${prefixe}/${Date.now()}-${nomSur}`, fichier, {
+      access: "public",
+      addRandomSuffix: true,
+    });
+    return { url: depot.url };
+  } catch (e) {
+    const msg = (e as Error).message ?? "";
+    await tracer("photo.echec", "competition", null, {
+      prefixe,
+      cause: msg.slice(0, 200),
+    });
+
+    if (/access denied|unauthorized|invalid token|forbidden/i.test(msg))
+      return {
+        erreur:
+          "Le stockage d'images refuse le jeton : BLOB_READ_WRITE_TOKEN ne " +
+          "correspond pas au magasin de ce projet. Recopiez-le depuis " +
+          "Vercel → Storage → votre magasin, puis redéployez.",
+      };
+    if (/not found|no such store|store.*exist/i.test(msg))
+      return {
+        erreur:
+          "Magasin d'images introuvable : il a peut-être été supprimé, ou le " +
+          "jeton pointe vers un autre projet.",
+      };
+    if (/quota|limit exceeded|too large|payload/i.test(msg))
+      return {
+        erreur:
+          "Le stockage d'images a refusé le fichier (quota ou taille). " +
+          "Essayez une image plus légère.",
+      };
+    return {
+      erreur: `Le stockage d'images a échoué : ${msg.slice(0, 160) || "cause inconnue"}`,
+    };
+  }
 }
 
 export async function televerserPhoto(

@@ -53,8 +53,12 @@ export function ChampTexte({
 
   const pousser = (val: string) => {
     demarrer(async () => {
-      const r = await enregistrer(val);
-      setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
+      try {
+        const r = await enregistrer(val);
+        setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
+      } catch {
+        setErreur(MESSAGE_TRANSPORT);
+      }
     });
   };
 
@@ -91,6 +95,19 @@ export function ChampTexte({
     </>
   );
 }
+
+/**
+ * Ce qu'on dit quand l'action n'a même pas pu répondre.
+ *
+ * Une Server Action qui lève — session expirée, réseau coupé, erreur serveur —
+ * fait tomber TOUT l'écran sur « This page couldn't load » si personne ne
+ * l'attrape. En pleine compétition, perdre le plateau parce qu'une case a mal
+ * pris est hors de question : on attrape, on nomme, et le reste de la page
+ * continue de vivre.
+ */
+const MESSAGE_TRANSPORT =
+  "Le serveur n'a pas répondu. Votre session a peut-être expiré : " +
+  "rechargez la page, puis réessayez.";
 
 /** Le message rouge qui accompagne un champ refusé. */
 function Avertissement({ children }: { children: React.ReactNode }) {
@@ -143,13 +160,18 @@ export function ChoixListe({
           const val = e.target.value;
           setV(val);
           demarrer(async () => {
-            const r = await enregistrer(val);
-            if (r.ok) {
-              setErreur("");
-            } else {
-              // Le serveur a refusé : on remet le choix précédent à l'écran
-              // plutôt que de laisser voir une valeur qui n'est pas en base.
-              setErreur(r.erreur ?? "Choix refusé.");
+            try {
+              const r = await enregistrer(val);
+              if (r.ok) {
+                setErreur("");
+              } else {
+                // Le serveur a refusé : on remet le choix précédent à l'écran
+                // plutôt que de laisser voir une valeur qui n'est pas en base.
+                setErreur(r.erreur ?? "Choix refusé.");
+                setV(valeur);
+              }
+            } catch {
+              setErreur(MESSAGE_TRANSPORT);
               setV(valeur);
             }
           });
@@ -203,8 +225,14 @@ export function BoutonAction({
         onClick={() => {
           if (confirmation && !window.confirm(confirmation)) return;
           demarrer(async () => {
-            const r = await action();
-            setErreur(r.ok ? (r.erreur ?? "") : (r.erreur ?? "Action refusée."));
+            try {
+              const r = await action();
+              setErreur(
+                r.ok ? (r.erreur ?? "") : (r.erreur ?? "Action refusée."),
+              );
+            } catch {
+              setErreur(MESSAGE_TRANSPORT);
+            }
           });
         }}
         style={styleBouton(ton, {
@@ -259,7 +287,16 @@ export function Bascule({
       type="button"
       title={title}
       aria-pressed={actif}
-      onClick={() => demarrer(async () => void (await enregistrer(!actif)))}
+      onClick={() =>
+        demarrer(async () => {
+          try {
+            await enregistrer(!actif);
+          } catch {
+            // Rien à afficher ici : l'interrupteur reprend simplement son
+            // état précédent au rafraîchissement suivant.
+          }
+        })
+      }
       style={{
         padding: "9px 14px",
         borderRadius: 9,

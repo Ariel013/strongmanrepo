@@ -33,10 +33,17 @@ export function CartesIdentite({
 
   const pousser = () => {
     demarrer(async () => {
-      const r = await enregistrerIdentite(competitionId, v);
-      // Une date illisible vidait `debutLe` sans rien dire, et avec elle le
-      // compte à rebours du mur LED. Elle se refuse maintenant, à voix haute.
-      setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
+      try {
+        const r = await enregistrerIdentite(competitionId, v);
+        // Une date illisible vidait `debutLe` sans rien dire, et avec elle le
+        // compte à rebours du mur LED. Elle se refuse maintenant, à voix haute.
+        setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
+      } catch {
+        setErreur(
+          "Le serveur n'a pas répondu. Votre session a peut-être expiré : " +
+            "rechargez la page, puis réessayez.",
+        );
+      }
     });
   };
 

@@ -80,25 +80,35 @@ export function PanneauImport({
 
   function ecrire() {
     demarrer(async () => {
-      const r = await importerAthletes(
-        competitionId,
-        gardees.map((l) => ({
-          nom: l.nom,
-          prenoms: l.prenoms,
-          club: l.club,
-          poids: l.poids,
-          telephone: l.telephone,
-          urgence: l.urgence,
-          doute: l.motifs.length > 0,
-          fusionner: l.doublon && l.fusionner,
-        })),
-      );
-      if (!r.ok || !r.resume) {
-        setErreur(r.erreur ?? "Import impossible.");
-        return;
+      try {
+        const r = await importerAthletes(
+          competitionId,
+          gardees.map((l) => ({
+            nom: l.nom,
+            prenoms: l.prenoms,
+            club: l.club,
+            poids: l.poids,
+            telephone: l.telephone,
+            urgence: l.urgence,
+            doute: l.motifs.length > 0,
+            fusionner: l.doublon && l.fusionner,
+          })),
+        );
+        if (!r.ok || !r.resume) {
+          setErreur(r.erreur ?? "Import impossible.");
+          return;
+        }
+        setResume(r.resume);
+        setEtape("resume");
+      } catch {
+        // Une liste de cent engagés qui échoue au transport ne doit pas
+        // effacer l'écran de vérification : la saisie est encore là, on
+        // réessaie.
+        setErreur(
+          "Le serveur n'a pas répondu — rien n'a été importé. Rechargez la " +
+            "page si le problème persiste ; votre liste est toujours là.",
+        );
       }
-      setResume(r.resume);
-      setEtape("resume");
     });
   }
 
@@ -160,7 +170,8 @@ export function PanneauImport({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(min(260px,100%),1fr))",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(min(260px,100%),1fr))",
               gap: 16,
             }}
           >
@@ -303,9 +314,7 @@ export function PanneauImport({
       {/* ── Vérification ── */}
       {etape === "verification" ? (
         <div>
-          <div
-            style={{ fontSize: 13, color: C.encre3, marginBottom: 12 }}
-          >
+          <div style={{ fontSize: 13, color: C.encre3, marginBottom: 12 }}>
             Source : {source}. Vérifiez, décochez ce qui ne doit pas entrer,
             puis importez. Les lignes en rose ont un doute.
           </div>
@@ -348,7 +357,9 @@ export function PanneauImport({
                   borderTop: `1px solid ${C.papier3}`,
                   alignItems: "center",
                   background:
-                    l.motifs.length > 0 || l.doublon ? "#FDF3EF" : "transparent",
+                    l.motifs.length > 0 || l.doublon
+                      ? "#FDF3EF"
+                      : "transparent",
                 }}
               >
                 <button
@@ -477,14 +488,19 @@ export function PanneauImport({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(min(130px,100%),1fr))",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(min(130px,100%),1fr))",
               gap: 12,
               marginBottom: 16,
             }}
           >
             {[
               { n: resume.ajoutes, lbl: "ajoutés", couleur: C.vert },
-              { n: resume.fusionnes, lbl: "fiches complétées", couleur: C.encre },
+              {
+                n: resume.fusionnes,
+                lbl: "fiches complétées",
+                couleur: C.encre,
+              },
               { n: resume.ignores, lbl: "ignorés", couleur: C.encre4 },
               { n: resume.aVerifier, lbl: "à vérifier", couleur: C.orange },
             ].map((c) => (
@@ -511,7 +527,10 @@ export function PanneauImport({
               type="button"
               title="Rester sur la liste pour compléter les fiches"
               onClick={fermer}
-              style={styleBouton("vert", { padding: "12px 20px", fontSize: 15 })}
+              style={styleBouton("vert", {
+                padding: "12px 20px",
+                fontSize: 15,
+              })}
             >
               Compléter les fiches
             </button>

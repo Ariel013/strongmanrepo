@@ -1192,28 +1192,29 @@ function ChoixFichier({
               const { fichier, avant, apres } = await preparerImage(f, mode);
               const fd = new FormData();
               fd.set("fichier", fichier);
-              setEtat(
-                apres < avant
-                  ? `Envoi de ${poidsLisible(apres)}…`
-                  : "Envoi…",
-              );
+              const reduite = apres < avant;
+              setEtat(`Envoi de ${poidsLisible(apres)}…`);
               demarrer(async () => {
                 try {
                   const r = await envoyer(fd);
                   setEchec(!r.ok);
                   setEtat(r.ok ? "" : (r.erreur ?? "Envoi refusé."));
                 } catch {
-                  // Une Server Action qui échoue au niveau du transport fait
-                  // autrement tomber toute la page sur l'écran d'erreur.
+                  // Une Server Action qui échoue au transport fait autrement
+                  // tomber toute la page sur l'écran d'erreur. On dit ce qui a
+                  // été tenté : la taille envoyée distingue « image encore
+                  // trop lourde » de « stockage qui refuse », sans second essai.
                   setEchec(true);
                   setEtat(
-                    "Envoi impossible. Réessayez, ou choisissez une image plus légère.",
+                    `Envoi interrompu (${poidsLisible(apres)}` +
+                      (reduite ? `, réduite depuis ${poidsLisible(avant)}` : ", non réduite") +
+                      "). Si le poids est faible, la panne vient du stockage, pas de l'image.",
                   );
                 }
               });
             } catch {
               setEchec(true);
-              setEtat("Cette image n'a pas pu être lue.");
+              setEtat("Cette image n'a pas pu être lue par le navigateur.");
             }
           }}
         />

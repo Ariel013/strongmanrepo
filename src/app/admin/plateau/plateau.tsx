@@ -112,6 +112,41 @@ export function Plateau({
   const router = useRouter();
   const [, demarrer] = useTransition();
   const [message, setMessage] = useState("");
+
+  /**
+   * Toute action du plateau passe par ici.
+   *
+   * Une Server Action qui lève — session expirée, réseau de salle coupé,
+   * erreur serveur — fait tomber TOUT l'écran si personne ne l'attrape. Perdre
+   * le plateau en pleine épreuve parce qu'un appel n'a pas abouti est le pire
+   * scénario de cette application : on attrape, on le dit, et la page reste
+   * debout.
+   */
+  const agir = (
+    f: () => Promise<{ ok: boolean; erreur?: string } | void>,
+    succes?: string,
+  ) =>
+    demarrer(async () => {
+      try {
+        const r = await f();
+        if (r && !r.ok) {
+          setMessage(r.erreur ?? "Action refusée.");
+          setMessageOk(false);
+        } else if (r?.erreur) {
+          setMessage(r.erreur);
+          setMessageOk(true);
+        } else if (succes) {
+          setMessage(succes);
+          setMessageOk(true);
+        }
+      } catch {
+        setMessage(
+          "Le serveur n'a pas répondu. Votre session a peut-être expiré : " +
+            "rechargez la page. Rien n'a été enregistré.",
+        );
+        setMessageOk(false);
+      }
+    });
   /** Un refus s'affiche en rouge : le vert dirait qu'il ne s'est rien passé
    *  d'anormal, alors que la file est restée vide. */
   const [messageOk, setMessageOk] = useState(true);
@@ -192,7 +227,15 @@ export function Plateau({
    * dépende du réseau pour voir défiler son propre compteur.
    */
   const publier = (etat: Parameters<typeof majChrono>[1]) =>
-    demarrer(async () => void (await majChrono(competitionId, etat)));
+    demarrer(async () => {
+      try {
+        await majChrono(competitionId, etat);
+      } catch {
+        // Le mur LED perdra la synchronisation du chronomètre, pas la table :
+        // le compteur local continue de tourner, et c'est lui qui compte pour
+        // l'officiel. Inutile d'interrompre un passage pour le dire.
+      }
+    });
 
   function basculerChrono() {
     if (auPlateau.length === 0) {
@@ -327,7 +370,7 @@ export function Plateau({
     const suivant = avenir.find(
       (p) => parId.get(p.athleteId)?.categorieId === cat,
     );
-    if (suivant) demarrer(async () => void (await appelerAuPlateau(suivant.id)));
+    if (suivant) agir(() => appelerAuPlateau(suivant.id));
   }
 
   /* ── Rendu ────────────────────────────────────────────────────────── */
@@ -633,7 +676,7 @@ export function Plateau({
             type="button"
             title="Reprendre la compétition"
             onClick={() =>
-              demarrer(async () => void (await reprendre(competitionId)))
+              agir(() => reprendre(competitionId))
             }
             style={styleBouton("vert", { padding: "9px 16px", borderRadius: 9 })}
           >
@@ -849,7 +892,7 @@ export function Plateau({
                   type="button"
                   title="Appelle cet athlète au plateau"
                   onClick={() =>
-                    demarrer(async () => void (await appelerAuPlateau(p.id)))
+                    agir(() => appelerAuPlateau(p.id))
                   }
                   style={styleBouton("noir", {
                     padding: "8px 13px",
@@ -1176,9 +1219,7 @@ export function Plateau({
                       type="button"
                       title="Erreur d'appel : remet cet athlète dans la liste À venir, sans résultat"
                       onClick={() =>
-                        demarrer(
-                          async () => void (await renvoyerEnFile(p.id)),
-                        )
+                        agir(() => renvoyerEnFile(p.id))
                       }
                       style={styleBouton("rouge", {
                         flex: "none",
@@ -1409,9 +1450,7 @@ export function Plateau({
                 type="button"
                 title="Annule la dernière validation : l'athlète précédent revient au plateau, sa performance est effacée"
                 onClick={() =>
-                  demarrer(
-                    async () => void (await rouvrirPassage(termines[0].id)),
-                  )
+                  agir(() => rouvrirPassage(termines[0].id))
                 }
                 style={styleBouton("rouge", {
                   width: "100%",
@@ -1532,7 +1571,7 @@ export function Plateau({
                   type="button"
                   title="Annule l'officialisation et renvoie le passage dans À venir"
                   onClick={() =>
-                    demarrer(async () => void (await renvoyerEnFile(p.id)))
+                    agir(() => renvoyerEnFile(p.id))
                   }
                   style={styleBouton("blanc", {
                     padding: "7px 11px",
@@ -1681,9 +1720,7 @@ export function Plateau({
                           type="button"
                           title="Appeler cet athlète au plateau maintenant"
                           onClick={() =>
-                            demarrer(
-                              async () => void (await appelerAuPlateau(p.id)),
-                            )
+                            agir(() => appelerAuPlateau(p.id))
                           }
                           style={styleBouton("creme", {
                             padding: "6px 10px",
