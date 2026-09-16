@@ -31,9 +31,9 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **56/56** ✓. Les routes répondent 200 sur un build de production local.
+  **88/88** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
-- **Branche** : `main` alignée avec `origin/main` sur `975a3bc`, poussée le
+- **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
@@ -94,6 +94,23 @@
 - Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
   de la table.
 
+### 2026-09-16 (3) — Premiers retours du terrain
+
+**Trois pannes signalées après le déploiement, une seule était connue.**
+
+- Choisir une catégorie renvoyait « A server error occurred », aux étapes
+  Athlètes comme Pesée. Cause : `sql` + `any(${tableau})`, aplati par drizzle
+  en paramètres séparés. Le même motif servait à deux autres endroits jamais
+  signalés et pires — `appelerAuPlateau` plantait à **chaque appel sauf le
+  premier**, et « Reconstruire l'ordre » dès qu'une file existait. Corrigé par
+  `inArray()` aux trois endroits.
+- Le poids déclaré n'était saisissable nulle part : il n'arrivait que par
+  l'import. Rendu modifiable. Le poids de la pesée reste en lecture seule —
+  il engage un officiel — mais la fiche dit maintenant où le saisir.
+- `BLOB_READ_WRITE_TOKEN` manque : aucune photo ne peut être déposée. Ce
+  n'est pas une panne mais une configuration Vercel jamais faite. Marche à
+  suivre dans `A-FAIRE.md` § 1.
+
 ### 2026-09-16 (suite) — Saisies fautives, téléphone, et vérification en ligne
 
 **Fait**
@@ -131,6 +148,24 @@ besoin du développement (survivre au rechargement des modules) s'ajoute à celu
 de la production (ne pas rouvrir la connexion), il ne s'y substitue pas. Et une
 lenteur se **mesure** avant d'être expliquée : c'est le compteur de pools, pas
 le raisonnement, qui a tranché.
+
+### Des tests qui n'écrivent jamais ne protègent pas les écritures (2026-09-16)
+
+**Symptôme.** Trois actions d'écriture plantaient en production —
+`affecterCategorie`, `appelerAuPlateau`, `construireFile` — alors que la suite
+de tests affichait 82/82.
+
+**Cause.** Les tests couvraient la logique pure : le barème, les départages,
+l'ordre de passage, la lecture des listes. Ils calculaient beaucoup et
+n'écrivaient rien. Le défaut, lui, était dans la **sérialisation SQL** d'un
+tableau (`any(${tableau})`, qu'aucun calcul ne traverse). Pire, deux des trois
+chemins ne plantaient qu'au **deuxième** appel, quand le tableau à traiter
+cessait d'être vide : même un essai manuel rapide les aurait manqués.
+
+**Règle.** Une suite de tests doit **exécuter** les écritures, pas seulement
+vérifier ce qui les précède — et les exécuter dans l'état où elles font
+vraiment quelque chose : file déjà remplie, plateau déjà occupé. Le cas
+intéressant n'est jamais le premier appel sur une base vide.
 
 ### Un symptôme local ne se reporte pas en production sans l'avoir mesuré (2026-09-16)
 

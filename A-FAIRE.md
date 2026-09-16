@@ -8,7 +8,7 @@ externes.
 > externe, elle est ajoutée ici **dans la même tâche**, avec la date. On ne
 > laisse aucun prérequis implicite.
 
-Dernière mise à jour : 2026-09-16 (déploiement vérifié en ligne).
+Dernière mise à jour : 2026-09-16 (retours du premier déploiement).
 
 ---
 
@@ -19,7 +19,7 @@ Dernière mise à jour : 2026-09-16 (déploiement vérifié en ligne).
 | `DATABASE_URL` | Supabase → Connect → **Transaction pooler (port 6543)** | ✅ en place |
 | `SESSION_SECRET` | `openssl rand -base64 48` | ✅ en place |
 | `ADMIN_PASSWORD_HASH` | `pnpm run motdepasse` | ✅ en ligne · 🟠 malformée **en local** |
-| `BLOB_READ_WRITE_TOKEN` | Vercel → Storage → Blob | ⬜ absente — les photos sont refusées proprement |
+| `BLOB_READ_WRITE_TOKEN` | Vercel → Storage → Blob | 🟠 **absente — aucune photo ne peut être déposée** |
 
 ### 🟠 `ADMIN_PASSWORD_HASH` — en local seulement (relevé le 2026-09-16)
 
@@ -48,11 +48,33 @@ Vérifier ensuite avec `GET /api/sante`, qui doit répondre `etat: en ordre`.
 > ⚠️ **Ne pas toucher à la valeur de Vercel** : elle est correcte, et la
 > changer déconnecterait immédiatement toutes les sessions ouvertes.
 
-### ⬜ `BLOB_READ_WRITE_TOKEN` — photos des athlètes
+### 🟠 `BLOB_READ_WRITE_TOKEN` — photos impossibles (constaté en ligne le 2026-09-16)
 
-Sans ce jeton, l'envoi d'une photo est refusé avec un message explicite et la
-fiche reste utilisable : la vignette retombe sur les initiales de l'athlète.
-À renseigner avant la pesée si les photos doivent apparaître sur le mur LED.
+L'envoi d'une photo répond :
+
+> `Aucun espace de stockage d'images configuré sur ce poste
+> (BLOB_READ_WRITE_TOKEN). La fiche reste utilisable sans photo.`
+
+Ce n'est pas une panne : le message est celui prévu quand le stockage n'est pas
+branché, et tout le reste fonctionne — la vignette retombe sur les initiales de
+l'athlète. Mais **aucune photo ne peut être déposée** tant que le jeton manque,
+ni pour les athlètes, ni pour les logos des clubs.
+
+Marche à suivre, entièrement sur vercel.com :
+
+1. Projet **strongman** → onglet **Storage** → **Create Database** → **Blob**.
+2. Nommer le magasin, puis **Connect to Project** en cochant les trois
+   environnements (Production, Preview, Development).
+   Vercel écrit alors `BLOB_READ_WRITE_TOKEN` tout seul dans les variables.
+3. **Redéployer** — une variable ajoutée ne s'applique qu'au déploiement
+   suivant : onglet Deployments → ⋯ sur le dernier → **Redeploy**.
+4. Vérifier en déposant une photo sur une fiche athlète.
+
+Pour travailler en local avec les photos, recopier la valeur depuis
+Settings → Environment Variables dans le `.env` du poste.
+
+> Les photos vivent chez Vercel Blob et **n'entrent pas dans l'export Excel** :
+> voir § 5.
 
 ## 2. Comptes / services externes
 
@@ -60,7 +82,7 @@ fiche reste utilisable : la vignette retombe sur les initiales de l'athlète.
 |---|---|---|
 | Supabase | PostgreSQL (région `eu-west-1`) | ✅ en place |
 | Vercel | Hébergement (région `dub1`, même région que la base) | ✅ en place |
-| Vercel Blob | Photos des athlètes et logos des clubs | ⬜ à activer |
+| Vercel Blob | Photos des athlètes et logos des clubs | 🟠 à activer — voir § 1 |
 
 ## 3. Migrations à appliquer
 
