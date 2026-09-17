@@ -16,6 +16,7 @@ import {
   type EpreuveVue,
 } from "@/lib/donnees";
 import { versMesure } from "@/lib/classement";
+import { realignerFile } from "@/lib/plateau";
 import { Plateau, type CategoriePlateau } from "./plateau";
 
 /**
@@ -101,6 +102,10 @@ export default async function PagePlateau({
     critere: e.critere,
     position: e.position,
   }));
+
+  // Une file où personne n'est encore passé suit les points acquis, pas
+  // l'ordre du préchargement. Idempotent : ne réécrit que si l'ordre diffère.
+  await realignerFile(comp.id, epreuveCourante.id);
 
   const [resultats, passages] = await Promise.all([
     tousLesResultats(comp.id, vuePublique),
@@ -207,6 +212,12 @@ export default async function PagePlateau({
         passages={passages}
         suspendue={comp.suspendue}
         motifSuspension={comp.motifSuspension}
+        chronoPublie={{
+          phase: comp.chronoPhase,
+          dureeS: comp.chronoDureeS,
+          debutLe: comp.chronoDebutLe ? comp.chronoDebutLe.getTime() : null,
+          arretS: comp.chronoArretS,
+        }}
       />
     </>
   );

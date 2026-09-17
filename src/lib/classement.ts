@@ -126,9 +126,10 @@ export function recompensesPour<T extends { categorieId: string | null; rang: nu
 /* ── Classement des clubs ────────────────────────────────────────────── */
 
 /**
- * Barème des clubs, sur le rang final de chaque athlète dans sa catégorie :
- * 15, 10, 5, 4, 3 points pour les cinq premiers, 1 point pour tout autre
- * athlète classé. Un athlète sans club n'apporte rien à personne.
+ * Barème des clubs, sur le rang de chaque athlète dans sa catégorie À CHAQUE
+ * ÉPREUVE, cumulé sur toutes les épreuves : 15, 10, 5, 4, 3 points pour les
+ * cinq premiers, 1 point pour tout autre athlète classé. Un athlète sans club
+ * n'apporte rien à personne.
  */
 export const POINTS_CLUB = [15, 10, 5, 4, 3] as const;
 export const pointsClub = (rang: number): number =>

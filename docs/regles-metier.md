@@ -1127,11 +1127,14 @@ mire, mais incohérent.
 
 ## 9. Classement des clubs — ajout du portage (2026-09-17)
 
-Demande de Kevin, absent de l'original. Sur le **rang final** de chaque athlète
-dans sa catégorie (le classement général de § 6), toutes catégories retenues
-confondues :
+Demande de Kevin, absent de l'original. Sur le **rang de chaque athlète dans
+sa catégorie à chaque épreuve** (le classement d'épreuve de § 5), **cumulé sur
+toutes les épreuves**, toutes catégories retenues confondues. Précision de
+Kevin le 2026-09-17 : un club dont l'athlète finit 2e à la première épreuve
+puis 1er à la deuxième a 10 + 15 = 25 points — le calcul sur le rang final
+seul « repartait à zéro » à chaque épreuve.
 
-| Rang final | Points au club |
+| Rang à l'épreuve | Points au club |
 |---|---|
 | 1er | 15 |
 | 2e | 10 |

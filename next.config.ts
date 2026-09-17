@@ -28,8 +28,9 @@ const ENTETES = [
       "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
       "font-src 'self'",
       // Next injecte ses scripts et styles en ligne ; les autoriser ici sans
-      // ouvrir les sources distantes, qui restent interdites.
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // ouvrir les sources distantes, qui restent interdites. `unsafe-eval`
+      // n'est requis que par le rechargement à chaud du développement.
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"}`,
       "style-src 'self' 'unsafe-inline'",
       "connect-src 'self'",
       // Aucun greffon, aucune balise <base> réécrite, aucun formulaire
@@ -43,6 +44,9 @@ const ENTETES = [
 ];
 
 const nextConfig: NextConfig = {
+  /** Ne pas annoncer la pile au premier venu. */
+  poweredByHeader: false,
+
   /**
    * Corps des Server Actions : 1 Mo par défaut, ce qui refusait toute photo de
    * téléphone par un `413` brut — avant même d'atteindre le code qui vérifie

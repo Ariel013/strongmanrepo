@@ -7,17 +7,69 @@
  * production, Next masque les erreurs serveur derrière un message générique :
  * sans cette route, il faut fouiller les journaux de la plateforme.
  *
- * Ce qui est exposé est délibérément pauvre : la PRÉSENCE d'une variable,
- * jamais sa valeur ; le fait que la base réponde, jamais son adresse ni son
- * utilisateur. Un attaquant n'y apprend rien qu'il ne puisse déduire en
- * constatant que le site est en panne.
+ * Deux niveaux de réponse. Sans session, le public ne voit que « en ordre »
+ * ou « en panne », et si la base et les images répondent : de quoi savoir
+ * que le site est en panne, rien qui aide à l'attaquer. Le diagnostic
+ * détaillé — quelle variable manque, quelle forme est attendue — n'est servi
+ * qu'avec la session d'administration, ou au cron de Vercel qui présente
+ * `CRON_SECRET`. Aucun message d'erreur du pilote n'est jamais relayé tel
+ * quel : un code, pas la phrase, qui pourrait contenir un hôte ou un port.
+ *
+ * Le résultat est gardé trente secondes : chaque appel ouvrait une connexion
+ * TLS neuve vers la base et un appel au magasin d'images, ce qui faisait de
+ * cette route publique un amplificateur de charge gratuit.
  */
 
 import postgres from "postgres";
+import { cookies } from "next/headers";
+import { NOM_COOKIE, lireSession } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+interface Diagnostic {
+  etat: "en ordre" | "configuration incomplète";
+  variables: Record<string, boolean>;
+  environnement: string;
+  variablesBlob: string[];
+  stockageImages: string;
+  base: string;
+  problemes: string[];
+  avertissements: string[];
+}
+
+let cache: { quand: number; diagnostic: Diagnostic } | null = null;
+const CACHE_MS = 30_000;
+
+export async function GET(requete: Request) {
+  const jeton = (await cookies()).get(NOM_COOKIE)?.value;
+  const secretCron = process.env.CRON_SECRET;
+  const autorise =
+    (await lireSession(jeton)) !== null ||
+    (Boolean(secretCron) &&
+      requete.headers.get("authorization") === `Bearer ${secretCron}`);
+
+  if (!cache || Date.now() - cache.quand > CACHE_MS) {
+    cache = { quand: Date.now(), diagnostic: await diagnostiquer() };
+  }
+  const d = cache.diagnostic;
+  const status = d.problemes.length === 0 ? 200 : 503;
+  const headers = { "Cache-Control": "no-store" };
+
+  if (!autorise) {
+    return Response.json(
+      {
+        etat: d.problemes.length === 0 ? "en ordre" : "en panne",
+        base: d.base.startsWith("joignable") ? "joignable" : d.base === "non testée" ? "non testée" : "injoignable",
+        stockageImages: d.stockageImages.startsWith("joignable") ? "joignable" : d.stockageImages,
+        detail: "Connectez-vous à l'administration pour le diagnostic complet.",
+      },
+      { status, headers },
+    );
+  }
+  return Response.json(d, { status, headers });
+}
+
+async function diagnostiquer(): Promise<Diagnostic> {
   const variables = {
     DATABASE_URL: Boolean(process.env.DATABASE_URL),
     SESSION_SECRET: Boolean(process.env.SESSION_SECRET),
@@ -107,7 +159,8 @@ export async function GET() {
         );
       else
         avertissements.push(
-          `Magasin d'images injoignable : ${m.slice(0, 140)}`,
+          "Magasin d'images injoignable : le magasin ne répond pas (réseau, " +
+            "jeton ou service). Réessayez, puis vérifiez le jeton et redéployez.",
         );
     }
   }
@@ -177,29 +230,27 @@ export async function GET() {
         problemes.push(
           "Base joignable mais vide : les tables ne sont pas créées.",
         );
+      } else if (msg.includes("timeout") || msg.includes("ETIMEDOUT")) {
+        problemes.push("Base injoignable : délai dépassé. Le pooler ne répond pas.");
+      } else if (msg.includes("Tenant or user not found")) {
+        problemes.push("Base injoignable : l'utilisateur de DATABASE_URL n'est pas celui du pooler (attendu « postgres.<ref> »).");
       } else {
-        problemes.push("Base injoignable : " + msg.slice(0, 120));
+        problemes.push("Base injoignable : la connexion échoue (cause non reconnue, voir les journaux du serveur).");
       }
     } finally {
       await sql.end({ timeout: 3 }).catch(() => {});
     }
   }
 
-  return Response.json(
-    {
-      etat: problemes.length === 0 ? "en ordre" : "configuration incomplète",
-      variables,
-      environnement,
-      variablesBlob,
-      stockageImages: stockage,
-      base,
-      problemes,
-      // Ce qui n'empêche pas la compétition, mais prive d'une fonction.
-      avertissements,
-    },
-    {
-      status: problemes.length === 0 ? 200 : 503,
-      headers: { "Cache-Control": "no-store" },
-    },
-  );
+  return {
+    etat: problemes.length === 0 ? "en ordre" : "configuration incomplète",
+    variables,
+    environnement,
+    variablesBlob,
+    stockageImages: stockage,
+    base,
+    problemes,
+    // Ce qui n'empêche pas la compétition, mais prive d'une fonction.
+    avertissements,
+  };
 }

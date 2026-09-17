@@ -1,7 +1,7 @@
 /**
  * Garde d'accès à l'administration.
  *
- * Ce middleware est la PREMIÈRE barrière, pas la seule. Il empêche d'afficher
+ * Ce proxy (le « middleware » de Next, renommé en v16) est la PREMIÈRE barrière, pas la seule. Il empêche d'afficher
  * les pages `/admin`, mais chaque écriture revérifie la session de son côté :
  * un garde unique qu'on contourne (route oubliée, appel direct à une API)
  * laisserait tout ouvert. Deux barrières indépendantes, jamais une.
@@ -10,7 +10,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { NOM_COOKIE, lireSession } from "@/lib/auth";
 
-export async function middleware(requete: NextRequest) {
+export async function proxy(requete: NextRequest) {
   const session = await lireSession(requete.cookies.get(NOM_COOKIE)?.value);
   if (session) return NextResponse.next();
 

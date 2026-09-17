@@ -102,8 +102,16 @@ export function Plateau({
   passages,
   suspendue,
   motifSuspension,
+  chronoPublie,
 }: {
   competitionId: string;
+  /** L'état du chrono tel que la base le connaît : pour reprendre un chrono en cours quand on revient sur la page. */
+  chronoPublie: {
+    phase: string;
+    dureeS: number;
+    debutLe: number | null;
+    arretS: number | null;
+  };
   /** Classement des clubs, toutes catégories retenues, barème 15/10/5/4/3/1. */
   clubs: LigneClub[];
   epreuve: EpreuvePlateau;
@@ -187,8 +195,24 @@ export function Plateau({
   /* ── Chronomètre ──────────────────────────────────────────────────── */
 
   const limite = epreuve.tempsLimiteS ?? 0;
-  const [phase, setPhase] = useState<"pret" | "encours" | "arrete">("pret");
-  const [ecoule, setEcoule] = useState(0);
+  /**
+   * Un chrono lancé survit à un aller-retour vers la régie : la base porte
+   * son instant de départ (c'est ce que lit le mur LED), on repart de là. Il
+   * n'est repris que si quelqu'un est au plateau — sinon c'est un reste.
+   */
+  const repris =
+    auPlateau.length > 0 && chronoPublie.phase === "encours" && chronoPublie.debutLe !== null
+      ? { phase: "encours" as const, ecoule: 0, t0: chronoPublie.debutLe }
+      : auPlateau.length > 0 && chronoPublie.phase === "arrete"
+        ? {
+            phase: "arrete" as const,
+            ecoule: limite > 0 ? Math.max(0, limite - (chronoPublie.arretS ?? 0)) : (chronoPublie.arretS ?? 0),
+            t0: null,
+          }
+        : null;
+  const [phase, setPhase] = useState<"pret" | "encours" | "arrete">(repris?.phase ?? "pret");
+  const [ecoule, setEcoule] = useState(repris?.ecoule ?? 0);
+  const reprise = useRef<number | null>(repris?.t0 ?? null);
   const [saisies, setSaisies] = useState<
     Record<string, { valeur: string; temps: string; chrono: string; erreur: string }>
   >({});
@@ -212,15 +236,6 @@ export function Plateau({
     setSaisies({});
   }
 
-  // Le minuteur du navigateur et le mur LED sont deux systèmes extérieurs :
-  // on les remet à l'heure dans un effet, pas pendant le rendu.
-  useEffect(() => {
-    if (minuteur.current) {
-      clearInterval(minuteur.current);
-      minuteur.current = null;
-    }
-    void majChrono(competitionId, { phase: "pret", dureeS: limite });
-  }, [cle, competitionId, limite]);
 
   useEffect(
     () => () => {
@@ -311,6 +326,37 @@ export function Plateau({
       return suite;
     });
   }
+
+  // Le minuteur du navigateur et le mur LED sont deux systèmes extérieurs :
+  // on les remet à l'heure dans un effet, pas pendant le rendu.
+  useEffect(() => {
+    if (minuteur.current) {
+      clearInterval(minuteur.current);
+      minuteur.current = null;
+    }
+    // Premier rendu avec un chrono en cours en base : on le relance depuis
+    // son instant de départ au lieu de l'écraser par « prêt » — c'est ce qui
+    // remettait le chrono à zéro à chaque retour sur la page.
+    if (reprise.current !== null) {
+      const t0 = reprise.current;
+      reprise.current = null;
+      minuteur.current = setInterval(() => {
+        const e = (Date.now() - t0) / 1000;
+        setEcoule(e);
+        if (limite > 0 && e >= limite) {
+          if (minuteur.current) clearInterval(minuteur.current);
+          minuteur.current = null;
+          setEcoule(limite);
+          setPhase("arrete");
+          releverChrono(limite);
+          publier({ phase: "arrete", dureeS: limite, arretS: 0 });
+        }
+      }, 100);
+      return;
+    }
+    void majChrono(competitionId, { phase: "pret", dureeS: limite });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cle, competitionId, limite]);
 
   /* ── Saisie ───────────────────────────────────────────────────────── */
 
@@ -2289,13 +2335,26 @@ export function Plateau({
         </div>
       ) : null}
 
-      {/* ── Classements ── */}
+      {/* ── Classements : l'épreuve sous chaque catégorie, le général en bas ── */}
+      <div
+        style={{
+          marginTop: 26,
+          marginBottom: 8,
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: ".1em",
+          textTransform: "uppercase",
+          color: C.encre3,
+        }}
+      >
+        Classement de l&apos;épreuve · {epreuve.nom}
+      </div>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(min(320px,100%),1fr))",
+          gridTemplateColumns: `repeat(${Math.max(1, parCategorie.length)}, minmax(min(300px,100%),1fr))`,
           gap: 16,
-          marginTop: 22,
+          justifyItems: "stretch",
         }}
       >
         {parCategorie.map((cat) => (
@@ -2371,7 +2430,28 @@ export function Plateau({
             ) : null}
           </div>
         ))}
+      </div>
 
+      <div
+        style={{
+          marginTop: 26,
+          marginBottom: 8,
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: ".1em",
+          textTransform: "uppercase",
+          color: C.encre3,
+        }}
+      >
+        Classement général · toutes épreuves
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(320px,100%),1fr))",
+          gap: 16,
+        }}
+      >
         {parCategorie.map((cat) => (
           <div
             key={`gen-${cat.id}`}
@@ -2437,7 +2517,9 @@ export function Plateau({
             ) : null}
           </div>
         ))}
+      </div>
 
+      <div style={{ marginTop: 16 }}>
         {/* Classement des clubs : toutes catégories retenues confondues */}
         <div
           style={{

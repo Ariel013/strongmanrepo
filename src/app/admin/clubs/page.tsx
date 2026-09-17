@@ -59,7 +59,7 @@ export default async function PageClubs() {
         <TitreSection
           debut="Classement"
           suite="des clubs"
-          chapeau={`Le rang final de chaque athlète dans sa catégorie rapporte des points à son club : ${POINTS_CLUB_LISIBLE}. Recalculé à chaque validation, toutes catégories retenues confondues.`}
+          chapeau={`À chaque épreuve, le rang de chaque athlète dans sa catégorie rapporte des points à son club, et les points se cumulent d'une épreuve à l'autre : ${POINTS_CLUB_LISIBLE}. Recalculé à chaque validation, toutes catégories retenues confondues.`}
         />
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
           <BoutonImprimer nombre={1} />

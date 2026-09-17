@@ -49,6 +49,7 @@ import {
   completerFile,
   libererLePlateau,
   placerAuPlateau,
+  realignerFile,
   reconstruireFile,
   remettreEnFile,
 } from "../src/lib/plateau";
@@ -765,7 +766,25 @@ async function principal() {
       etat.find((p) => p.athleteId === file[0].athleteId)?.statut,
       "a_saisir",
     );
-    egal("et ne recrée que les autres", reconstruit.crees, file.length - 1);
+    egal(
+      "et ne recrée que les autres — ni l'attente, ni l'athlète au plateau",
+      reconstruit.crees,
+      file.length - 2,
+    );
+    egal(
+      "l'athlète au plateau y reste : on ne renvoie pas en file un essai en cours",
+      etat.find((p) => p.id === file[1].id)?.statut,
+      "plateau",
+    );
+    const etranger = await reconstruireFile(comp.id, eps[0].id, [
+      "00000000-0000-4000-8000-000000000000",
+    ]);
+    verifier("un athlète étranger à la compétition est refusé avant toute suppression", !etranger.ok);
+    egal(
+      "et la file n'a pas bougé",
+      (await relire()).length,
+      etat.length,
+    );
 
     await remettreEnFile(file[0].id);
     etat = await relire();
@@ -1025,6 +1044,51 @@ async function principal() {
     egal("import : ISO conservé", av[1].dateNaissance, "1999-07-02");
     egal("import : une date illisible reste vide", av[2].dateNaissance, "");
 
+    /* ── 21. Réalignement d'une file intacte sur les points acquis ── */
+    console.log("\n21. Réalignement : une file intacte suit les points acquis, pas le préchargement");
+    {
+      // Épreuve 2 préchargée par dossards ; l'épreuve 1 a des résultats.
+      // L'épreuve 2 doit passer en premier celui qui a le moins de points.
+      const ath = await db
+        .select()
+        .from(athlete)
+        .where(eq(athlete.competitionId, comp.id))
+        .orderBy(asc(athlete.dossard));
+      const classes = ath.filter((a) => a.categorieId !== null && !a.horsClassement);
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+      await db.insert(passage).values(
+        classes.map((a, i) => ({
+          competitionId: comp.id,
+          epreuveId: eps[1].id,
+          athleteId: a.id,
+          ordre: i + 1,
+          statut: "avenir",
+        })),
+      );
+      const r = await realignerFile(comp.id, eps[1].id);
+      const apres = await db
+        .select()
+        .from(passage)
+        .where(eq(passage.epreuveId, eps[1].id))
+        .orderBy(asc(passage.ordre));
+      const epreuvesVueR = await epreuvesDe(comp.id);
+      const resultatsR = await tousLesResultats(comp.id, epreuvesVueR);
+      const catsR = await categoriesDe(comp.id);
+      const athVueR = await athletesDe(comp.id);
+      const attendu = catsR
+        .filter((c) => c.active)
+        .flatMap((c) =>
+          ordrePour(epreuvesVueR[1], c.id, epreuvesVueR, athVueR, resultatsR).map((a) => a.id),
+        )
+        .filter((id) => classes.some((a) => a.id === id));
+      egal("la file réalignée suit l'ordre théorique (points acquis croissants)", apres.map((p) => p.athleteId), attendu);
+      verifier("le réalignement s'est fait (l'ordre des dossards différait)", r.realignee || apres.map((p) => p.athleteId).join() === attendu.join());
+      await placerAuPlateau(apres[0].id);
+      const r2 = await realignerFile(comp.id, eps[1].id);
+      verifier("une épreuve commencée n'est plus réalignée", !r2.realignee);
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+    }
+
     /* ── 19. Classement des clubs ── */
     console.log("\n19. Clubs : 15 / 10 / 5 / 4 / 3, puis 1 pour tout classé");
     const clubs = classementClubs([
@@ -1044,6 +1108,12 @@ async function principal() {
       "ordre : points, puis titres (Hercule devant Atlas à 15)",
       clubs.map((c) => c.club),
       ["Titan", "Hercule", "Atlas"],
+    );
+    // Cumul épreuve par épreuve : 2e puis 1er = 10 + 15.
+    egal(
+      "les points d'un club se cumulent d'une épreuve à l'autre",
+      classementClubs([{ club: "Titan", rang: 2 }, { club: "Titan", rang: 1 }])[0].points,
+      25,
     );
     egal("un 6e vaut 1 point, un 5e vaut 3", [
       classementClubs([{ club: "X", rang: 6 }])[0].points,

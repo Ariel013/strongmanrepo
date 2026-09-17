@@ -191,7 +191,7 @@ export const libelleTemps = (mesure: string | null | undefined): string =>
 
 /** Le barème des clubs, tel qu'on l'annonce au micro. */
 export const POINTS_CLUB_LISIBLE =
-  "1er : 15 pts · 2e : 10 · 3e : 5 · 4e : 4 · 5e : 3 · classé : 1";
+  "à chaque épreuve, 1er : 15 pts · 2e : 10 · 3e : 5 · 4e : 4 · 5e : 3 · classé : 1, cumulés";
 
 /** La troisième case : le temps lu au chronomètre quand il s'arrête. */
 export const LIBELLE_CHRONO = "Temps au chrono (s)";

@@ -119,6 +119,11 @@ Settings → Environment Variables dans le `.env` du poste.
 | `0007_confused_jazinda` (colonne `recompense_club` sur `competition`) | Supabase | ✅ appliquée le 2026-09-17 |
 | `0008_little_ben_urich` (colonne `categorie_id` sur `recompense`) | Supabase | ✅ appliquée le 2026-09-17 |
 
+**Facultatif, après l'audit du 2026-09-17** : définir `CRON_SECRET` dans les
+variables Vercel (une chaîne aléatoire). Vercel l'envoie au cron quotidien de
+`/api/sante`, qui lui rend alors le diagnostic complet ; sans lui, le cron ne
+reçoit que « en ordre / en panne », ce qui suffit à alerter.
+
 > ⚠️ `pnpm run db:push` **échoue sur Supabase** : l'introspection de drizzle-kit
 > trébuche sur les contraintes CHECK des schémas internes. Utiliser
 > `pnpm run db:migrer`, qui applique le SQL versionné de `drizzle/`.

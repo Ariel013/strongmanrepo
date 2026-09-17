@@ -15,10 +15,16 @@ import { signatureEcrans } from "@/lib/donnees";
 
 export const dynamic = "force-dynamic";
 
+/** La chaîne brute porte des identifiants internes et le motif de suspension : on n'en sort que l'empreinte. */
+async function hacher(texte: string): Promise<string> {
+  const octets = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(texte));
+  return Array.from(new Uint8Array(octets), (o) => o.toString(16).padStart(2, "0")).join("");
+}
+
 export async function GET() {
   try {
     return Response.json(
-      { signature: await signatureEcrans() },
+      { signature: await hacher(await signatureEcrans()) },
       {
         // Jamais de cache : une empreinte mise en cache ferait exactement ce
         // qu'elle est censée empêcher — un écran figé qui se croit à jour.

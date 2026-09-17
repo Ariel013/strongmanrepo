@@ -12,7 +12,7 @@
  * de réclamation, c'est la seule pièce qui dise ce qui a été saisi et quand.
  */
 
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
@@ -38,6 +38,7 @@ import {
   completerFile,
   libererLePlateau,
   placerAuPlateau,
+  realignerFile,
   reconstruireFile,
   remettreEnFile,
 } from "./plateau";
@@ -65,12 +66,40 @@ async function exigerSession() {
 /** Empreinte du poste : IP tronquée, assez pour situer, pas pour identifier. */
 async function origine(): Promise<string> {
   const e = await headers();
-  return (e.get("x-forwarded-for") ?? "local")
-    .split(",")[0]
-    .trim()
-    .split(".")
-    .slice(0, 3)
-    .join(".");
+  const brut = (e.get("x-forwarded-for") ?? "local").split(",")[0].trim();
+  // IPv4 : trois octets sur quatre. IPv6 : quatre groupes sur huit. Dans les
+  // deux cas, de quoi situer un poste, pas de quoi l'identifier.
+  return brut.includes(":")
+    ? brut.split(":").slice(0, 4).join(":")
+    : brut.split(".").slice(0, 3).join(".");
+}
+
+/** Efface un ancien fichier du magasin ; un échec ne bloque jamais la saisie. */
+async function effacerImage(url: string | null | undefined) {
+  if (!url) return;
+  try {
+    const { del } = await import("@vercel/blob");
+    await del(url);
+  } catch {
+    // Un blob orphelin coûte quelques kilo-octets ; une photo non enregistrée
+    // coûte un athlète sans visage sur le mur LED.
+  }
+}
+
+/** Un identifiant qui n'a pas la forme d'un UUID ne vient pas de nos écrans. */
+const idValide = (id: string | null | undefined): id is string =>
+  typeof id === "string" && UUID.test(id);
+
+/** Un nombre fini dans une borne, ou `null` si absent. Refuse tout le reste. */
+function nombreBorne(
+  v: unknown,
+  min: number,
+  max: number,
+): { ok: true; valeur: number | null } | { ok: false } {
+  if (v === null || v === undefined) return { ok: true, valeur: null };
+  if (typeof v !== "number" || !Number.isFinite(v) || v < min || v > max)
+    return { ok: false };
+  return { ok: true, valeur: v };
 }
 
 async function tracer(
@@ -123,72 +152,6 @@ const UUID =
 
 /* ── Athlètes ─────────────────────────────────────────────────────────── */
 
-/** Lit un nombre saisi à la française : « 104,5 » vaut 104.5. */
-function versNombre(v: FormDataEntryValue | null): number | null {
-  const s = String(v ?? "").trim().replace(",", ".");
-  if (!s) return null;
-  const n = Number.parseFloat(s);
-  return Number.isFinite(n) ? n : null;
-}
-
-export async function enregistrerAthlete(
-  _etat: Retour,
-  donnees: FormData,
-): Promise<Retour> {
-  await exigerSession();
-
-  const id = String(donnees.get("id") ?? "").trim();
-  const nom = String(donnees.get("nom") ?? "").trim().toUpperCase();
-  const prenoms = String(donnees.get("prenoms") ?? "").trim();
-  const competitionId = String(donnees.get("competitionId") ?? "").trim();
-
-  if (!nom) return { ok: false, erreur: "Le nom est obligatoire." };
-  if (!competitionId) return { ok: false, erreur: "Compétition introuvable." };
-
-  const dossard = versNombre(donnees.get("dossard"));
-  const poidsCorps = versNombre(donnees.get("poidsCorps"));
-  const categorieIdBrut = String(donnees.get("categorieId") ?? "").trim();
-
-  const valeurs = {
-    nom,
-    prenoms,
-    club: String(donnees.get("club") ?? "").trim() || null,
-    pays: String(donnees.get("pays") ?? "CIV").trim() || "CIV",
-    dossard: dossard === null ? null : Math.trunc(dossard),
-    poidsCorps: poidsCorps === null ? null : String(poidsCorps),
-    categorieId: categorieIdBrut || null,
-    horsClassement: donnees.get("horsClassement") === "on",
-  };
-
-  try {
-    if (id) {
-      await db.update(athlete).set(valeurs).where(eq(athlete.id, id));
-      await tracer("athlete.modifie", "athlete", id, { nom, dossard: valeurs.dossard });
-    } else {
-      const [cree] = await db
-        .insert(athlete)
-        .values({ ...valeurs, competitionId })
-        .returning();
-      await tracer("athlete.cree", "athlete", cree.id, { nom });
-    }
-  } catch (e) {
-    const msg = (e as Error).message;
-    // L'index unique sur (compétition, dossard) protège d'un doublon de
-    // dossard — deux athlètes au même numéro rendraient l'ordre de passage
-    // et la feuille de match incohérents.
-    if (msg.includes("athlete_dossard_unique")) {
-      return {
-        ok: false,
-        erreur: `Le dossard ${valeurs.dossard} est déjà attribué à un autre athlète.`,
-      };
-    }
-    return { ok: false, erreur: "Enregistrement impossible : " + msg };
-  }
-
-  revalidatePath("/admin/athletes");
-  revalidatePath("/admin/plateau");
-  return { ok: true };
-}
 
 export async function supprimerAthlete(id: string): Promise<Retour> {
   await exigerSession();
@@ -227,15 +190,29 @@ export async function enregistrerContact(
   },
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(athleteId)) return { ok: false, erreur: "Athlète introuvable." };
 
-  // La date de naissance est vérifiée ; une année tapée avec un chiffre en
-  // moins donnerait sinon un « 4 ans » sur la fiche sans un mot.
+  // Chaque coordonnée est bornée : un téléphone de deux mille caractères
+  // n'est pas un téléphone. La date de naissance est vérifiée ; une année
+  // tapée avec un chiffre en moins donnerait sinon un « 4 ans » sur la fiche.
   const valeurs: {
     telephone?: string;
     contactUrgence?: string;
     commune?: string;
     dateNaissance?: string | null;
-  } = { ...donnees };
+  } = {};
+  const bornes = [
+    ["telephone", "Le téléphone", 40],
+    ["contactUrgence", "Le contact d'urgence", 120],
+    ["commune", "La commune", 80],
+  ] as const;
+  for (const [champ, libelle, max] of bornes) {
+    const v = donnees[champ];
+    if (v === undefined) continue;
+    const r = texteFacultatif(v, libelle, max);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    valeurs[champ] = r.valeur ?? "";
+  }
   if (donnees.dateNaissance !== undefined) {
     const r = dateNaissance(donnees.dateNaissance);
     if (!r.ok) return { ok: false, erreur: r.erreur };
@@ -261,6 +238,27 @@ export async function choisirEpreuve(
   categorieId: string | null,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(competitionId)) return { ok: false, erreur: "Compétition introuvable." };
+
+  // Une épreuve ou une catégorie qui n'est pas de cette compétition
+  // laisserait les écrans publics sur un contenu fantôme.
+  if (epreuveId !== null) {
+    if (!idValide(epreuveId)) return { ok: false, erreur: "Épreuve introuvable." };
+    const [e] = await db
+      .select({ id: epreuve.id })
+      .from(epreuve)
+      .where(and(eq(epreuve.id, epreuveId), eq(epreuve.competitionId, competitionId)));
+    if (!e) return { ok: false, erreur: "Épreuve introuvable dans cette compétition." };
+  }
+  if (categorieId !== null) {
+    if (!idValide(categorieId)) return { ok: false, erreur: "Catégorie introuvable." };
+    const [c] = await db
+      .select({ id: categorie.id })
+      .from(categorie)
+      .where(and(eq(categorie.id, categorieId), eq(categorie.competitionId, competitionId)));
+    if (!c) return { ok: false, erreur: "Catégorie introuvable dans cette compétition." };
+  }
+
   await db
     .update(competition)
     .set({
@@ -269,6 +267,12 @@ export async function choisirEpreuve(
       majLe: new Date(),
     })
     .where(eq(competition.id, competitionId));
+  // L'épreuve choisie prend l'ordre des points acquis, si personne n'y est
+  // encore passé : c'est le moment où la première épreuve vient de finir.
+  if (epreuveId !== null) {
+    const r = await realignerFile(competitionId, epreuveId);
+    if (r.realignee) await tracer("file.realignee", "epreuve", epreuveId);
+  }
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
   return { ok: true };
@@ -396,26 +400,60 @@ export async function validerPassage(
     | { statut: "zero" | "forfait" },
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(passageId)) return { ok: false, erreur: "Passage introuvable." };
 
-  if (resultat.statut === "ok" && !Number.isFinite(resultat.valeur)) {
-    return {
-      ok: false,
-      erreur: "Saisissez la performance mesurée avant de valider.",
-    };
+  // On ne valide qu'un passage au plateau ou en attente de résultat. Un
+  // passage déjà validé ne se réécrit pas en silence : c'est un résultat
+  // officiel, et la double validation (deux onglets, plateau + attente)
+  // finirait sinon par « le dernier a raison ».
+  const [cible] = await db
+    .select({ statut: passage.statut })
+    .from(passage)
+    .where(eq(passage.id, passageId));
+  if (!cible) return { ok: false, erreur: "Passage introuvable." };
+  if (cible.statut === "termine")
+    return { ok: false, erreur: "Ce passage est déjà validé : rien n'a été modifié." };
+  if (cible.statut !== "plateau" && cible.statut !== "a_saisir")
+    return { ok: false, erreur: "Appelez l'athlète au plateau avant de valider." };
+
+  let valeurs: {
+    valeur: number | null;
+    tempsS: number | null;
+    tours: number[];
+    chronoS: number | null;
+  } = { valeur: null, tempsS: null, tours: [], chronoS: null };
+  if (resultat.statut === "ok") {
+    const v = nombreBorne(resultat.valeur, 0, 100_000);
+    if (!v.ok || v.valeur === null)
+      return { ok: false, erreur: "Saisissez la performance mesurée avant de valider." };
+    const t = nombreBorne(resultat.tempsS, 0, 36_000);
+    if (!t.ok) return { ok: false, erreur: "Temps intermédiaire : un nombre de secondes, 0 à 36 000." };
+    const c = nombreBorne(resultat.chronoS, 0, 36_000);
+    if (!c.ok) return { ok: false, erreur: "Temps au chrono : un nombre de secondes, 0 à 36 000." };
+    const tours = resultat.tours ?? [];
+    if (
+      !Array.isArray(tours) ||
+      tours.length > 200 ||
+      tours.some((x) => typeof x !== "number" || !Number.isFinite(x) || x < 0 || x > 36_000)
+    )
+      return { ok: false, erreur: "Tours : des temps en secondes, 200 au plus." };
+    valeurs = { valeur: v.valeur, tempsS: t.valeur, tours, chronoS: c.valeur };
+  } else if (resultat.statut !== "zero" && resultat.statut !== "forfait") {
+    return { ok: false, erreur: "Verdict inconnu." };
   }
 
-  await db
+  const ecrit = await db
     .update(passage)
     .set({
       statut: "termine",
       resultatStatut: resultat.statut,
-      valeur: resultat.statut === "ok" ? resultat.valeur : null,
-      tempsS: resultat.statut === "ok" ? resultat.tempsS : null,
-      tours: resultat.statut === "ok" ? (resultat.tours ?? []) : [],
-      chronoS: resultat.statut === "ok" ? (resultat.chronoS ?? null) : null,
+      ...valeurs,
       valideLe: new Date(),
     })
-    .where(eq(passage.id, passageId));
+    .where(and(eq(passage.id, passageId), inArray(passage.statut, ["plateau", "a_saisir"])))
+    .returning({ id: passage.id });
+  if (ecrit.length === 0)
+    return { ok: false, erreur: "Ce passage vient d'être validé ailleurs : rien n'a été modifié." };
 
   await tracer("passage.valide", "passage", passageId, resultat);
   revalidatePath("/admin/plateau");
@@ -480,9 +518,12 @@ export async function suspendre(
   motif: string,
 ): Promise<Retour> {
   await exigerSession();
+  // Le motif part sur le mur LED : borné, comme tout ce qui s'y affiche.
+  const r = texteFacultatif(motif, "Le motif", 120);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
     .update(competition)
-    .set({ suspendue: true, motifSuspension: motif || "Suspension" })
+    .set({ suspendue: true, motifSuspension: r.valeur || "Suspension" })
     .where(eq(competition.id, competitionId));
   await tracer("competition.suspendue", "competition", competitionId, { motif });
   revalidatePath("/admin", "layout");
@@ -650,8 +691,12 @@ export async function modifierEpreuve(
   valeur: string | boolean,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Épreuve introuvable." };
+  // `hasOwn` : « constructor » ou « toString » sont des clés héritées, pas
+  // des colonnes. Le type TypeScript n'existe plus à l'exécution.
+  if (!Object.hasOwn(CHAMPS_EPREUVE, champ))
+    return { ok: false, erreur: "Champ inconnu." };
   const type = CHAMPS_EPREUVE[champ];
-  if (!type) return { ok: false, erreur: "Champ inconnu." };
 
   let v: unknown;
   if (type === "booleen") {
@@ -744,6 +789,11 @@ export async function modifierCategorie(
   valeur: string | boolean,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Groupe introuvable." };
+  // Le nom de colonne vient du navigateur : on ne l'écrit que s'il est de la
+  // liste, sinon `set({ [champ]: v })` écrirait n'importe quelle colonne.
+  const champOk = parmi(champ, ["nom", "poidsMin", "poidsMax", "active", "couleur"] as const, "Champ");
+  if (!champOk.ok) return { ok: false, erreur: champOk.erreur };
 
   let v: unknown;
   if (champ === "active") {
@@ -857,6 +907,9 @@ export async function modifierOfficiel(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Officiel introuvable." };
+  const champOk = parmi(champ, ["nom", "role", "categorieId"] as const, "Champ");
+  if (!champOk.ok) return { ok: false, erreur: champOk.erreur };
 
   // Le nom peut rester vide : les postes sont créés d'avance et nommés plus
   // tard. Le rôle, lui, décide de la place au procès-verbal.
@@ -929,6 +982,9 @@ export async function modifierProgramme(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Ligne introuvable." };
+  const champOk = parmi(champ, ["heure", "texte"] as const, "Champ");
+  if (!champOk.ok) return { ok: false, erreur: champOk.erreur };
   // L'heure du programme est lue par un humain, jamais comparée : « 14h00 »
   // comme « vers midi » sont acceptables. On borne, c'est tout.
   const r = texteFacultatif(
@@ -1029,6 +1085,9 @@ export async function modifierRecompense(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Récompense introuvable." };
+  const champOk = parmi(champ, ["titre", "prime", "lot"] as const, "Champ");
+  if (!champOk.ok) return { ok: false, erreur: champOk.erreur };
   const r = texteFacultatif(valeur, "Ce champ", 120);
   if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
@@ -1084,6 +1143,9 @@ export async function modifierSortie(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(id)) return { ok: false, erreur: "Sortie introuvable." };
+  const champOk = parmi(champ, ["nom", "contenu"] as const, "Champ");
+  if (!champOk.ok) return { ok: false, erreur: champOk.erreur };
 
   let v: string;
   if (champ === "contenu") {
@@ -1117,9 +1179,11 @@ export async function basculerTheme(
   vers: "nuit" | "jour",
 ): Promise<Retour> {
   await exigerSession();
+  const r = parmi(vers, ["nuit", "jour"] as const, "Thème");
+  if (!r.ok) return { ok: false, erreur: r.erreur };
   await db
     .update(competition)
-    .set({ themeEcran: vers, majLe: new Date() })
+    .set({ themeEcran: r.valeur, majLe: new Date() })
     .where(eq(competition.id, competitionId));
   revalidatePath("/admin/regie");
   revalidatePath("/ecran", "layout");
@@ -1236,9 +1300,22 @@ export async function definirNiveau(
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(athleteId) || !idValide(epreuveId))
+    return { ok: false, erreur: "Athlète ou épreuve introuvable." };
 
   const [a] = await db.select().from(athlete).where(eq(athlete.id, athleteId));
   if (!a) return { ok: false, erreur: "Athlète introuvable." };
+  // L'épreuve doit être de la même compétition : sinon la clé du JSON
+  // grossit avec des identifiants qui ne correspondent à rien.
+  const [e] = await db
+    .select({ id: epreuve.id })
+    .from(epreuve)
+    .where(and(eq(epreuve.id, epreuveId), eq(epreuve.competitionId, a.competitionId)));
+  if (!e) return { ok: false, erreur: "Épreuve introuvable dans cette compétition." };
+  // Affiché sur le plateau et le mur LED : borné.
+  const rv = texteFacultatif(valeur, "Le niveau", 40);
+  if (!rv.ok) return { ok: false, erreur: rv.erreur };
+  const niveau = rv.valeur ?? "";
 
   let niveaux: Record<string, string> = {};
   try {
@@ -1246,7 +1323,7 @@ export async function definirNiveau(
   } catch {
     niveaux = {};
   }
-  if (valeur) niveaux[epreuveId] = valeur;
+  if (niveau) niveaux[epreuveId] = niveau;
   else delete niveaux[epreuveId];
 
   await db
@@ -1298,6 +1375,8 @@ export async function affecterCategorie(
   await exigerSession();
   if (athleteIds.length === 0)
     return { ok: false, erreur: "Aucun athlète sélectionné." };
+  if (athleteIds.length > 500 || !athleteIds.every(idValide))
+    return { ok: false, erreur: "Sélection invalide : rechargez la page." };
 
   // La catégorie est relue en base avant d'être écrite. Sans cette lecture,
   // une valeur quelconque venue du navigateur partirait dans la colonne :
@@ -1308,10 +1387,16 @@ export async function affecterCategorie(
     // malformé par une erreur brute, qui remonterait à la table sous la forme
     // d'un écran cassé plutôt que d'un message.
     if (!UUID.test(cible)) return { ok: false, erreur: "Catégorie inconnue." };
+    // … et de la compétition des athlètes visés, pas d'une autre.
+    const [premier] = await db
+      .select({ competitionId: athlete.competitionId })
+      .from(athlete)
+      .where(eq(athlete.id, athleteIds[0]));
+    if (!premier) return { ok: false, erreur: "Athlète introuvable." };
     const [cat] = await db
       .select({ id: categorie.id })
       .from(categorie)
-      .where(eq(categorie.id, cible));
+      .where(and(eq(categorie.id, cible), eq(categorie.competitionId, premier.competitionId)));
     if (!cat) return { ok: false, erreur: "Catégorie inconnue." };
   }
 
@@ -1504,14 +1589,22 @@ export async function televerserPhoto(
   donnees: FormData,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(athleteId)) return { ok: false, erreur: "Athlète introuvable." };
   const fichier = donnees.get("fichier");
   if (!(fichier instanceof File) || fichier.size === 0)
     return { ok: false, erreur: "Aucun fichier reçu." };
+  const [avant] = await db
+    .select({ photoUrl: athlete.photoUrl })
+    .from(athlete)
+    .where(eq(athlete.id, athleteId));
+  if (!avant) return { ok: false, erreur: "Athlète introuvable." };
 
   const { url, erreur } = await deposer(fichier, "athletes");
   if (!url) return { ok: false, erreur };
 
   await db.update(athlete).set({ photoUrl: url }).where(eq(athlete.id, athleteId));
+  // L'ancienne photo ne reste pas lisible publiquement une fois remplacée.
+  if (avant.photoUrl !== url) await effacerImage(avant.photoUrl);
   await tracer("photo.deposee", "athlete", athleteId);
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
@@ -1524,20 +1617,31 @@ export async function televerserLogo(
   donnees: FormData,
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(competitionId)) return { ok: false, erreur: "Compétition introuvable." };
+  // Le club est une clé : tel qu'il est saisi sur les fiches, sans espace
+  // parasite, et borné comme sur la fiche.
+  const rc = texteObligatoire(club, "Le club", 60);
+  if (!rc.ok) return { ok: false, erreur: rc.erreur };
+  const nomClub = rc.valeur;
   const fichier = donnees.get("fichier");
   if (!(fichier instanceof File) || fichier.size === 0)
     return { ok: false, erreur: "Aucun fichier reçu." };
+  const [avant] = await db
+    .select({ logoUrl: clubLogo.logoUrl })
+    .from(clubLogo)
+    .where(and(eq(clubLogo.competitionId, competitionId), eq(clubLogo.club, nomClub)));
 
   const { url, erreur } = await deposer(fichier, "clubs");
   if (!url) return { ok: false, erreur };
 
   await db
     .insert(clubLogo)
-    .values({ competitionId, club, logoUrl: url })
+    .values({ competitionId, club: nomClub, logoUrl: url })
     .onConflictDoUpdate({
       target: [clubLogo.competitionId, clubLogo.club],
       set: { logoUrl: url },
     });
+  if (avant && avant.logoUrl !== url) await effacerImage(avant.logoUrl);
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
   return { ok: true };
@@ -1745,13 +1849,31 @@ export async function majChrono(
     | { phase: "arrete"; dureeS: number; arretS: number },
 ): Promise<Retour> {
   await exigerSession();
+  if (!idValide(competitionId)) return { ok: false, erreur: "Compétition introuvable." };
+  // Ce qui part sur le mur LED est vérifié : une phase inconnue ou une durée
+  // non numérique laisserait le chrono des écrans dans un état indéfini.
+  const phase = parmi(etat.phase, ["pret", "encours", "arrete"] as const, "Phase");
+  if (!phase.ok) return { ok: false, erreur: phase.erreur };
+  const duree = nombreBorne(etat.dureeS, 0, 36_000);
+  if (!duree.ok || duree.valeur === null) return { ok: false, erreur: "Durée du chrono invalide." };
+  let debutLe: Date | null = null;
+  let arretS: number | null = null;
+  if (etat.phase === "encours") {
+    const d = nombreBorne(etat.debutLe, Date.now() - 86_400_000, Date.now() + 86_400_000);
+    if (!d.ok || d.valeur === null) return { ok: false, erreur: "Instant de départ invalide." };
+    debutLe = new Date(d.valeur);
+  } else if (etat.phase === "arrete") {
+    const a = nombreBorne(etat.arretS, 0, 36_000);
+    if (!a.ok) return { ok: false, erreur: "Temps d'arrêt invalide." };
+    arretS = a.valeur;
+  }
   await db
     .update(competition)
     .set({
-      chronoPhase: etat.phase,
-      chronoDureeS: etat.dureeS,
-      chronoDebutLe: etat.phase === "encours" ? new Date(etat.debutLe) : null,
-      chronoArretS: etat.phase === "arrete" ? etat.arretS : null,
+      chronoPhase: phase.valeur,
+      chronoDureeS: duree.valeur,
+      chronoDebutLe: debutLe,
+      chronoArretS: arretS,
     })
     .where(eq(competition.id, competitionId));
   revalidatePath("/ecran", "layout");
@@ -1796,14 +1918,58 @@ export async function importerAthletes(
   }[],
 ): Promise<Retour & { resume?: ResumeImport }> {
   await exigerSession();
+  if (!idValide(competitionId)) return { ok: false, erreur: "Compétition introuvable." };
+  if (!Array.isArray(lignes) || lignes.length === 0)
+    return { ok: false, erreur: "Aucune ligne à importer." };
+  if (lignes.length > 500)
+    return { ok: false, erreur: "Import limité à 500 lignes à la fois : découpez la liste." };
 
-  const existants = await db
-    .select()
-    .from(athlete)
-    .where(eq(athlete.competitionId, competitionId));
-  const parCle = new Map(
-    existants.map((a) => [cleRapprochement(a.nom, a.prenoms), a]),
-  );
+  /**
+   * Chaque ligne est vérifiée AVANT d'écrire quoi que ce soit, avec les mêmes
+   * bornes que la fiche : la lecture côté navigateur a déjà nettoyé, mais le
+   * serveur reste l'arbitre. Une ligne fautive arrête tout et dit laquelle,
+   * plutôt que d'importer la moitié d'une liste.
+   */
+  const propres: {
+    nom: string;
+    prenoms: string;
+    club: string | null;
+    poids: number | null;
+    telephone: string | null;
+    urgence: string | null;
+    dateNaissance: string | null;
+    doute: boolean;
+    fusionner: boolean;
+  }[] = [];
+  for (let n = 0; n < lignes.length; n++) {
+    const l = lignes[n];
+    const ou = `Ligne ${n + 1}`;
+    const nom = texteFacultatif(String(l.nom ?? ""), `${ou}, le nom`, 60);
+    if (!nom.ok) return { ok: false, erreur: nom.erreur };
+    const prenoms = texteFacultatif(String(l.prenoms ?? ""), `${ou}, les prénoms`, 80);
+    if (!prenoms.ok) return { ok: false, erreur: prenoms.erreur };
+    const club = texteFacultatif(String(l.club ?? ""), `${ou}, le club`, 60);
+    if (!club.ok) return { ok: false, erreur: club.erreur };
+    const poids = decimalFacultatif(String(l.poids ?? ""), `${ou}, le poids`, 20, 400);
+    if (!poids.ok) return { ok: false, erreur: poids.erreur };
+    const telephone = texteFacultatif(String(l.telephone ?? ""), `${ou}, le téléphone`, 40);
+    if (!telephone.ok) return { ok: false, erreur: telephone.erreur };
+    const urgence = texteFacultatif(String(l.urgence ?? ""), `${ou}, le contact d'urgence`, 120);
+    if (!urgence.ok) return { ok: false, erreur: urgence.erreur };
+    const naissance = dateNaissance(String(l.dateNaissance ?? ""));
+    if (!naissance.ok) return { ok: false, erreur: `${ou} : ${naissance.erreur}` };
+    propres.push({
+      nom: (nom.valeur ?? "").toUpperCase(),
+      prenoms: prenoms.valeur ?? "",
+      club: club.valeur || null,
+      poids: poids.valeur,
+      telephone: telephone.valeur || null,
+      urgence: urgence.valeur || null,
+      dateNaissance: naissance.valeur,
+      doute: Boolean(l.doute),
+      fusionner: Boolean(l.fusionner),
+    });
+  }
 
   const resume: ResumeImport = {
     ajoutes: 0,
@@ -1812,70 +1978,77 @@ export async function importerAthletes(
     aVerifier: 0,
   };
 
-  for (const l of lignes) {
-    const nom = l.nom.trim().toUpperCase();
-    if (!nom) {
-      resume.ignores++;
-      continue;
-    }
-    const poids = l.poids.trim().replace(",", ".");
-    const poidsValide =
-      poids && Number.isFinite(Number.parseFloat(poids)) ? poids : null;
+  // Tout ou rien : une erreur au milieu n'importe pas la moitié de la liste
+  // en annonçant « rien n'a été importé ».
+  await db.transaction(async (tx) => {
+    const existants = await tx
+      .select()
+      .from(athlete)
+      .where(eq(athlete.competitionId, competitionId));
+    const parCle = new Map(
+      existants.map((a) => [cleRapprochement(a.nom, a.prenoms), a]),
+    );
 
-    const deja = parCle.get(cleRapprochement(nom, l.prenoms));
-
-    if (deja) {
-      if (!l.fusionner) {
+    for (const l of propres) {
+      if (!l.nom) {
         resume.ignores++;
         continue;
       }
-      // Complément, pas remplacement : `??` sur ce qui est déjà en base.
-      await db
-        .update(athlete)
-        .set({
-          prenoms: deja.prenoms || l.prenoms.trim(),
-          club: deja.club ?? (l.club.trim() || null),
-          poidsDeclare: deja.poidsDeclare ?? poidsValide,
-        })
-        .where(eq(athlete.id, deja.id));
-      if (l.telephone.trim() || l.urgence.trim() || l.dateNaissance)
-        await db
-          .insert(athleteContact)
-          .values({
-            athleteId: deja.id,
-            telephone: l.telephone.trim() || null,
-            contactUrgence: l.urgence.trim() || null,
-            dateNaissance: l.dateNaissance || null,
+      const deja = parCle.get(cleRapprochement(l.nom, l.prenoms));
+
+      if (deja) {
+        if (!l.fusionner) {
+          resume.ignores++;
+          continue;
+        }
+        // Complément, pas remplacement : `??` sur ce qui est déjà en base.
+        await tx
+          .update(athlete)
+          .set({
+            prenoms: deja.prenoms || l.prenoms,
+            club: deja.club ?? l.club,
+            poidsDeclare: deja.poidsDeclare ?? (l.poids === null ? null : String(l.poids)),
           })
-          .onConflictDoNothing();
-      resume.fusionnes++;
-      continue;
+          .where(eq(athlete.id, deja.id));
+        if (l.telephone || l.urgence || l.dateNaissance)
+          await tx
+            .insert(athleteContact)
+            .values({
+              athleteId: deja.id,
+              telephone: l.telephone,
+              contactUrgence: l.urgence,
+              dateNaissance: l.dateNaissance,
+            })
+            .onConflictDoNothing();
+        resume.fusionnes++;
+        continue;
+      }
+
+      const [cree] = await tx
+        .insert(athlete)
+        .values({
+          competitionId,
+          nom: l.nom,
+          prenoms: l.prenoms,
+          club: l.club,
+          poidsDeclare: l.poids === null ? null : String(l.poids),
+          aVerifier: l.doute,
+        })
+        .returning();
+
+      if (l.telephone || l.urgence || l.dateNaissance)
+        await tx.insert(athleteContact).values({
+          athleteId: cree.id,
+          telephone: l.telephone,
+          contactUrgence: l.urgence,
+          dateNaissance: l.dateNaissance,
+        });
+
+      parCle.set(cleRapprochement(l.nom, l.prenoms), cree);
+      resume.ajoutes++;
+      if (l.doute) resume.aVerifier++;
     }
-
-    const [cree] = await db
-      .insert(athlete)
-      .values({
-        competitionId,
-        nom,
-        prenoms: l.prenoms.trim(),
-        club: l.club.trim() || null,
-        poidsDeclare: poidsValide,
-        aVerifier: l.doute,
-      })
-      .returning();
-
-    if (l.telephone.trim() || l.urgence.trim() || l.dateNaissance)
-      await db.insert(athleteContact).values({
-        athleteId: cree.id,
-        telephone: l.telephone.trim() || null,
-        contactUrgence: l.urgence.trim() || null,
-        dateNaissance: l.dateNaissance || null,
-      });
-
-    parCle.set(cleRapprochement(nom, l.prenoms), cree);
-    resume.ajoutes++;
-    if (l.doute) resume.aVerifier++;
-  }
+  });
 
   await tracer("athletes.importes", "competition", competitionId, resume);
   revalidatePath("/admin", "layout");

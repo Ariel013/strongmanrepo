@@ -15,7 +15,11 @@
 
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "./db";
-import { athlete, passage } from "./db/schema";
+import { athlete, epreuve, passage } from "./db/schema";
+
+/** Forme d'un identifiant : tout le reste vient d'ailleurs que de nos écrans. */
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export interface Resultat {
   ok: boolean;
@@ -32,41 +36,51 @@ export interface Resultat {
  * milieu de son essai.
  */
 export async function placerAuPlateau(passageId: string): Promise<Resultat> {
-  const [cible] = await db
-    .select()
-    .from(passage)
-    .where(eq(passage.id, passageId));
-  if (!cible) return { ok: false, erreur: "Passage introuvable." };
+  if (!UUID.test(passageId)) return { ok: false, erreur: "Passage introuvable." };
+  // Une transaction avec verrou : deux appels au même instant (deux postes,
+  // deux onglets) ne laissent jamais deux athlètes au plateau pour la même
+  // catégorie — le second attend le premier, puis le renvoie en file.
+  return db.transaction(async (tx) => {
+    const [cible] = await tx
+      .select()
+      .from(passage)
+      .where(eq(passage.id, passageId))
+      .for("update");
+    if (!cible) return { ok: false, erreur: "Passage introuvable." };
+    if (cible.statut === "termine")
+      return { ok: false, erreur: "Ce passage est déjà validé : il ne revient pas au plateau." };
 
-  const [athleteAppele] = await db
-    .select({ categorieId: athlete.categorieId })
-    .from(athlete)
-    .where(eq(athlete.id, cible.athleteId));
+    const [athleteAppele] = await tx
+      .select({ categorieId: athlete.categorieId })
+      .from(athlete)
+      .where(eq(athlete.id, cible.athleteId));
 
-  const dejaAuPlateau = await db
-    .select({ id: passage.id, categorieId: athlete.categorieId })
-    .from(passage)
-    .innerJoin(athlete, eq(athlete.id, passage.athleteId))
-    .where(
-      and(eq(passage.epreuveId, cible.epreuveId), eq(passage.statut, "plateau")),
-    );
+    const dejaAuPlateau = await tx
+      .select({ id: passage.id, categorieId: athlete.categorieId })
+      .from(passage)
+      .innerJoin(athlete, eq(athlete.id, passage.athleteId))
+      .where(
+        and(eq(passage.epreuveId, cible.epreuveId), eq(passage.statut, "plateau")),
+      );
 
-  const aRenvoyer = dejaAuPlateau
-    .filter((p) => p.categorieId === (athleteAppele?.categorieId ?? null))
-    .map((p) => p.id);
-  if (aRenvoyer.length > 0) {
-    await db
+    const aRenvoyer = dejaAuPlateau
+      .filter((p) => p.categorieId === (athleteAppele?.categorieId ?? null))
+      .filter((p) => p.id !== passageId)
+      .map((p) => p.id);
+    if (aRenvoyer.length > 0) {
+      await tx
+        .update(passage)
+        .set({ statut: "avenir" })
+        .where(inArray(passage.id, aRenvoyer));
+    }
+
+    await tx
       .update(passage)
-      .set({ statut: "avenir" })
-      .where(inArray(passage.id, aRenvoyer));
-  }
+      .set({ statut: "plateau" })
+      .where(eq(passage.id, passageId));
 
-  await db
-    .update(passage)
-    .set({ statut: "plateau" })
-    .where(eq(passage.id, passageId));
-
-  return { ok: true };
+    return { ok: true };
+  });
 }
 
 /** Remet en file un passage appelé par erreur, sans résultat. */
@@ -132,7 +146,13 @@ export async function libererLePlateau(
  *
  * Les passages déjà terminés sont conservés : refaire l'ordre ne doit jamais
  * effacer une performance validée. Ceux qui attendent leur résultat aussi :
- * l'athlète est passé, sa feuille est entre les mains du jury.
+ * l'athlète est passé, sa feuille est entre les mains du jury. Et celui qui
+ * est AU PLATEAU : on ne renvoie pas en file quelqu'un en plein essai.
+ *
+ * Tout se fait en une transaction, après avoir vérifié que chaque athlète
+ * demandé appartient bien à la compétition : sans cela, un identifiant
+ * étranger faisait échouer l'insertion APRÈS la suppression, et la file
+ * disparaissait sans être remplacée.
  *
  * Le périmètre est la liste des athlètes concernés par la reconstruction — en
  * pratique ceux des catégories affichées au plateau. Sans lui, reconstruire
@@ -147,49 +167,134 @@ export async function reconstruireFile(
   /** Les athlètes dont les passages peuvent être remplacés. */
   perimetre: string[] = athleteIdsDansLOrdre,
 ): Promise<Resultat & { crees: number }> {
+  if (!UUID.test(competitionId) || !UUID.test(epreuveId))
+    return { ok: false, erreur: "Épreuve introuvable.", crees: 0 };
+  const ids = [...new Set([...athleteIdsDansLOrdre, ...perimetre])];
+  if (ids.length > 1000 || !ids.every((id) => UUID.test(id)))
+    return { ok: false, erreur: "Liste d'athlètes invalide : rechargez la page.", crees: 0 };
+
+  return db.transaction(async (tx) => {
+    const [ep] = await tx
+      .select({ id: epreuve.id })
+      .from(epreuve)
+      .where(and(eq(epreuve.id, epreuveId), eq(epreuve.competitionId, competitionId)));
+    if (!ep) return { ok: false, erreur: "Épreuve introuvable dans cette compétition.", crees: 0 };
+    if (ids.length > 0) {
+      const connus = await tx
+        .select({ id: athlete.id })
+        .from(athlete)
+        .where(and(eq(athlete.competitionId, competitionId), inArray(athlete.id, ids)));
+      if (connus.length !== ids.length)
+        return {
+          ok: false,
+          erreur: "Un athlète de la liste n'est pas de cette compétition : rechargez la page.",
+          crees: 0,
+        };
+    }
+
+    const existants = await tx
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, epreuveId))
+      .for("update");
+
+    const dedans = new Set(perimetre);
+    const conserve = (statut: string) =>
+      statut === "termine" || statut === "a_saisir" || statut === "plateau";
+    const gardes = new Set(
+      existants.filter((p) => conserve(p.statut)).map((p) => p.athleteId),
+    );
+
+    const aSupprimer = existants
+      .filter((p) => !conserve(p.statut) && dedans.has(p.athleteId))
+      .map((p) => p.id);
+    if (aSupprimer.length > 0) {
+      await tx
+        .delete(passage)
+        .where(
+          and(eq(passage.epreuveId, epreuveId), inArray(passage.id, aSupprimer)),
+        );
+    }
+
+    // Les passages des autres catégories gardent leurs numéros d'ordre : les
+    // nouveaux se rangent après, pour ne pas s'intercaler dans une file qu'on
+    // n'a pas demandé à toucher.
+    const restants = existants.filter(
+      (p) => !conserve(p.statut) && !dedans.has(p.athleteId),
+    );
+    const depart = restants.reduce((m, p) => Math.max(m, p.ordre), 0);
+
+    const aCreer = athleteIdsDansLOrdre
+      .filter((id) => !gardes.has(id))
+      .map((athleteId, i) => ({
+        competitionId,
+        epreuveId,
+        athleteId,
+        ordre: depart + i + 1,
+        statut: "avenir",
+      }));
+
+    if (aCreer.length > 0) await tx.insert(passage).values(aCreer);
+    return { ok: true, crees: aCreer.length };
+  });
+}
+
+/**
+ * Réaligne la file d'une épreuve sur l'ordre théorique — points acquis
+ * croissants, dossards à la première épreuve — TANT QUE PERSONNE N'Y EST
+ * PASSÉ.
+ *
+ * Le préchargement construit toutes les files d'un coup, par dossard, avant
+ * qu'aucun résultat n'existe. Sans ce réalignement, la deuxième épreuve
+ * gardait l'ordre des dossards au lieu de faire passer en premier celui qui
+ * a le moins de points. Dès qu'un passage est au plateau, en attente ou
+ * validé, la file ne bouge plus : on ne réordonne pas une épreuve commencée.
+ */
+export async function realignerFile(
+  competitionId: string,
+  epreuveId: string,
+): Promise<{ realignee: boolean }> {
+  if (!UUID.test(competitionId) || !UUID.test(epreuveId)) return { realignee: false };
+  const { athletesDe, categoriesDe, epreuvesDe, ordrePour, tousLesResultats } =
+    await import("./donnees");
   const existants = await db
     .select()
     .from(passage)
     .where(eq(passage.epreuveId, epreuveId));
+  if (existants.length === 0 || existants.some((p) => p.statut !== "avenir"))
+    return { realignee: false };
 
-  const dedans = new Set(perimetre);
-  const conserve = (statut: string) =>
-    statut === "termine" || statut === "a_saisir";
-  const termines = new Set(
-    existants.filter((p) => conserve(p.statut)).map((p) => p.athleteId),
-  );
+  const [epreuves, categories, athletes] = await Promise.all([
+    epreuvesDe(competitionId),
+    categoriesDe(competitionId),
+    athletesDe(competitionId),
+  ]);
+  const ep = epreuves.find((e) => e.id === epreuveId);
+  if (!ep) return { realignee: false };
+  const resultats = await tousLesResultats(competitionId, epreuves);
 
-  const aSupprimer = existants
-    .filter((p) => !conserve(p.statut) && dedans.has(p.athleteId))
-    .map((p) => p.id);
-  if (aSupprimer.length > 0) {
-    await db
-      .delete(passage)
-      .where(
-        and(eq(passage.epreuveId, epreuveId), inArray(passage.id, aSupprimer)),
-      );
-  }
+  // Catégorie par catégorie, dans l'ordre des catégories : c'est ainsi que
+  // le préchargement les range, et l'appel en duo lit chaque catégorie.
+  const dansLaFile = new Set(existants.map((p) => p.athleteId));
+  const voulu: string[] = [];
+  for (const cat of categories.filter((c) => c.active))
+    for (const a of ordrePour(ep, cat.id, epreuves, athletes, resultats))
+      if (dansLaFile.has(a.id)) voulu.push(a.id);
+  // Les passages d'athlètes hors des catégories actives gardent leur place, à la fin.
+  for (const p of [...existants].sort((a, b) => a.ordre - b.ordre))
+    if (!voulu.includes(p.athleteId)) voulu.push(p.athleteId);
 
-  // Les passages des autres catégories gardent leurs numéros d'ordre : les
-  // nouveaux se rangent après, pour ne pas s'intercaler dans une file qu'on
-  // n'a pas demandé à toucher.
-  const restants = existants.filter(
-    (p) => !conserve(p.statut) && !dedans.has(p.athleteId),
-  );
-  const depart = restants.reduce((m, p) => Math.max(m, p.ordre), 0);
+  const actuel = [...existants].sort((a, b) => a.ordre - b.ordre).map((p) => p.athleteId);
+  if (actuel.join(",") === voulu.join(",")) return { realignee: false };
 
-  const aCreer = athleteIdsDansLOrdre
-    .filter((id) => !termines.has(id))
-    .map((athleteId, i) => ({
-      competitionId,
-      epreuveId,
-      athleteId,
-      ordre: depart + i + 1,
-      statut: "avenir",
-    }));
-
-  if (aCreer.length > 0) await db.insert(passage).values(aCreer);
-  return { ok: true, crees: aCreer.length };
+  const parAthlete = new Map(existants.map((p) => [p.athleteId, p.id]));
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < voulu.length; i++) {
+      const id = parAthlete.get(voulu[i]);
+      if (id) await tx.update(passage).set({ ordre: i + 1 }).where(eq(passage.id, id));
+    }
+  });
+  return { realignee: true };
 }
 
 /**

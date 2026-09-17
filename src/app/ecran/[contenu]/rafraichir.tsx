@@ -43,12 +43,24 @@ export default function Rafraichir() {
     // rester reproductible.
     dernierRendu.current = Date.now();
 
-    const battement = setInterval(async () => {
+    // Un tour ne commence qu'à la fin du précédent : un serveur qui met dix
+    // secondes à répondre ne reçoit pas cinq requêtes empilées par écran.
+    // Et une requête qui traîne est abandonnée avant le tour suivant.
+    let minuterie: ReturnType<typeof setTimeout> | null = null;
+    const armer = () => {
+      if (!vivant) return;
+      minuterie = setTimeout(tour, PERIODE_MS);
+    };
+    const tour = async () => {
+      if (!vivant) return;
       const forcer = Date.now() - dernierRendu.current >= FILET_MS;
 
       if (!forcer) {
         try {
-          const r = await fetch("/api/ecran/etat", { cache: "no-store" });
+          const r = await fetch("/api/ecran/etat", {
+            cache: "no-store",
+            signal: AbortSignal.timeout(1500),
+          });
           if (!vivant) return;
           const { signature } = (await r.json()) as { signature: string };
 
@@ -56,25 +68,32 @@ export default function Rafraichir() {
           // d'être rendue.
           if (empreinte.current === null) {
             empreinte.current = signature;
+            armer();
             return;
           }
-          if (signature === empreinte.current) return;
+          if (signature === empreinte.current) {
+            armer();
+            return;
+          }
           empreinte.current = signature;
         } catch {
           // Réseau coupé ou serveur muet : on ne force rien ici. Le filet
           // s'en chargera, et un écran qui garde sa dernière image reste plus
           // utile qu'un écran qui clignote.
+          armer();
           return;
         }
       }
 
       dernierRendu.current = Date.now();
       routeur.refresh();
-    }, PERIODE_MS);
+      armer();
+    };
+    armer();
 
     return () => {
       vivant = false;
-      clearInterval(battement);
+      if (minuterie) clearTimeout(minuterie);
     };
   }, [routeur]);
 

@@ -343,6 +343,8 @@ function FicheGroupe({
               {effectif > 0
                 ? `${effectif} athlète(s) s'y trouvent : ils ne sont pas supprimés, ils repassent « sans catégorie » et devront être réaffectés.`
                 : "Aucun athlète n'y est rattaché. La suppression est sans effet sur les classements."}{" "}
+              Les récompenses propres à cette catégorie sont supprimées, et les
+              officiels qui lui étaient affectés repassent « toutes catégories ».{" "}
               Pour retirer la catégorie du plateau sans rien perdre, préférez
               « Mettre de côté ».
             </div>

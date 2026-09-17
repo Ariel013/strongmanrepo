@@ -15,7 +15,10 @@
  */
 
 import { eq } from "drizzle-orm";
+import { cookies, headers } from "next/headers";
 import { db } from "@/lib/db";
+import { NOM_COOKIE, lireSession } from "@/lib/auth";
+import { journal } from "@/lib/db/schema";
 // L'export lit la base à chaque appel : aucune tentative de prérendu, sans
 // quoi la compilation chercherait à joindre la base pour figer un résultat.
 export const dynamic = "force-dynamic";
@@ -34,6 +37,9 @@ type Cellule = string | number | null;
 
 const echapper = (v: Cellule): string =>
   String(v ?? "")
+    // Les caractères de contrôle sont interdits en XML : un nom importé qui
+    // en porte un rendrait tout le classeur illisible pour Excel.
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -65,13 +71,48 @@ function feuille(nom: string, entetes: string[], lignes: Cellule[][]): string {
 type Format = "tout" | "athletes" | "classements";
 
 export async function GET(requete: Request) {
+  // Seconde barrière, indépendante du middleware : cette route sort des
+  // coordonnées personnelles, elle ne s'en remet pas à un matcher.
+  const session = await lireSession((await cookies()).get(NOM_COOKIE)?.value);
+  if (!session) {
+    return Response.json({ erreur: "Non authentifié" }, { status: 401 });
+  }
+
   const demande = new URL(requete.url).searchParams.get("format");
   const format: Format =
     demande === "athletes" || demande === "classements" ? demande : "tout";
 
+  try {
+    return await exporter(format);
+  } catch {
+    // Base injoignable : le secrétaire lit une phrase, pas le 500 de Next.
+    return new Response(
+      "Export impossible pour l'instant : le serveur n'a pas pu lire la compétition. Réessayez dans un instant.",
+      { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    );
+  }
+}
+
+async function exporter(format: Format): Promise<Response> {
   const comp = await competitionCourante();
   if (!comp) {
     return new Response("Aucune compétition.", { status: 404 });
+  }
+
+  // Un export complet des coordonnées se trace comme une saisie : c'est une
+  // sortie de données personnelles, datée et située.
+  try {
+    const e = await headers();
+    const origine = (e.get("x-forwarded-for") ?? "local").split(",")[0].trim().split(".").slice(0, 3).join(".");
+    await db.insert(journal).values({
+      action: "export",
+      cibleTable: "competition",
+      cibleId: comp.id,
+      details: JSON.stringify({ format }),
+      origine,
+    });
+  } catch {
+    // Le journal ne bloque jamais l'export.
   }
 
   const [epreuves, categories, athletes] = await Promise.all([

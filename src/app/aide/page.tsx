@@ -5,7 +5,7 @@
  * session. Elle doit rester consultable depuis un téléphone, au bord du
  * plateau, même si le poste de saisie est occupé ou hors service — c'est
  * pourquoi elle est volontairement hors du périmètre du middleware
- * d'authentification (voir `src/middleware.ts`).
+ * d'authentification (voir `src/proxy.ts`).
  */
 
 import type { ReactNode } from "react";
@@ -420,14 +420,16 @@ export default function PageAide() {
 
           <Carte titre="Le classement des meilleurs clubs">
             <p>
-              Une fois le classement général de chaque catégorie établi, le
-              rang final de chaque athlète rapporte des points à son club.
+              À chaque épreuve, le rang de chaque athlète dans sa catégorie
+              rapporte des points à son club, et les points se cumulent
+              d&apos;une épreuve à l&apos;autre : un athlète 2e à la première
+              épreuve puis 1er à la deuxième apporte 10 + 15 = 25 points.
               Toutes les catégories retenues comptent, ensemble.
             </p>
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-bordure text-left text-xs tracking-wide text-encre-3 uppercase">
-                  <th className="py-2 pr-4">Rang final dans sa catégorie</th>
+                  <th className="py-2 pr-4">Rang à l&apos;épreuve, dans sa catégorie</th>
                   <th className="py-2 text-right">Points pour le club</th>
                 </tr>
               </thead>

@@ -48,7 +48,7 @@ L'interface reprend le poste autonome d'origine, conservé tel quel dans
   CHECK internes). Utiliser `pnpm run db:migrer`.
 - **Le cache du pool PostgreSQL se pose dans tous les environnements**, pas
   seulement en développement — voir la leçon du 2026-09-16 dans `JOURNAL.md`.
-- Toute action serveur commence par `exigerSession()`. Le middleware est la
+- Toute action serveur commence par `exigerSession()`. Le proxy (`src/proxy.ts`) est la
   première barrière, jamais la seule.
 - Les écrans publics (`/ecran/*`) ne lisent que `AthletePublic`. Ils ne doivent
   **jamais** appeler `fichesAthletes()`, qui joint les coordonnées.

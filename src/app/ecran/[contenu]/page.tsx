@@ -41,12 +41,14 @@ import { VueAttente } from "./vues/attente";
 import { Mire } from "./vues/mire";
 
 /**
- * Le rendu serveur est refait au plus toutes les deux secondes. Le composant
- * client `Rafraichir` déclenche la demande ; cette valeur borne le coût côté
- * base. Le chronomètre et le compte à rebours, eux, tournent dans le
- * navigateur : ils ne peuvent pas attendre deux secondes.
+ * Le rendu est fait à la demande : la page lit `searchParams`, ce qui la rend
+ * dynamique — un `revalidate` n'aurait aucun effet ici (vérifié : la route
+ * n'est pas dans le manifeste de prérendu). Ce qui borne le coût côté base,
+ * c'est l'empreinte de `/api/ecran/etat`, interrogée par `Rafraichir` : la
+ * page n'est redemandée que si quelque chose a bougé. Le chronomètre et le
+ * compte à rebours, eux, tournent dans le navigateur.
  */
-export const revalidate = 2;
+export const dynamic = "force-dynamic";
 
 const CONTENUS = [
   "plateau",

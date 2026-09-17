@@ -51,10 +51,11 @@ le total, puis le nombre de premières, deuxièmes et troisièmes places.
 L'ordre de passage suit les dossards croissants à la première épreuve, puis va
 du moins de points au plus de points — le leader ferme la marche.
 
-**Classement des clubs** (`/admin/clubs`, écran `clubs`) : le rang final de
-chaque athlète dans sa catégorie rapporte à son club 15, 10, 5, 4 ou 3 points
-pour les cinq premiers, 1 point pour tout autre classé. Toutes catégories
-retenues confondues ; un athlète sans club ne rapporte rien.
+**Classement des clubs** (`/admin/clubs`, écran `clubs`) : à chaque épreuve,
+le rang de chaque athlète dans sa catégorie rapporte à son club 15, 10, 5, 4
+ou 3 points pour les cinq premiers, 1 point pour tout autre classé, et les
+points se cumulent d'une épreuve à l'autre. Toutes catégories retenues
+confondues ; un athlète sans club ne rapporte rien.
 
 Le détail complet des règles est dans `docs/regles-metier.md`.
 
@@ -112,7 +113,8 @@ injoignable, erreurs de copie courantes. Elle n'expose aucune valeur de secret.
 
 - Le code d'accès n'existe nulle part en clair : seulement une empreinte
   PBKDF2 salée (210 000 itérations), comparée en temps constant.
-- Deux barrières indépendantes : le middleware bloque l'affichage de
+- Deux barrières indépendantes : le proxy (`src/proxy.ts`, le « middleware »
+  de Next renommé en v16) bloque l'affichage de
   `/admin`, et **chaque écriture revérifie la session**. Une Server Action
   est une route HTTP appelable directement — se fier au seul middleware
   laisserait la porte ouverte.
@@ -131,8 +133,9 @@ injoignable, erreurs de copie courantes. Elle n'expose aucune valeur de secret.
 - **Export en SpreadsheetML** plutôt qu'en `.xlsx` réel. S'ouvre dans Excel
   et LibreOffice, mais sans mise en forme.
 - **Limitation des tentatives de connexion en mémoire** — remise à zéro à
-  chaque instance. Suffisant à cette échelle, à déplacer en base si l'outil
-  sert au-delà.
+  chaque instance. Elle ralentit (2, 4, 8 s) au lieu de bloquer : un blocage
+  par adresse verrouillait la table de marque depuis le Wi-Fi de la salle,
+  que tout le public partage. À déplacer en base si l'outil sert au-delà.
 - **Photos des athlètes** — le stockage est prévu, l'écran d'envoi reste à
   construire.
 

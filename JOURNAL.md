@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **176/176** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
+  **179/179** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
@@ -56,6 +56,102 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (22) — Quatre corrections de terrain : ordre de passage, clubs, chrono, classements
+
+Retours de Kevin après essai en ligne.
+
+1. **L'ordre de passage de la 2e épreuve restait par dossards.** La règle
+   (dossards à la 1re épreuve, puis points acquis croissants) était bien
+   dans `ordreDePassage`, mais « Précharger toutes les épreuves » construit
+   toutes les files d'un coup, avant tout résultat, et rien ne les réordonnait.
+   `realignerFile` (`plateau.ts`) réaligne une file **où personne n'est encore
+   passé** sur l'ordre théorique ; appelée au choix de l'épreuve et à
+   l'affichage du plateau (idempotente), tracée `file.realignee`. Une épreuve
+   commencée ne bouge plus. Test § 21.
+2. **Le classement des clubs « repartait à zéro ».** Il était calculé sur le
+   rang **final** de chaque athlète ; Kevin veut le rang **à chaque épreuve**,
+   cumulé : 2e puis 1er = 10 + 15 = 25. `tableauClubs` parcourt maintenant
+   chaque épreuve ; barème, README, règles métier § 9, aide et libellés mis à
+   jour ; test ajouté.
+3. **Le chrono revenait à zéro en revenant de la régie.** Le plateau est un
+   composant client ; quitter la page perdait son état, et l'effet de montage
+   republiait « prêt » en base — ce qui remettait aussi le mur LED à zéro. Le
+   plateau reçoit maintenant l'état publié (`chronoPublie`) et, si un chrono
+   est en cours pour un athlète au plateau, reprend depuis son instant de
+   départ sans rien republier. Pas de `Date.now()` pendant le rendu ; reprise
+   portée par un ref, effet déplacé après les fonctions qu'il appelle
+   (compilateur React).
+4. **Classements** : sous le plateau, d'abord « Classement de l'épreuve »
+   avec une carte par catégorie, en autant de colonnes que de catégories ;
+   puis « Classement général · toutes épreuves » ; puis les clubs.
+
+Le lot UI/UX (audit précédent) est suspendu, à reprendre ensuite.
+
+### 2026-09-17 (21) — Audit de sécurité complet, et ses corrections
+
+Demande de Kevin : tout vérifier, jusqu'aux entrées insignifiantes. Trois
+audits en parallèle (auth et accès ; actions serveur et entrées ; API, écrans
+publics, robustesse), chaque constat revérifié à la source avant correction.
+
+**Sain, vérifié** : cookie httpOnly/secure/lax signé HMAC, PBKDF2 210 000
+itérations et comparaison en temps constant, message d'erreur unique,
+fail-closed sans secret ; toutes les Server Actions ouvrent par
+`exigerSession()` ; aucune fuite de `athlete_contact` sur `/ecran/*`, `/aide`,
+`/api/ecran/etat` ; aucun secret versionné ni dans l'historique ; `pnpm audit`
+vide ; SQL toujours paramétré ; JSON parse protégé ; Next 16.3.5 postérieur
+au correctif du contournement de middleware.
+
+**Corrigé** (aucune faille critique, mais de vrais défauts) :
+
+- *Redirection ouverte* après connexion : `suite=/\evil.com` ou `/%09/evil.com`
+  passaient le filtre « commence par / ». L'URL est maintenant résolue et
+  bornée à `/admin`.
+- *Blocage d'IP* : huit mauvais codes depuis le Wi-Fi de la salle verrouillaient
+  la table cinq minutes. Remplacé par un ralentissement progressif (2, 4, 8 s),
+  par adresse et global ; le bon code passe toujours. IPv6 tronquée.
+- *Cinq actions `modifier*`* écrivaient la colonne nommée par le client
+  (`set({ [champ]: v })`) : `competitionId`, `id`, `position` étaient
+  écrivables. Fermé par `parmi(...)` ; `modifierEpreuve` par `Object.hasOwn`.
+- *`validerPassage`* réécrivait un passage déjà validé, ou inexistant, sans
+  trace. Il exige `plateau` ou `a_saisir`, refuse le reste, et l'écriture est
+  conditionnée au statut (`returning`) contre la double validation.
+- *`reconstruireFile`* supprimait puis réinsérait sans transaction : un
+  identifiant étranger effaçait la file sans la remplacer. Transaction avec
+  verrou, athlètes vérifiés avant toute suppression, et **l'athlète au plateau
+  est conservé** (test mis à jour). `placerAuPlateau` en transaction verrouillée.
+- *Bornes* : performance 0–100 000, temps 0–36 000, tours ≤ 200, chrono
+  (phase, durée, instant), motif de suspension 120, niveau 40 avec épreuve de
+  la compétition, coordonnées (40/120/80), import ≤ 500 lignes validées avant
+  écriture et en transaction, thème `parmi`, catégorie rattachée à la
+  compétition des athlètes, UUID vérifiés partout où un id vient du client.
+- *`enregistrerAthlete`* : action sans appelant et sans validation, supprimée.
+- *Photos* : l'ancien blob est effacé au remplacement ; le club du logo est
+  borné et nettoyé ; à la lecture, seule une URL du magasin Vercel Blob est
+  affichée.
+- *Seconde barrière* : `/api/admin/export` vérifie la session lui-même et
+  trace l'export ; `fichesAthletes()` refuse de lire les coordonnées sans
+  session, quelle que soit la page. `src/middleware.ts` → `src/proxy.ts`
+  (convention Next 16, l'ancienne est dépréciée).
+- *`/api/sante`* : public, il ne dit plus que « en ordre / en panne » ; le
+  diagnostic complet exige la session ou `CRON_SECRET` ; plus aucun message
+  d'erreur brut ; résultat gardé 30 s (chaque appel ouvrait une connexion).
+- *Robustesse* : `error.tsx` sur `/ecran` (message en français, nouvelle
+  tentative toutes les 5 s — avant, une base muette deux secondes figeait le
+  mur LED sur la page d'erreur anglaise jusqu'à un F5 en régie), sur `/admin`,
+  `global-error.tsx`, `not-found.tsx`. Rafraîchissement LED sans requêtes
+  empilées (délai réarmé, abandon à 1,5 s). `revalidate = 2` retiré : sans
+  effet sur une route dynamique, le commentaire mentait. Export : caractères
+  de contrôle filtrés, 503 en clair si la base ne répond pas. CSP sans
+  `unsafe-eval` en production, `X-Powered-By` retiré, empreinte publique hachée.
+- Confirmation de suppression de catégorie : dit que les récompenses propres
+  partent et que le jury repasse « toutes catégories ».
+
+**Laissé pour après la compétition, consigné** : révocation de session côté
+serveur (un jeton copié vaut 12 h), limitation de débit partagée en base,
+`rowCount` sur tous les `update` par id, `competition_id` dans le journal.
+
+`lint` ✓, `build` ✓, `test` 179/179 (3 ajoutés). Non essayé sur matériel réel.
 
 ### 2026-09-17 (20) — Mode d'emploi : file d'attente, écrans résultats et clubs, bouton
 

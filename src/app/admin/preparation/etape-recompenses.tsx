@@ -243,7 +243,7 @@ export function EtapeRecompenses({
       >
         <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Meilleur club</div>
         <div style={{ fontSize: 13, color: C.encre3, lineHeight: 1.5, marginBottom: 12, textWrap: "pretty" }}>
-          Calculé sur le rang final de chaque athlète dans sa catégorie ({POINTS_CLUB_LISIBLE}).
+          Calculé sur le rang de chaque athlète dans sa catégorie, épreuve par épreuve ({POINTS_CLUB_LISIBLE}).
           Écrivez ici ce que reçoit le club : il figure au palmarès imprimé.
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>

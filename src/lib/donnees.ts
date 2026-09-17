@@ -79,6 +79,15 @@ export interface CategorieVue {
   couleur: string;
 }
 
+/**
+ * Une URL d'image n'est affichée que si elle vient du magasin attendu. Rien
+ * d'autre n'écrit cette colonne, mais l'écran ne s'en remet pas à la base.
+ */
+const urlImageSure = (url: string | null): string | null =>
+  url && /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(url)
+    ? url
+    : null;
+
 /** Le décimal de Postgres arrive en chaîne : on le convertit à la lecture. */
 const nombre = (v: string | number | null): number | null => {
   if (v === null || v === undefined) return null;
@@ -165,7 +174,7 @@ export async function athletesDe(
     categorieId: a.categorieId,
     horsClassement: a.horsClassement,
     peseeValidee: a.peseeValidee,
-    photoUrl: a.photoUrl,
+    photoUrl: urlImageSure(a.photoUrl),
   }));
 }
 
@@ -323,8 +332,10 @@ export function tableauGeneral(
 }
 
 /**
- * Classement des clubs, toutes catégories retenues confondues : le rang final
- * de chaque athlète dans sa catégorie rapporte des points à son club.
+ * Classement des clubs, toutes catégories retenues confondues : à CHAQUE
+ * épreuve, le rang de chaque athlète dans sa catégorie rapporte des points à
+ * son club, et les points se cumulent d'une épreuve à l'autre. Un club dont
+ * l'athlète finit 2e puis 1er a 10 + 15 = 25 points.
  */
 export function tableauClubs(
   categories: CategorieVue[],
@@ -335,8 +346,12 @@ export function tableauClubs(
   const parId = new Map(athletes.map((a) => [a.id, a]));
   const entrees: { club: string | null; rang: number }[] = [];
   for (const cat of categories.filter((c) => c.active)) {
-    for (const l of tableauGeneral(cat, epreuves, athletes, resultats).lignes)
-      entrees.push({ club: parId.get(l.athleteId)?.club ?? null, rang: l.rang });
+    for (const ep of epreuves) {
+      for (const l of tableauEpreuve(ep, cat.id, athletes, resultats).lignes) {
+        if (l.rang === null) continue;
+        entrees.push({ club: parId.get(l.athleteId)?.club ?? null, rang: l.rang });
+      }
+    }
   }
   return classementClubs(entrees);
 }
@@ -514,6 +529,15 @@ export interface FicheAthlete extends AthletePublic {
 export async function fichesAthletes(
   competitionId: string,
 ): Promise<FicheAthlete[]> {
+  // Seconde barrière : cette fonction joint les coordonnées personnelles.
+  // Elle refuse de les lire sans session, quelle que soit la page qui
+  // l'appelle — le middleware n'est jamais la seule garde. L'import est
+  // différé pour que les scripts hors requête puissent charger ce module.
+  const { cookies } = await import("next/headers");
+  const { NOM_COOKIE, lireSession } = await import("./auth");
+  const session = await lireSession((await cookies()).get(NOM_COOKIE)?.value);
+  if (!session) throw new Error("Non authentifié : les fiches nominatives exigent une session.");
+
   // L'âge se compte au jour de la compétition : c'est la règle sportive, et
   // une fiche ne doit pas changer d'âge entre la pesée et le podium.
   const [comp] = await db
@@ -549,7 +573,7 @@ export async function fichesAthletes(
       categorieId: a.categorieId,
       horsClassement: a.horsClassement,
       peseeValidee: a.peseeValidee,
-      photoUrl: a.photoUrl,
+      photoUrl: urlImageSure(a.photoUrl),
       poidsDeclare: nombre(a.poidsDeclare),
       tailleCm: a.tailleCm,
       dateNaissance: c?.dateNaissance ?? null,
