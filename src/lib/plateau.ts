@@ -86,27 +86,36 @@ export async function remettreEnFile(passageId: string): Promise<Resultat> {
 }
 
 /**
- * Reconstruit la file de passage d'une épreuve.
+ * Reconstruit la file de passage d'une épreuve, DANS UN PÉRIMÈTRE.
  *
  * Les passages déjà terminés sont conservés : refaire l'ordre ne doit jamais
  * effacer une performance validée.
+ *
+ * Le périmètre est la liste des athlètes concernés par la reconstruction — en
+ * pratique ceux des catégories affichées au plateau. Sans lui, reconstruire
+ * l'ordre de « Plus de 105 kg » supprimait TOUS les passages non terminés de
+ * l'épreuve, y compris ceux de « Moins de 105 kg », et ne recréait que les
+ * siens : l'autre catégorie perdait sa file sans un mot.
  */
 export async function reconstruireFile(
   competitionId: string,
   epreuveId: string,
   athleteIdsDansLOrdre: string[],
+  /** Les athlètes dont les passages peuvent être remplacés. */
+  perimetre: string[] = athleteIdsDansLOrdre,
 ): Promise<Resultat & { crees: number }> {
   const existants = await db
     .select()
     .from(passage)
     .where(eq(passage.epreuveId, epreuveId));
 
+  const dedans = new Set(perimetre);
   const termines = new Set(
     existants.filter((p) => p.statut === "termine").map((p) => p.athleteId),
   );
 
   const aSupprimer = existants
-    .filter((p) => p.statut !== "termine")
+    .filter((p) => p.statut !== "termine" && dedans.has(p.athleteId))
     .map((p) => p.id);
   if (aSupprimer.length > 0) {
     await db
@@ -116,18 +125,58 @@ export async function reconstruireFile(
       );
   }
 
+  // Les passages des autres catégories gardent leurs numéros d'ordre : les
+  // nouveaux se rangent après, pour ne pas s'intercaler dans une file qu'on
+  // n'a pas demandé à toucher.
+  const restants = existants.filter(
+    (p) => p.statut !== "termine" && !dedans.has(p.athleteId),
+  );
+  const depart = restants.reduce((m, p) => Math.max(m, p.ordre), 0);
+
   const aCreer = athleteIdsDansLOrdre
     .filter((id) => !termines.has(id))
     .map((athleteId, i) => ({
       competitionId,
       epreuveId,
       athleteId,
-      ordre: i + 1,
+      ordre: depart + i + 1,
       statut: "avenir",
     }));
 
   if (aCreer.length > 0) await db.insert(passage).values(aCreer);
   return { ok: true, crees: aCreer.length };
+}
+
+/**
+ * Ajoute à une épreuve les athlètes qui n'y ont pas encore de passage.
+ *
+ * C'est le cas d'un engagé inscrit APRÈS le préchargement : les files
+ * existent, il n'y figure pas, et rien ne l'y mettra sans effacer les autres.
+ * Il se range en fin de file de sa catégorie, jamais devant quelqu'un.
+ */
+export async function completerFile(
+  competitionId: string,
+  epreuveId: string,
+  athleteIds: string[],
+): Promise<{ ajoutes: number }> {
+  const existants = await db
+    .select()
+    .from(passage)
+    .where(eq(passage.epreuveId, epreuveId));
+  const deja = new Set(existants.map((p) => p.athleteId));
+  const depart = existants.reduce((m, p) => Math.max(m, p.ordre), 0);
+
+  const aCreer = athleteIds
+    .filter((id) => !deja.has(id))
+    .map((athleteId, i) => ({
+      competitionId,
+      epreuveId,
+      athleteId,
+      ordre: depart + i + 1,
+      statut: "avenir",
+    }));
+  if (aCreer.length > 0) await db.insert(passage).values(aCreer);
+  return { ajoutes: aCreer.length };
 }
 
 /**

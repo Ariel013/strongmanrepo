@@ -34,6 +34,7 @@ import { NOM_COOKIE, lireSession } from "./auth";
 import { cleRapprochement } from "./import-liste";
 import {
   affecterCategorieA,
+  completerFile,
   placerAuPlateau,
   reconstruireFile,
   remettreEnFile,
@@ -282,6 +283,8 @@ export async function construireFile(
   competitionId: string,
   epreuveId: string,
   athleteIdsDansLOrdre: string[],
+  /** Les athlètes dont les passages peuvent être remplacés — les catégories affichées. */
+  perimetre: string[] = athleteIdsDansLOrdre,
 ): Promise<Retour> {
   await exigerSession();
 
@@ -300,6 +303,7 @@ export async function construireFile(
     competitionId,
     epreuveId,
     athleteIdsDansLOrdre,
+    perimetre,
   );
   await tracer("file.construite", "epreuve", epreuveId, { passages: r.crees });
 
@@ -1486,52 +1490,64 @@ export async function preparerToutes(competitionId: string): Promise<Retour> {
    */
   let preparees = 0;
   let dejaFaites = 0;
+  let ajoutes = 0;
 
   for (const ep of eps) {
     const [{ compte }] = await db
       .select({ compte: sql<number>`count(*)::int` })
       .from(passage)
       .where(eq(passage.epreuveId, ep.id));
-    if (compte > 0) {
-      dejaFaites++;
-      continue;
-    }
 
     // Ordre de départ : dossards croissants, catégorie par catégorie. Les
     // épreuves suivantes seront reconstruites depuis le plateau, où les
     // points acquis sont connus.
-    const aCreer = actives.flatMap((cat) =>
-      tous
-        .filter((a) => a.categorieId === cat.id)
-        .map((a, i) => ({
-          competitionId,
-          epreuveId: ep.id,
-          athleteId: a.id,
-          ordre: i + 1,
-          statut: "avenir",
-        })),
+    const ordonnes = actives.flatMap((cat) =>
+      tous.filter((a) => a.categorieId === cat.id).map((a) => a.id),
     );
-    if (aCreer.length === 0) continue;
-    await db.insert(passage).values(aCreer);
+    if (ordonnes.length === 0) continue;
+
+    if (compte > 0) {
+      // Une file existe : on n'y touche pas, mais on y AJOUTE ceux qui n'y
+      // sont pas encore. Sauter l'épreuve laissait un engagé inscrit après le
+      // préchargement invisible au plateau, sans un mot.
+      const r = await completerFile(competitionId, ep.id, ordonnes);
+      ajoutes += r.ajoutes;
+      dejaFaites++;
+      continue;
+    }
+
+    await db.insert(passage).values(
+      ordonnes.map((athleteId, i) => ({
+        competitionId,
+        epreuveId: ep.id,
+        athleteId,
+        ordre: i + 1,
+        statut: "avenir",
+      })),
+    );
     preparees++;
   }
 
   await tracer("epreuves.prechargees", "competition", competitionId, {
     preparees,
     dejaFaites,
+    ajoutes,
     placables: placables.length,
   });
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");
 
-  if (preparees > 0)
-    return {
-      ok: true,
-      erreur:
-        dejaFaites > 0
-          ? `${preparees} épreuve(s) préchargée(s). ${dejaFaites} avaient déjà un ordre : elles n'ont pas été touchées.`
-          : undefined,
-    };
+  if (preparees > 0 || ajoutes > 0) {
+    const parts: string[] = [];
+    if (preparees > 0) parts.push(`${preparees} épreuve(s) préchargée(s)`);
+    if (ajoutes > 0)
+      parts.push(
+        `${ajoutes} passage(s) ajouté(s) en fin de file pour les athlètes inscrits depuis`,
+      );
+    if (dejaFaites > 0 && ajoutes === 0)
+      parts.push(`${dejaFaites} avaient déjà un ordre et n'ont pas été touchées`);
+    return { ok: true, erreur: parts.join(". ") + "." };
+  }
 
   // Rien n'a été créé : dire POURQUOI, et quoi faire ensuite.
   if (eps.length === 0)

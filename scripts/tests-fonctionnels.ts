@@ -45,6 +45,7 @@ import { cleRapprochement, lireListe } from "../src/lib/import-liste";
 import { calculerRecadrage, poidsLisible } from "../src/lib/image";
 import {
   affecterCategorieA,
+  completerFile,
   placerAuPlateau,
   reconstruireFile,
   remettreEnFile,
@@ -587,6 +588,66 @@ async function principal() {
       .from(passage)
       .where(eq(passage.epreuveId, eps[0].id));
     egal("aucun doublon après reconstruction", apresRebuild.length, 3);
+
+    // Reconstruction DANS UN PÉRIMÈTRE : refaire l'ordre d'une catégorie ne
+    // doit pas effacer la file de l'autre. Ici delta joue l'autre catégorie.
+    const r3 = await reconstruireFile(comp.id, eps[0].id, [delta.id], [delta.id]);
+    const apresPerimetre = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id))
+      .orderBy(asc(passage.ordre));
+    egal("reconstruire un périmètre : 1 passage créé", r3.crees, 1);
+    egal(
+      "la file des autres catégories est INTACTE",
+      apresPerimetre.filter((p) => p.athleteId !== delta.id).length,
+      3,
+    );
+    egal(
+      "le périmètre se range APRÈS les autres",
+      apresPerimetre.find((p) => p.athleteId === delta.id)?.ordre,
+      4,
+    );
+    await reconstruireFile(comp.id, eps[0].id, [delta.id], [delta.id]);
+    egal(
+      "reconstruire deux fois le périmètre : pas de doublon",
+      (await db.select().from(passage).where(eq(passage.epreuveId, eps[0].id)))
+        .length,
+      4,
+    );
+    await db
+      .delete(passage)
+      .where(
+        and(eq(passage.epreuveId, eps[0].id), eq(passage.athleteId, delta.id)),
+      );
+
+    // Compléter une file : l'engagé inscrit après le préchargement — le cas
+    // des deux « Plus de 105 kg » invisibles au plateau.
+    const c1 = await completerFile(comp.id, eps[0].id, [
+      alpha.id,
+      bravo.id,
+      charlie.id,
+      delta.id,
+    ]);
+    const apresComplement = await db
+      .select()
+      .from(passage)
+      .where(eq(passage.epreuveId, eps[0].id))
+      .orderBy(asc(passage.ordre));
+    egal("compléter : seul le nouveau est ajouté", c1.ajoutes, 1);
+    egal("compléter : les 3 autres sont toujours là", apresComplement.length, 4);
+    egal(
+      "compléter : le nouveau passe en dernier",
+      apresComplement[3]?.athleteId,
+      delta.id,
+    );
+    const c2 = await completerFile(comp.id, eps[0].id, [alpha.id, delta.id]);
+    egal("compléter deux fois : rien à ajouter", c2.ajoutes, 0);
+    await db
+      .delete(passage)
+      .where(
+        and(eq(passage.epreuveId, eps[0].id), eq(passage.athleteId, delta.id)),
+      );
 
     // Appels successifs : le deuxième est celui qui plantait.
     const file = await db

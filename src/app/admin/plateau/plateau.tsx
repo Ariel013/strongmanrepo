@@ -162,6 +162,9 @@ export function Plateau({
   const avenir = passages
     .filter((p) => p.statut === "avenir")
     .sort((a, b) => a.ordre - b.ordre);
+  /** Rangés, pesés, numérotés — mais sans passage dans cette épreuve. */
+  const avecPassage = new Set(passages.map((p) => p.athleteId));
+  const sansPassage = athletes.filter((a) => !avecPassage.has(a.id));
   const auPlateau = passages
     .filter((p) => p.statut === "plateau")
     .sort((a, b) => a.ordre - b.ordre);
@@ -478,7 +481,14 @@ export function Plateau({
               const ordre = melange
                 ? entrelacer(parCategorie.map((c) => c.ordre))
                 : (parCategorie[0]?.ordre ?? []);
-              const r = await construireFile(competitionId, epreuve.id, ordre);
+              // Le périmètre : les athlètes des catégories affichées. Les
+              // autres catégories gardent leur file intacte.
+              const r = await construireFile(
+                competitionId,
+                epreuve.id,
+                ordre,
+                athletes.map((a) => a.id),
+              );
               setMessage(
                 r.erreur ??
                   (r.ok
@@ -822,6 +832,31 @@ export function Plateau({
           }}
         >
           <EnteteColonne>À venir · {avenir.length}</EnteteColonne>
+          {sansPassage.length > 0 ? (
+            // Un athlète rangé, pesé, numéroté — mais inscrit après le
+            // préchargement : il n'a pas de passage, donc pas de ligne ici, et
+            // rien ne le disait. C'est ce silence qui a fait chercher un bug.
+            <div
+              style={{
+                margin: "10px 16px 0",
+                padding: "10px 12px",
+                borderRadius: 9,
+                background: C.ambreFond,
+                border: `1px solid ${C.ambreBord}`,
+                color: C.ambreEncre,
+                fontSize: 13,
+                lineHeight: 1.45,
+                fontWeight: 600,
+              }}
+            >
+              {sansPassage.length} athlète{sansPassage.length > 1 ? "s" : ""} de
+              cette sélection {sansPassage.length > 1 ? "n'ont" : "n'a"} pas
+              encore de passage dans cette épreuve :{" "}
+              {sansPassage.map((a) => `n°${a.dossard ?? "—"} ${a.nom}`).join(", ")}.
+              Cliquez <strong>Précharger toutes les épreuves</strong> pour les
+              ajouter en fin de file, partout d&apos;un coup.
+            </div>
+          ) : null}
           {avenir.map((p) => {
             const a = parId.get(p.athleteId);
             if (!a) return null;

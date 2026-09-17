@@ -296,3 +296,24 @@ exactement pareil. Le code était fidèle, l'attente ne l'était pas.
 **Règle.** Sur un portage, la référence n'est pas l'intuition : c'est
 `docs/reference/`. Un écart se tranche en relisant l'original, pas en corrigeant
 le code vers ce qu'on croit juste.
+
+### Un écran qui ne montre que ce qui existe doit dire ce qui manque (2026-09-17)
+
+**Symptôme.** Deux athlètes de « Plus de 105 kg », rangés, pesés, numérotés,
+n'apparaissaient pas au plateau — ni dans leur catégorie, ni « toutes
+mélangées ». Tout semblait un bug de filtre.
+
+**Cause.** Ils avaient été inscrits **après** le préchargement. Aucun passage
+n'existait pour eux ; le plateau n'affiche que les passages ; et « Précharger
+toutes les épreuves » sautait toute épreuve ayant déjà une file. Trois
+comportements exacts, un résultat faux — et pas un mot à l'écran.
+
+**Au passage.** « Reconstruire l'ordre » d'une seule catégorie effaçait les
+passages non terminés de **l'autre** catégorie : la file de « Moins de 105 »
+disparaissait si l'on refaisait celle de « Plus de 105 ». Jamais cliqué en
+prod, trouvé en lisant le code. Corrigé par un périmètre explicite.
+
+**Règle.** Un écran qui ne liste que ce qui est *créé* doit nommer ce qui
+*aurait dû l'être* — ici les athlètes rangés sans passage, avec le bouton à
+cliquer. Et toute action de reconstruction s'exécute **dans un périmètre**
+qu'on lui donne, jamais « tout ce qu'il y a ».
