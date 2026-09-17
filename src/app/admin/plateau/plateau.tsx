@@ -258,7 +258,10 @@ export function Plateau({
       if (minuteur.current) clearInterval(minuteur.current);
       minuteur.current = null;
       setPhase("arrete");
-      releverChrono(Math.round(passe * 10) / 10);
+      // Arrêt à la main : la case porte quand même le temps imparti de
+      // l'épreuve. C'est ce temps-là que tout le monde a eu, qu'on ait coupé
+      // le chrono avant ou non. Sans limite (chrono montant), le temps écoulé.
+      releverChrono(limite > 0 ? limite : Math.round(passe * 10) / 10);
       publier({ phase: "arrete", dureeS: limite, arretS: reste });
       return;
     }
@@ -286,9 +289,11 @@ export function Plateau({
   }
 
   /**
-   * Le chrono s'arrête — au bout du temps imparti ou à la main — et le temps
-   * lu se pose dans la troisième case de chaque athlète au plateau. La table
-   * peut le corriger avant de valider ; il part avec le passage.
+   * Le chrono s'arrête — au bout du temps imparti ou à la main — et la
+   * troisième case de chaque athlète au plateau reçoit le temps imparti de
+   * l'épreuve (90 s pour tous, même si la table a coupé avant), ou le temps
+   * écoulé quand l'épreuve n'a pas de limite. Modifiable avant de valider ;
+   * part avec le passage.
    */
   function releverChrono(secondes: number) {
     setSaisies((m) => {
@@ -1629,8 +1634,8 @@ export function Plateau({
                           onChange={(e) =>
                             majSaisie(p.id, "chrono", e.target.value)
                           }
-                          placeholder="à l'arrêt du chrono"
-                          title="Se remplit tout seul quand le chronomètre s'arrête, au bout du temps imparti ou à la main. Ne départage pas : c'est le temps de la dernière répétition qui départage."
+                          placeholder={limite > 0 ? `${limite} s à l'arrêt du chrono` : "à l'arrêt du chrono"}
+                          title="Se remplit tout seul quand le chronomètre s'arrête : le temps imparti de l'épreuve, le même pour tous, qu'on ait coupé avant la fin ou non. Ne départage pas : c'est le temps de la dernière répétition qui départage."
                           style={styleChamp({
                             padding: "11px 12px",
                             borderRadius: 9,

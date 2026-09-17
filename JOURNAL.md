@@ -34,7 +34,7 @@
   **175/175** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0006` appliquées sur Supabase (dernière le
   2026-09-17).
-- **Branche** : `main` alignée avec `origin/main` sur `037a6df`, poussée le
+- **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
   2026-09-17 (vérifié par comparaison des SHA).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
@@ -56,6 +56,12 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (10) — Le temps au chrono est le temps imparti, pour tous
+
+Précision de Kevin : la troisième case porte le temps imparti de l'épreuve
+(90 s), que le chrono soit allé au bout ou qu'on l'ait coupé avant. Seule une
+épreuve sans limite garde le temps écoulé. `lint` ✓, `build` ✓.
 
 ### 2026-09-17 (9) — Niveau sans liste, bouton retour, staff par catégorie, clubs
 
@@ -81,7 +87,9 @@ Quatre demandes de Kevin.
 Et sur le plateau, un seul « Imprimer les résultats » : celui de l'encadré
 « Épreuve terminée », le doublon en tête des terminés est retiré.
 
-`lint` ✓, `build` ✓, `test` 175/175. Non essayé sur matériel réel.
+`lint` ✓, `build` ✓, `test` 175/175. Non essayé sur matériel réel. Commit
+`2210a22` poussé. Capitalisation : une troisième occurrence au coffre, fiche
+complétée.
 
 ### 2026-09-17 (8) — Troisième case « Temps au chrono », et le message de reconstruction
 
@@ -91,8 +99,9 @@ faisait déjà** (nombre décroissant, puis temps croissant — `regles-metier.m
 § 5). Ce qui manquait : la troisième case, le temps lu au chrono à l'arrêt.
 
 - Colonne `passage.chrono_s`, migration `0005` appliquée. Se remplit toute
-  seule pour chaque athlète au plateau quand le chrono s'arrête (temps imparti
-  écoulé → la limite ; arrêt à la main → le temps écoulé au dixième), reste
+  seule pour chaque athlète au plateau quand le chrono s'arrête, avec le
+  **temps imparti de l'épreuve** (précision de Kevin, session 10 : 90 s pour
+  tous, qu'on ait coupé avant ou non ; le temps écoulé seulement sans limite), reste
   modifiable, part avec la validation et avec la mise en attente. Absente pour
   les mesures `chrono` et `duree`, où le temps est la performance.
 - Visible : carte du plateau, tableau d'attente (préremplie), ligne des
@@ -381,6 +390,20 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Un sélecteur sans option est un blanc muet, signalé comme une panne de sauvegarde (2026-09-17)
+
+*Au coffre : troisième occurrence dans `brain/10-lecons/une-fonctionnalite-invisible-est-absente.md`.*
+
+**Symptôme.** « Le niveau ne passe pas pour Piliers d'Hercule, le select dit de
+choisir mais ça ne prend pas. »
+
+**Cause.** En base, `niveau = true` et `niveaux_options = null` : le sélecteur
+n'avait que son libellé. Rien n'était cassé côté enregistrement.
+
+**Règle.** Devant un rapport qui décrit un effet, lire la donnée avant le code.
+Et ne jamais servir un sélecteur sans option : saisie libre, et dire où
+renseigner la liste.
 
 ### Un état ajouté rend faux les messages qui énumèrent les états (2026-09-17)
 

@@ -257,8 +257,10 @@ Texte libre affiché en bas des écrans publics (l. 1900).
 | `nb_temps` | Nombre, puis temps | « la quantité classe ; à égalité, le temps intermédiaire de la dernière répétition départage » | `valeur` **décroissante**, puis `temps` **croissant** |
 
 > **Portage (2026-09-17)** : une troisième case, « Temps au chrono (s) »
-> (`passage.chrono_s`), se remplit toute seule quand le chronomètre s'arrête —
-> au bout du temps imparti ou à la main. Elle est conservée et imprimée, elle
+> (`passage.chrono_s`), se remplit toute seule quand le chronomètre s'arrête,
+> avec **le temps imparti de l'épreuve** (90 s pour tous), qu'on ait coupé le
+> chrono avant la fin ou non ; le temps écoulé seulement si l'épreuve n'a pas
+> de limite. Elle est conservée et imprimée, elle
 > **ne départage pas** : la règle reste nombre puis temps de la dernière
 > répétition. Exemple du client : 4 répétitions à 58 s bat 4 répétitions à
 > 68 s, quel que soit le temps au chrono (90 s pour les deux).
