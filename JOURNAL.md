@@ -57,6 +57,21 @@
 
 ## 📓 Journal des sessions
 
+### 2026-09-17 (24) — Le mode d'emploi rattrape tout ce qui a été fait
+
+Kevin : « est-ce qu'il contient tout ? » Non. Réécrit contre le code : les
+sept étapes de préparation dans l'ordre des onglets (épreuves et niveaux,
+couleur des groupes, staff par catégorie, import et photos, feuilles de
+pesée, programme par heure, récompenses par catégorie et meilleur club) ;
+au plateau, le choix de l'épreuve et du passage, précharger, reconstruire,
+le réalignement de la file, la case « temps au chrono », la reprise du
+chrono ; la régie et le branchement d'une sortie vidéo ; une rubrique « Ce
+qui s'imprime » avec les huit feuilles, qui les remplit et où les trouver ;
+la fin de compétition en trois temps, vérifier, proclamer, archiver ; la
+rubrique problèmes alignée sur ce que le logiciel permet — plus
+d'annulation depuis le plateau, connexion ralentie, suspension, écran
+d'erreur qui retente seul. Sommaire à neuf rubriques. `lint` ✓, `build` ✓.
+
 ### 2026-09-17 (23) — Le bouton du mode d'emploi ne repasse plus par le code
 
 Kevin : « le CTA a le même problème ». Cause : `/connexion` ne regardait

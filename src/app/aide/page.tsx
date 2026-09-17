@@ -24,9 +24,10 @@ const SOMMAIRE = [
   { id: "points", titre: "3. Comment les points sont calculés" },
   { id: "ordre", titre: "4. L'ordre de passage" },
   { id: "epreuve", titre: "5. Pendant l'épreuve" },
-  { id: "ecrans", titre: "6. Les écrans du public" },
-  { id: "fin", titre: "7. En fin de compétition" },
-  { id: "probleme", titre: "8. En cas de problème" },
+  { id: "ecrans", titre: "6. Les écrans du public et la régie" },
+  { id: "papier", titre: "7. Ce qui s'imprime" },
+  { id: "fin", titre: "8. En fin de compétition" },
+  { id: "probleme", titre: "9. En cas de problème" },
 ] as const;
 
 function Section({
@@ -234,66 +235,124 @@ export default function PageAide() {
           titre="2. Avant la compétition"
           chapeau="Tout se joue ici. Une préparation propre évite les corrections dans l'urgence, une fois le public installé."
         >
-          <Carte titre="Les quatre étapes de préparation">
+          <Carte titre="Les sept étapes de préparation, dans l'ordre des onglets">
+            <p className="text-encre-2">
+              Chaque saisie s&apos;enregistre toute seule dès que vous quittez
+              le champ. Le bouton « ← Retour » et le fil d&apos;Ariane vous
+              ramènent où vous étiez. Le <strong>Récapitulatif</strong>, depuis
+              l&apos;accueil, dit ce qui est prêt et ce qui manque, avec un lien
+              vers l&apos;étape concernée.
+            </p>
             <ol className="space-y-5">
-              <Etape numero={1} titre="Saisir les athlètes">
+              <Etape numero={1} titre="Épreuves">
                 <p>
-                  Créez une fiche par athlète : nom, prénoms, club, nationalité,
-                  photo. Une liste d&apos;inscription peut aussi être importée
-                  d&apos;un coup, puis corrigée fiche par fiche.
+                  Les cinq épreuves officielles sont installées. Pour chacune :
+                  le nom, la mesure (nombre de répétitions, charge, distance,
+                  temps, tenue), le temps imparti, le critère lu au micro, le
+                  matériel. Activez le <strong>comptage des tours</strong> sur
+                  les épreuves à répétitions : c&apos;est le bouton « Tour » du
+                  plateau qui relève le temps de la dernière répétition, celui
+                  qui départage.
                 </p>
                 <p>
-                  Vérifiez les doublons : un même athlète saisi deux fois
-                  apparaîtra deux fois dans l&apos;ordre de passage et faussera
-                  les points de toute sa catégorie.
-                </p>
-              </Etape>
-
-              <Etape numero={2} titre="Peser les athlètes">
-                <p>
-                  À la pesée, relevez le poids à la bascule et saisissez-le sur
-                  la fiche de l&apos;athlète. Puis validez la pesée : la ligne se
-                  verrouille et l&apos;athlète est considéré comme prêt à
-                  concourir.
-                </p>
-                <p>
-                  Le logiciel refuse de valider une pesée sans poids :
-                  c&apos;est volontaire, un athlète sans poids ne peut être
-                  classé nulle part.
+                  Une épreuve de tenue dont la prise dépend de la taille, les
+                  Piliers d&apos;Hercule, a des <strong>niveaux</strong> :
+                  renseignez la liste (« Niveau 1, Niveau 2… ») pour que chaque
+                  athlète choisisse le sien sur sa fiche. Sans liste, le niveau
+                  se saisit en clair.
                 </p>
               </Etape>
 
-              <Etape numero={3} titre="Affecter la catégorie">
+              <Etape numero={2} titre="Groupes de poids">
                 <p>
-                  Deux catégories de poids : <strong>moins de 105 kg</strong> et{" "}
-                  <strong>plus de 105 kg</strong>. Le logiciel propose la
-                  catégorie correspondant au poids relevé ; vous confirmez.
-                </p>
-                <p>
-                  Si le poids ne correspond pas à la catégorie choisie, la
-                  saisie est refusée avec un message qui vous dit exactement
-                  pourquoi. Corrigez le poids ou la catégorie, jamais les deux
-                  au hasard.
+                  Les catégories, avec leurs bornes de poids et leur{" "}
+                  <strong>couleur</strong>, la même sur le plateau, les écrans
+                  et les impressions. « Retenue » : elle concourt. « Mise de
+                  côté » : elle disparaît du plateau sans rien perdre. Le
+                  logiciel signale un trou entre deux bornes.
                 </p>
               </Etape>
 
-              <Etape numero={4} titre="Attribuer les dossards">
+              <Etape numero={3} titre="Officiels">
                 <p>
-                  Saisissez le numéro de dossard de chaque athlète. Ce numéro
-                  n&apos;est pas décoratif : il détermine l&apos;ordre de
+                  Nom et rôle de chaque officiel, et la{" "}
+                  <strong>catégorie qu&apos;il arbitre</strong> : il faut un
+                  staff par catégorie, au moins un juge principal chacune. Les
+                  postes communs, directeur, speaker, régie, restent « toutes
+                  catégories ». Ces noms se retrouvent préremplis sur les
+                  feuilles de notation.
+                </p>
+              </Etape>
+
+              <Etape numero={4} titre="Athlètes">
+                <p>
+                  Une fiche par athlète : nom, prénoms, club, nationalité, date
+                  de naissance, photo, coordonnées. Une liste d&apos;inscription
+                  s&apos;importe d&apos;un coup depuis un fichier CSV ou un
+                  texte collé, les doublons sont signalés avant import. Les
+                  photos se déposent en lot, le logiciel les rapproche des
+                  noms et vous confirmez.
+                </p>
+                <p>
+                  Le club est important : c&apos;est lui qui reçoit les points
+                  du classement des clubs. Un athlète sans club ne rapporte
+                  rien. Un athlète <strong>invité</strong> passe au plateau
+                  mais reste hors classement.
+                </p>
+              </Etape>
+
+              <Etape numero={5} titre="Pesée">
+                <p>
+                  Imprimez d&apos;abord les <strong>feuilles de pesée</strong>,
+                  une par catégorie. À la balance, l&apos;officiel note le poids
+                  et signe. La table reporte ensuite ici : elle saisit le
+                  poids, le logiciel propose la catégorie, elle valide. La
+                  validation attribue le dossard et verrouille la ligne. Sans
+                  poids, pas de validation : un athlète sans poids ne se classe
+                  nulle part.
+                </p>
+                <p>
+                  Le dossard n&apos;est pas décoratif : il fixe l&apos;ordre de
                   passage de la première épreuve, du plus petit au plus grand.
+                </p>
+              </Etape>
+
+              <Etape numero={6} titre="Programme">
+                <p>
+                  Le déroulé de la journée, heure par heure. Les lignes se
+                  rangent toutes seules par heure : une ligne ajoutée après
+                  coup à 12h passe avant celle de 18h. Ce programme alimente
+                  l&apos;écran d&apos;attente du mur LED et s&apos;imprime sur
+                  une page.
+                </p>
+              </Etape>
+
+              <Etape numero={7} titre="Récompenses">
+                <p>
+                  Titre, prime et lot de chaque place, <strong>catégorie par
+                  catégorie</strong> : le podium de « Moins de 105 kg » n&apos;a
+                  pas forcément la dotation de « Plus de 105 kg ». Tant
+                  qu&apos;une catégorie n&apos;a pas ses propres récompenses,
+                  elle utilise les communes ; « Personnaliser » les lui copie.
+                  Dès que le classement commence, le lauréat de chaque place
+                  s&apos;affiche à côté.
+                </p>
+                <p>
+                  Le <strong>meilleur club</strong> se calcule ; sa récompense
+                  se saisit ici et figure au palmarès. Le bandeau des
+                  partenaires défile sur l&apos;écran d&apos;attente.
                 </p>
               </Etape>
             </ol>
           </Carte>
 
-          <Encadre ton="attention" titre="Un athlète sans catégorie ne marque aucun point">
+          <Encadre ton="attention" titre="Avant le coup d'envoi">
             <p>
-              Un athlète qui n&apos;est rattaché à aucune catégorie passe quand
-              même sur le plateau, mais il reste hors classement. Il en va de
-              même pour les athlètes invités. Avant le coup d&apos;envoi,
-              assurez-vous que chaque concurrent à classer a bien : un poids,
-              une catégorie et un dossard.
+              Chaque concurrent à classer a un poids, une catégorie et un
+              dossard. Chaque catégorie retenue a son staff et trois places
+              dotées. Le récapitulatif le vérifie pour vous. Puis, sur le
+              plateau, « Précharger toutes les épreuves » construit les files de
+              passage d&apos;un coup.
             </p>
           </Encadre>
         </Section>
@@ -516,6 +575,27 @@ export default function PageAide() {
           titre="5. Pendant l'épreuve"
           chapeau="Le geste se répète à chaque athlète : appeler, chronométrer, compter, valider."
         >
+          <Carte titre="Avant d'appeler : l'épreuve et la file">
+            <p>
+              En haut du plateau, choisissez l&apos;<strong>épreuve</strong> et
+              le <strong>passage</strong> : par groupe de poids, ou tout le
+              monde mélangé, un athlète de chaque catégorie côte à côte sur le
+              même chronomètre. Ce choix pilote aussi le mur LED.
+            </p>
+            <p>
+              La colonne « À venir » est la file de passage. Elle vient du
+              préchargement, ou de « Reconstruire l&apos;ordre », qui remet la
+              file dans l&apos;ordre théorique sans toucher aux passages déjà
+              validés, en attente ou au plateau. Quand vous passez à la
+              deuxième épreuve, la file se réordonne seule sur les points
+              acquis, tant que personne n&apos;y est encore passé.
+            </p>
+            <p>
+              « Imprimer la feuille » sort la feuille de notation de
+              l&apos;épreuve, dans l&apos;ordre de passage, pour l&apos;arbitre.
+            </p>
+          </Carte>
+
           <Carte titre="Le cycle d'un passage">
             <ol className="space-y-5">
               <Etape numero={1} titre="Appeler l'athlète au plateau">
@@ -630,6 +710,28 @@ export default function PageAide() {
             </div>
           </Carte>
 
+          <Carte titre="Le temps au chrono, et quitter la page">
+            <p>
+              Sur les épreuves à répétitions, trois cases : le nombre validé,
+              le temps de la dernière répétition, et le{" "}
+              <strong>temps au chrono</strong>. Cette dernière se remplit toute
+              seule quand le chronomètre s&apos;arrête, avec le temps imparti
+              de l&apos;épreuve, le même pour tous, qu&apos;on ait coupé avant
+              la fin ou non. Elle est conservée et imprimée ; elle ne départage
+              pas.
+            </p>
+            <p>
+              Vous pouvez aller à la régie ou ailleurs pendant qu&apos;un
+              chrono tourne : en revenant sur le plateau, il reprend là où il
+              en était, le même que sur le mur LED.
+            </p>
+            <p>
+              Quand tous les passages d&apos;une catégorie sont rendus, un
+              encadré « Épreuve terminée » propose d&apos;imprimer les
+              résultats, à signer.
+            </p>
+          </Carte>
+
           <Encadre ton="attention" titre="Zéro et forfait rapportent 0 point et ne prennent aucun rang">
             <p>
               Ces deux verdicts ne sont pas des performances. L&apos;athlète
@@ -649,9 +751,38 @@ export default function PageAide() {
         {/* ── 6 ───────────────────────────────────────────────────────── */}
         <Section
           id="ecrans"
-          titre="6. Les écrans du public"
-          chapeau="Le mur LED se sert tout seul dans les données du poste de saisie. Vous choisissez seulement ce qu'il affiche."
+          titre="6. Les écrans du public et la régie"
+          chapeau="Le mur LED se sert tout seul dans les données du poste de saisie. La régie choisit seulement ce que chaque sortie affiche."
         >
+          <Carte titre="Brancher une sortie vidéo">
+            <ol className="ml-5 list-decimal space-y-2 text-encre-2 marker:font-semibold marker:text-encre">
+              <li>
+                Dans la <strong>Régie de diffusion</strong>, déclarez une sortie
+                par écran branché, mur LED, vidéoprojecteur, avec son nom.
+              </li>
+              <li>
+                Choisissez son contenu dans la liste ci-dessous. « Aperçu » le
+                montre dans l&apos;onglet courant ; « Ouvrir la fenêtre »
+                l&apos;ouvre à part.
+              </li>
+              <li>
+                Détachez cette fenêtre, glissez-la sur l&apos;écran voulu,
+                passez en plein écran (F11). Elle se met à jour toute seule à
+                chaque décision du plateau ; rien à saisir de ce côté.
+              </li>
+              <li>
+                Avant l&apos;ouverture au public, ouvrez la <strong>mire</strong>{" "}
+                sur chaque sortie et lisez-la depuis le dernier rang. Le bouton
+                « jour / nuit » règle la lisibilité en plein soleil.
+              </li>
+            </ol>
+            <p className="text-encre-2">
+              La régie n&apos;affiche ni l&apos;épreuve ni les résultats : ils
+              se lisent sur les écrans qu&apos;elle pilote. N&apos;importe quel
+              poste du réseau peut ouvrir un écran, sans code d&apos;accès.
+            </p>
+          </Carte>
+
           <Carte titre="Les contenus disponibles">
             <dl className="space-y-4">
               {[
@@ -711,34 +842,99 @@ export default function PageAide() {
 
         {/* ── 7 ───────────────────────────────────────────────────────── */}
         <Section
-          id="fin"
-          titre="7. En fin de compétition"
-          chapeau="Le classement est déjà fait. Il reste à le vérifier, à l'afficher et à l'archiver."
+          id="papier"
+          titre="7. Ce qui s'imprime"
+          chapeau="Le papier demande exactement ce que l'écran demandera à la ressaisie, avec les mêmes mots. Le juge n'a rien à traduire."
         >
-          <Carte titre="Le classement">
+          <Carte titre="Les huit feuilles, et qui les remplit">
+            <dl className="space-y-4">
+              {[
+                [
+                  "Feuilles de pesée",
+                  "Une par catégorie, plus une pour les athlètes pas encore rangés. L'officiel de pesée note le poids à la balance et signe ; la table reporte à l'étape Pesée. Depuis l'étape Pesée ou l'accueil.",
+                ],
+                [
+                  "Programme de la journée",
+                  "Une page : déroulé, épreuves dans l'ordre avec matériel, catégories, officiels. Pour le speaker, l'accueil, les clubs. Depuis l'étape Programme ou l'accueil.",
+                ],
+                [
+                  "Liste des officiels",
+                  "Postes communs puis staff de chaque catégorie, colonne signature, pour le procès-verbal. Depuis l'étape Officiels ou l'accueil.",
+                ],
+                [
+                  "Fiches de notation par athlète",
+                  "Une page par athlète, toutes épreuves, cases vides à remplir par les juges. Le repli si le réseau tombe. Depuis l'étape Athlètes ou l'accueil.",
+                ],
+                [
+                  "Feuille de notation de l'épreuve",
+                  "Une feuille par catégorie, tous les athlètes dans l'ordre de passage : l'arbitre remplit ligne à ligne sur le terrain, la table reporte au plateau ou dans la file d'attente. Les résultats déjà validés y sont préremplis et grisés. Depuis le plateau, « Imprimer la feuille ».",
+                ],
+                [
+                  "Résultats de l'épreuve",
+                  "Une feuille par catégorie : classement recalculé, zéros, forfaits et non-passés listés avec leur motif, bandeau « provisoires » ou « définitifs », signatures. Depuis le plateau quand l'épreuve est terminée.",
+                ],
+                [
+                  "Palmarès",
+                  "Par catégorie, chaque place dotée avec son lauréat, puis le meilleur club et sa récompense, à signer. Depuis l'étape Récompenses ou l'accueil.",
+                ],
+                [
+                  "Classement des clubs",
+                  "Rang, club, athlètes classés, titres, points. Depuis la page Classement des clubs.",
+                ],
+              ].map(([nom, texte]) => (
+                <div key={nom}>
+                  <dt className="font-semibold">{nom}</dt>
+                  <dd className="mt-1 text-encre-2">{texte}</dd>
+                </div>
+              ))}
+            </dl>
+          </Carte>
+
+          <Encadre ton="info" titre="Imprimer">
             <p>
-              Le classement général est disponible à tout moment, catégorie par
-              catégorie : total de points, puis départage au nombre de premières,
-              deuxièmes et troisièmes places.
+              Chaque feuille a un bouton « Imprimer » qui ouvre la boîte
+              d&apos;impression du navigateur : choisissez A4, portrait, sauf
+              la feuille de notation de l&apos;épreuve, qui est en paysage. Les
+              boutons et le bandeau disparaissent à l&apos;impression.
             </p>
+          </Encadre>
+        </Section>
+
+        {/* ── 8 ───────────────────────────────────────────────────────── */}
+        <Section
+          id="fin"
+          titre="8. En fin de compétition"
+          chapeau="Le classement est déjà fait. Il reste à le vérifier, à le proclamer, à le signer et à l'archiver."
+        >
+          <Carte titre="Vérifier">
             <p>
-              Avant la proclamation, relisez-le une dernière fois avec le
-              directeur de compétition : vérifiez qu&apos;aucun passage
-              n&apos;est resté sans verdict et qu&apos;aucun athlète attendu ne
-              manque.
+              Sur le plateau, sous les colonnes : le classement de
+              l&apos;épreuve par catégorie, puis le classement général de toutes
+              les épreuves, puis le classement des clubs. Avant la
+              proclamation, relisez-les avec le directeur de compétition :
+              aucun passage ne doit rester « en attente de résultat », aucun
+              athlète attendu ne doit manquer.
             </p>
           </Carte>
 
-          <Carte titre="L'export Excel">
+          <Carte titre="Proclamer">
             <p>
-              L&apos;export produit un fichier Excel contenant les athlètes, les
-              résultats de chaque épreuve et les classements. C&apos;est le
-              document à remettre à la fédération et à conserver comme archive
-              de la compétition.
+              Dans la régie, passez une sortie sur « Podium » pour la catégorie
+              affichée, puis sur « Classement des clubs ». L&apos;étape
+              Récompenses montre le lauréat de chaque place ; le{" "}
+              <strong>palmarès imprimé</strong> reprend le tout, avec le
+              meilleur club et sa récompense, à signer par le directeur et le
+              juge principal.
             </p>
-            <p className="text-encre-2">
-              Faites cet export avant d&apos;éteindre quoi que ce soit. Les
-              photos des athlètes ne sont pas contenues dans ce fichier.
+          </Carte>
+
+          <Carte titre="Archiver">
+            <p>
+              L&apos;export Excel, depuis l&apos;accueil, contient les athlètes,
+              les résultats de chaque épreuve et les classements. C&apos;est le
+              document à remettre à la fédération et à conserver. Faites-le
+              avant d&apos;éteindre quoi que ce soit ; les photos n&apos;y sont
+              pas.
             </p>
           </Carte>
 
@@ -751,36 +947,33 @@ export default function PageAide() {
           </Encadre>
         </Section>
 
-        {/* ── 8 ───────────────────────────────────────────────────────── */}
+        {/* ── 9 ───────────────────────────────────────────────────────── */}
         <Section
           id="probleme"
-          titre="8. En cas de problème"
-          chapeau="Trois situations reviennent souvent. Aucune n'est irrattrapable."
+          titre="9. En cas de problème"
+          chapeau="Quatre situations reviennent souvent. Aucune n'est irrattrapable."
         >
           <Carte titre="Vous vous êtes trompé de saisie">
             <p>
-              Si le verdict vient d&apos;être validé, utilisez
-              « annuler le dernier verdict » : l&apos;athlète revient au
-              plateau, son résultat est effacé, et vous ressaisissez la
-              performance correcte. Attention, la valeur et les répétitions
-              comptées doivent être resaisies entièrement.
+              <strong>Avant de valider</strong> : corrigez la case, retirez le
+              dernier tour compté, ou « ← Retour file » remet l&apos;athlète
+              dans « À venir » sans rien enregistrer.
             </p>
             <p>
-              Si l&apos;erreur est plus ancienne, renvoyez le passage concerné
-              en file d&apos;attente, puis rappelez l&apos;athlète et validez la
-              bonne performance. Les points et les classements se recalculent
-              aussitôt.
-            </p>
-            <p className="text-encre-2">
-              Dans tous les cas, prévenez le directeur de compétition avant de
-              corriger un résultat déjà annoncé au public.
+              <strong>Après validation</strong>, un passage ne s&apos;annule
+              pas depuis le plateau : c&apos;est un résultat officiel, déjà lu
+              sur le mur LED. La correction passe par la feuille de notation
+              signée du juge principal, puis par la personne qui administre le
+              logiciel. Prévenez le directeur de compétition avant de corriger
+              un résultat déjà annoncé au public.
             </p>
           </Carte>
 
           <Carte titre="Un athlète est disqualifié">
             <p>
-              Retirez-le du classement de sa catégorie, ou saisissez un forfait
-              selon la décision du jury. Le logiciel recalcule immédiatement.
+              Passez-le « invité, hors classement » sur sa fiche, ou saisissez
+              un forfait sur l&apos;épreuve, selon la décision du jury. Le
+              logiciel recalcule immédiatement.
             </p>
           </Carte>
 
@@ -800,35 +993,55 @@ export default function PageAide() {
             </p>
           </Encadre>
 
-          <Carte titre="L'écran du public se fige">
+          <Carte titre="L'écran du public se fige ou affiche une erreur">
             <p>
               Vérifiez d&apos;abord le poste de saisie : si le logiciel y
               fonctionne, les données sont intactes, seul l&apos;affichage est
-              en cause.
+              en cause. Un écran qui affiche « Données momentanément
+              indisponibles » retente tout seul toutes les cinq secondes.
             </p>
             <p>
-              Fermez la fenêtre de l&apos;écran concerné et rouvrez-la depuis la
-              régie. L&apos;écran se reconstruit à partir des données du poste :
-              aucun résultat n&apos;est perdu en le fermant.
+              Sinon, fermez la fenêtre de l&apos;écran concerné et rouvrez-la
+              depuis la régie. L&apos;écran se reconstruit à partir des données
+              du poste : aucun résultat n&apos;est perdu en le fermant. Si
+              l&apos;image ne revient pas, contrôlez le câble et la sortie
+              vidéo. Pendant ce temps, la compétition continue : le mur LED est
+              un affichage, pas la source des résultats.
             </p>
+          </Carte>
+
+          <Carte titre="Le code d'accès est refusé, ou la page met du temps">
             <p>
-              Si l&apos;image ne revient pas, contrôlez le câble et la sortie
-              vidéo avant de toucher au logiciel. Pendant ce temps, la
-              compétition peut continuer normalement : le mur LED est un
-              affichage, pas la source des résultats.
+              Après plusieurs mauvais codes, chaque nouvel essai attend un peu
+              plus longtemps, quelques secondes : c&apos;est une protection, pas
+              une panne, et le bon code passe toujours. Une session dure douze
+              heures ; si une page dit « session expirée », reconnectez-vous,
+              rien de validé n&apos;est perdu.
+            </p>
+          </Carte>
+
+          <Carte titre="Suspendre la compétition">
+            <p>
+              Blessure, panne, réclamation : le bouton « Suspendre » du plateau
+              affiche « Compétition suspendue » et le motif sur tous les écrans
+              du public. « Reprendre » les rend à leur contenu.
             </p>
           </Carte>
 
           <Encadre ton="interdit" titre="Ce qu'il ne faut jamais faire en pleine compétition">
             <p>
-              Ne reconstruisez pas un ordre de passage déjà entamé : cette
-              opération supprime les passages de l&apos;épreuve en cours, y
-              compris les résultats déjà saisis.
+              Ne supprimez pas une catégorie : ses athlètes perdent leur
+              affectation, ses récompenses propres disparaissent et son staff
+              repasse « toutes catégories ». Préférez « Mettre de côté ».
             </p>
             <p>
-              Ne supprimez pas une catégorie : les athlètes concernés perdent
-              leur affectation, leur pesée est déverrouillée et leurs passages
-              disparaissent.
+              Ne supprimez pas une épreuve commencée : ses passages et ses
+              résultats partent avec elle.
+            </p>
+            <p>
+              Ne modifiez pas le club d&apos;un athlète après la première
+              épreuve sans prévenir : les points de club déjà acquis suivent le
+              nouveau nom.
             </p>
           </Encadre>
         </Section>
