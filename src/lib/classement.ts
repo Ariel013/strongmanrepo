@@ -103,6 +103,61 @@ export interface LigneGenerale {
   places: [number, number, number];
 }
 
+/* ── Classement des clubs ────────────────────────────────────────────── */
+
+/**
+ * Barème des clubs, sur le rang final de chaque athlète dans sa catégorie :
+ * 15, 10, 5, 4, 3 points pour les cinq premiers, 1 point pour tout autre
+ * athlète classé. Un athlète sans club n'apporte rien à personne.
+ */
+export const POINTS_CLUB = [15, 10, 5, 4, 3] as const;
+export const pointsClub = (rang: number): number =>
+  POINTS_CLUB[rang - 1] ?? 1;
+
+export interface LigneClub {
+  club: string;
+  points: number;
+  /** Athlètes classés qui ont marqué pour le club. */
+  athletes: number;
+  /** Premières, deuxièmes, troisièmes places — sert au départage. */
+  places: [number, number, number];
+}
+
+/**
+ * Cumule les rangs finaux de toutes les catégories par club.
+ *
+ * Départage : les points, puis le nombre de premières, deuxièmes et
+ * troisièmes places, puis le nom du club — pour que deux clubs à égalité
+ * parfaite sortent toujours dans le même ordre.
+ */
+export function classementClubs(
+  entrees: { club: string | null; rang: number }[],
+): LigneClub[] {
+  const parClub = new Map<string, LigneClub>();
+  for (const e of entrees) {
+    const club = (e.club ?? "").trim();
+    if (!club || e.rang < 1) continue;
+    const l = parClub.get(club) ?? {
+      club,
+      points: 0,
+      athletes: 0,
+      places: [0, 0, 0] as [number, number, number],
+    };
+    l.points += pointsClub(e.rang);
+    l.athletes += 1;
+    if (e.rang <= 3) l.places[e.rang - 1] += 1;
+    parClub.set(club, l);
+  }
+  return [...parClub.values()].sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.places[0] - a.places[0] ||
+      b.places[1] - a.places[1] ||
+      b.places[2] - a.places[2] ||
+      a.club.localeCompare(b.club, "fr"),
+  );
+}
+
 /** Une valeur absente ne doit jamais gagner un départage : elle part à l'infini. */
 const ouInfini = (v: number | null | undefined): number =>
   v === null || v === undefined || Number.isNaN(v) ? Infinity : v;

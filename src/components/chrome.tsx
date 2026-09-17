@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { C } from "@/lib/charte";
+import { BoutonRetour } from "./retour";
 
 /** La colonne de 1180 px du fichier d'origine, avec sa marge basse de 80 px. */
 export function Conteneur({ children }: { children: React.ReactNode }) {
@@ -152,6 +153,7 @@ export function FilAriane({ children }: { children: React.ReactNode }) {
         flexWrap: "wrap",
       }}
     >
+      <BoutonRetour />
       <Link
         href="/"
         title="Revenir à l'accueil du championnat"

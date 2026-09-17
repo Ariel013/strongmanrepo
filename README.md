@@ -21,7 +21,7 @@ L'application est en trois parties, aux accès distincts :
 | `/ecran/…` | Mur LED, public | libre, lecture seule |
 | `/aide` | Officiels en formation | libre |
 
-Huit écrans publics : `plateau`, `ordre`, `verdict`, `resultats`, `classement`, `podium`,
+Neuf écrans publics : `plateau`, `ordre`, `verdict`, `resultats`, `classement`, `podium`, `clubs`,
 `attente`, `mire`. Chacun s'ouvre en plein écran sur sa sortie vidéo ; la régie
 dit seulement lequel va où.
 
@@ -50,6 +50,11 @@ le total, puis le nombre de premières, deuxièmes et troisièmes places.
 
 L'ordre de passage suit les dossards croissants à la première épreuve, puis va
 du moins de points au plus de points — le leader ferme la marche.
+
+**Classement des clubs** (`/admin/clubs`, écran `clubs`) : le rang final de
+chaque athlète dans sa catégorie rapporte à son club 15, 10, 5, 4 ou 3 points
+pour les cinq premiers, 1 point pour tout autre classé. Toutes catégories
+retenues confondues ; un athlète sans club ne rapporte rien.
 
 Le détail complet des règles est dans `docs/regles-metier.md`.
 

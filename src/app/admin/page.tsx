@@ -261,6 +261,17 @@ export default async function PageAccueil() {
         >
           Imprimer les fiches de notation
         </Link>
+        <Link
+          href="/admin/clubs"
+          title="Classement des meilleurs clubs, barème 15 / 10 / 5 / 4 / 3 / 1 sur le rang final de chaque athlète"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Classement des clubs
+        </Link>
         <a
           href="/api/admin/export?format=classements"
           title="Classements par groupe et par épreuve en CSV"

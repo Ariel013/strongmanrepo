@@ -43,6 +43,13 @@
       "when": 1789615269634,
       "tag": "0005_sturdy_norman_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789616453501,
+      "tag": "0006_closed_pestilence",
+      "breakpoints": true
     }
   ]
 }

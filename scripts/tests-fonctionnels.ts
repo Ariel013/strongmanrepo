@@ -33,6 +33,7 @@ import {
   tousLesResultats,
 } from "../src/lib/donnees";
 import {
+  classementClubs,
   classementEpreuve,
   incoherencesCategories,
   plusPetitGagne,
@@ -1022,6 +1023,31 @@ async function principal() {
     egal("import : « 14/03/1998 » devient ISO", av[0].dateNaissance, "1998-03-14");
     egal("import : ISO conservé", av[1].dateNaissance, "1999-07-02");
     egal("import : une date illisible reste vide", av[2].dateNaissance, "");
+
+    /* ── 19. Classement des clubs ── */
+    console.log("\n19. Clubs : 15 / 10 / 5 / 4 / 3, puis 1 pour tout classé");
+    const clubs = classementClubs([
+      { club: "Titan", rang: 1 },
+      { club: "Titan", rang: 6 },
+      { club: "Atlas", rang: 2 },
+      { club: "Atlas", rang: 3 },
+      { club: "Hercule", rang: 1 },
+      { club: "", rang: 4 },
+      { club: null, rang: 5 },
+    ]);
+    egal("Titan : 15 + 1", clubs.find((c) => c.club === "Titan")?.points, 16);
+    egal("Atlas : 10 + 5", clubs.find((c) => c.club === "Atlas")?.points, 15);
+    egal("Hercule : 15", clubs.find((c) => c.club === "Hercule")?.points, 15);
+    egal("sans club : personne ne marque", clubs.length, 3);
+    egal(
+      "ordre : points, puis titres (Hercule devant Atlas à 15)",
+      clubs.map((c) => c.club),
+      ["Titan", "Hercule", "Atlas"],
+    );
+    egal("un 6e vaut 1 point, un 5e vaut 3", [
+      classementClubs([{ club: "X", rang: 6 }])[0].points,
+      classementClubs([{ club: "X", rang: 5 }])[0].points,
+    ], [1, 3]);
 
     /* ── 18. Cloisonnement des données personnelles ── */
     console.log("\n18. Cloisonnement des données personnelles");

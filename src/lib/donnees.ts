@@ -25,9 +25,11 @@ import { ageDe } from "./age";
 import { couleurCategorie } from "./charte";
 import {
   classementEpreuve,
+  classementClubs,
   classementGeneral,
   ordreDePassage,
   type AthleteClassable,
+  type LigneClub,
   type LigneEpreuve,
   type LigneGenerale,
   type Mesure,
@@ -317,6 +319,25 @@ export function tableauGeneral(
     lignes: classementGeneral(classables, tableaux),
     parEpreuve,
   };
+}
+
+/**
+ * Classement des clubs, toutes catégories retenues confondues : le rang final
+ * de chaque athlète dans sa catégorie rapporte des points à son club.
+ */
+export function tableauClubs(
+  categories: CategorieVue[],
+  epreuves: EpreuveVue[],
+  athletes: AthletePublic[],
+  resultats: ResultatsParEpreuve,
+): LigneClub[] {
+  const parId = new Map(athletes.map((a) => [a.id, a]));
+  const entrees: { club: string | null; rang: number }[] = [];
+  for (const cat of categories.filter((c) => c.active)) {
+    for (const l of tableauGeneral(cat, epreuves, athletes, resultats).lignes)
+      entrees.push({ club: parId.get(l.athleteId)?.club ?? null, rang: l.rang });
+  }
+  return classementClubs(entrees);
 }
 
 /**

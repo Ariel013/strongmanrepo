@@ -43,6 +43,18 @@ export default async function PageRecapitulatif() {
 
   const nommes = officiels.filter((o) => o.nom.trim());
   const juges = nommes.filter((o) => o.role === "juge").length;
+  // Un staff par catégorie : chaque catégorie retenue a son juge principal,
+  // affecté à elle ou à toutes.
+  const sansJuge = categories
+    .filter((c) => c.active)
+    .filter(
+      (c) =>
+        !nommes.some(
+          (o) =>
+            o.role === "juge" &&
+            (o.categorieId === c.id || o.categorieId === null),
+        ),
+    );
   const peses = athletes.filter((a) => a.peseeValidee).length;
   const complets = athletes.filter(
     (a) =>
@@ -77,9 +89,12 @@ export default async function PageRecapitulatif() {
       etape: 1,
     },
     {
-      ok: nommes.length >= 5,
+      ok: nommes.length >= 5 && sansJuge.length === 0,
       titre: "Officiels",
-      detail: `${nommes.length} officiel(s) nommé(s), dont ${juges} juge(s) de terrain`,
+      detail:
+        sansJuge.length > 0
+          ? `Sans juge principal affecté : ${sansJuge.map((c) => c.nom).join(", ")}`
+          : `${nommes.length} officiel(s) nommé(s), dont ${juges} juge(s) de terrain — un staff par catégorie`,
       etape: 2,
     },
     {

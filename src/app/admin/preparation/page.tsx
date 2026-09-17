@@ -145,7 +145,11 @@ export default async function PagePreparation({
         />
       ) : null}
       {etape === 2 ? (
-        <EtapeOfficiels competitionId={comp.id} officiels={officiels} />
+        <EtapeOfficiels
+          competitionId={comp.id}
+          officiels={officiels}
+          categories={categories}
+        />
       ) : null}
       {etape === 3 ? (
         <EtapeAthletes

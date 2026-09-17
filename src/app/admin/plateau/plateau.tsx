@@ -1793,18 +1793,6 @@ export function Plateau({
                 Un passage validé ne s&apos;annule pas ici. Une correction passe
                 par la feuille de notation et la signature du juge principal.
               </div>
-              <Link
-                href={lienResultats}
-                title="Résultats de cette épreuve, classés par catégorie, prêts à signer — provisoires tant que des passages restent à faire"
-                style={styleBouton("creme", {
-                  flex: "none",
-                  padding: "7px 11px",
-                  borderRadius: 8,
-                  fontSize: 12,
-                })}
-              >
-                Imprimer les résultats
-              </Link>
             </div>
           ) : null}
           {termines.map((p) => {

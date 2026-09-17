@@ -1122,3 +1122,23 @@ non pesées ou sans dossard (affichées « — ») apparaissent sur le mur LED.
 Ligne 1673 : `?ecran=mire&theme=...` sans `&espace=`, contrairement aux boutons
 « ouvrir » (l. 1671) et à la mire globale (l. 1844). Sans conséquence visible pour une
 mire, mais incohérent.
+
+## 9. Classement des clubs — ajout du portage (2026-09-17)
+
+Demande de Kevin, absent de l'original. Sur le **rang final** de chaque athlète
+dans sa catégorie (le classement général de § 6), toutes catégories retenues
+confondues :
+
+| Rang final | Points au club |
+|---|---|
+| 1er | 15 |
+| 2e | 10 |
+| 3e | 5 |
+| 4e | 4 |
+| 5e | 3 |
+| tout autre classé | 1 |
+
+Un athlète sans club, ou hors classement, ne rapporte rien. Départage entre
+clubs : les points, puis le nombre de premières, deuxièmes et troisièmes places,
+puis le nom. Fonction `classementClubs` (`src/lib/classement.ts`), jamais
+stockée, testée en § 19 des tests fonctionnels.

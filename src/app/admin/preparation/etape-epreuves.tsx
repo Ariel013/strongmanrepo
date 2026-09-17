@@ -293,6 +293,16 @@ function FicheEpreuve({ ep, rang }: { ep: EpreuveComplete; rang: number }) {
           ) : null}
         </div>
 
+        {ep.niveau && !(ep.niveauxOptions ?? "").trim() ? (
+          <div style={{ marginTop: 14 }}>
+            <Encart ton="ambre">
+              Les niveaux sont activés mais aucune liste n&apos;est proposée :
+              à l&apos;étape Athlètes, le niveau se saisit en clair. Renseignez
+              ici les niveaux séparés par des virgules pour offrir un choix.
+            </Encart>
+          </div>
+        ) : null}
+
         {ep.mesure === "nb_temps" && !ep.tours ? (
           <div style={{ marginTop: 14 }}>
             <Encart ton="ambre">

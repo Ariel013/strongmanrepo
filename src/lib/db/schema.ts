@@ -329,6 +329,14 @@ export const officiel = pgTable(
     nom: text("nom").notNull(),
     role: text("role").notNull(),
     position: integer("position").notNull().default(0),
+    /**
+     * La catégorie que cet officiel arbitre. Un staff par catégorie : le jury
+     * de « Moins de 105 kg » n'est pas celui de « Plus de 105 kg ». Vide :
+     * l'officiel sert toutes les catégories (directeur, speaker, régie…).
+     */
+    categorieId: uuid("categorie_id").references(() => categorie.id, {
+      onDelete: "set null",
+    }),
   },
   (t) => [index("officiel_competition_idx").on(t.competitionId)],
 );

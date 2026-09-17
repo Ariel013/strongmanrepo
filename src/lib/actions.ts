@@ -108,7 +108,7 @@ const ROLES_ADMIS = [
 /** Les contenus qu'un écran public sait afficher. */
 const CONTENUS_ADMIS = [
   "attente", "plateau", "ordre", "verdict", "resultats",
-  "classement", "podium", "mire",
+  "classement", "podium", "clubs", "mire",
 ] as const;
 
 /** Les nationalités proposées par la fiche athlète. */
@@ -837,15 +837,34 @@ export async function ajouterOfficiel(competitionId: string): Promise<Retour> {
 
 export async function modifierOfficiel(
   id: string,
-  champ: "nom" | "role",
+  champ: "nom" | "role" | "categorieId",
   valeur: string,
 ): Promise<Retour> {
   await exigerSession();
 
   // Le nom peut rester vide : les postes sont créés d'avance et nommés plus
   // tard. Le rôle, lui, décide de la place au procès-verbal.
-  let v: string;
-  if (champ === "role") {
+  let v: string | null;
+  if (champ === "categorieId") {
+    if (valeur === "") {
+      v = null;
+    } else {
+      if (!UUID.test(valeur))
+        return { ok: false, erreur: "Catégorie inconnue." };
+      const [o] = await db.select().from(officiel).where(eq(officiel.id, id));
+      const [c] = await db
+        .select({ id: categorie.id })
+        .from(categorie)
+        .where(
+          and(
+            eq(categorie.id, valeur),
+            eq(categorie.competitionId, o?.competitionId ?? ""),
+          ),
+        );
+      if (!c) return { ok: false, erreur: "Catégorie inconnue." };
+      v = valeur;
+    }
+  } else if (champ === "role") {
     const r = parmi(valeur, ROLES_ADMIS, "Rôle");
     if (!r.ok) return { ok: false, erreur: r.erreur };
     v = r.valeur;

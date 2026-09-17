@@ -896,7 +896,37 @@ function LigneAthlete({
                 </ChoixListe>
               </div>
 
-              {niveauxDus.map((ep) => (
+              {niveauxDus.map((ep) => {
+                const options = (ep.niveauxOptions ?? "")
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                // Sans liste à l'étape Épreuves, un sélecteur n'aurait rien à
+                // proposer : on laisse saisir le niveau en clair, et on dit
+                // où renseigner la liste.
+                if (options.length === 0)
+                  return (
+                    <div key={ep.id}>
+                      <Etiquette couleur={C.orangeFonce}>
+                        Niveau — {ep.nom}
+                      </Etiquette>
+                      <ChampTexte
+                        valeur={a.niveaux[ep.id] ?? ""}
+                        placeholder="ex. prise haute"
+                        title="Niveau déclaré par l'athlète, en clair. Pour proposer une liste à choisir, renseignez les niveaux de l'épreuve à l'étape Épreuves."
+                        enregistrer={(v) => definirNiveau(a.id, ep.id, v)}
+                        style={{
+                          border: `1px solid ${C.ambreBord}`,
+                          background: C.ambreFond,
+                        }}
+                      />
+                      <div style={{ fontSize: 11, color: C.encre4, marginTop: 4, lineHeight: 1.4 }}>
+                        Aucune liste de niveaux pour cette épreuve : saisie
+                        libre. Renseignez la liste à l&apos;étape Épreuves.
+                      </div>
+                    </div>
+                  );
+                return (
                 <div key={ep.id}>
                   <Etiquette couleur={C.orangeFonce}>
                     Niveau — {ep.nom}
@@ -911,18 +941,15 @@ function LigneAthlete({
                     }}
                   >
                     <option value="">— Niveau à déclarer —</option>
-                    {(ep.niveauxOptions ?? "")
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean)
-                      .map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
+                    {options.map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
+                    ))}
                   </ChoixListe>
                 </div>
-              ))}
+                );
+              })}
 
               <div>
                 <Etiquette>Participation</Etiquette>

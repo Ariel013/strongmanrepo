@@ -794,3 +794,18 @@ Outil de réglage du mur LED avant ouverture au public :
 - **Tous les libellés, messages d'erreur et info-bulles sont en français** et
   rédigés en langue métier (« Valider la pesée », « Zéro », « Forfait »,
   « Retour file ») : ils font partie de l'interface, pas de l'habillage.
+
+---
+
+## Ajouts du portage sans équivalent dans l'original (2026-09-17)
+
+- **« ← Retour »** en tête de chaque fil d'Ariane de l'administration : la
+  page précédente, sinon l'accueil de l'administration.
+- **Étape Officiels** : chaque officiel porte une catégorie arbitrée (ou
+  « Toutes ») ; un encart par catégorie retenue dit son staff et signale
+  l'absence de juge principal. Le récapitulatif le vérifie. La feuille de
+  notation préremplit juge, chronométreur et secrétaire de la catégorie.
+- **Étape Athlètes** : quand une épreuve à niveaux n'a pas de liste, le niveau
+  se saisit en clair et l'écran renvoie à l'étape Épreuves, qui avertit.
+- **Classement des clubs** : page `/admin/clubs` imprimable, neuvième écran
+  public `clubs`, entrée dans la régie. Barème en `regles-metier.md` § 9.

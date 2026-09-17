@@ -23,6 +23,7 @@ const CONTENUS = [
   { cle: "resultats", lbl: "Résultats de l'épreuve par catégorie" },
   { cle: "classement", lbl: "Classement général par catégorie" },
   { cle: "podium", lbl: "Podium et palmarès" },
+  { cle: "clubs", lbl: "Classement des clubs" },
   { cle: "mire", lbl: "Mire de lisibilité" },
 ] as const;
 

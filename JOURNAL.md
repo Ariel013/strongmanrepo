@@ -31,8 +31,8 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **169/169** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
-- **Base** : migrations `0001` à `0005` appliquées sur Supabase (dernière le
+  **175/175** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
+- **Base** : migrations `0001` à `0006` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `037a6df`, poussée le
   2026-09-17 (vérifié par comparaison des SHA).
@@ -56,6 +56,32 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (9) — Niveau sans liste, bouton retour, staff par catégorie, clubs
+
+Quatre demandes de Kevin.
+
+1. **« Le niveau ne passe pas » sur Piliers d'Hercule.** Vérifié en base :
+   `niveau = true`, `niveaux_options = null`. Le sélecteur n'avait rien à
+   proposer — un blanc muet, lu comme une panne. Désormais sans liste, le
+   niveau se saisit en clair et l'écran dit où renseigner la liste ; l'étape
+   Épreuves avertit quand les niveaux sont activés sans liste.
+2. **« ← Retour »** dans le fil d'Ariane de toutes les pages d'administration
+   (`src/components/retour.tsx`).
+3. **Un staff par catégorie** : `officiel.categorie_id` (migration `0006`),
+   sélecteur « Catégorie arbitrée » sur chaque officiel, un encart par
+   catégorie retenue avec son staff, avertissement sans juge principal, ligne
+   du récapitulatif. La feuille de notation préremplit juge, chrono et
+   secrétaire de la catégorie.
+4. **Classement des clubs**, barème 15 / 10 / 5 / 4 / 3 puis 1 sur le rang
+   final par catégorie : `classementClubs` (pure, 6 tests), `tableauClubs`,
+   page `/admin/clubs` imprimable depuis l'accueil, écran public `clubs`,
+   entrée régie. Règle en `regles-metier.md` § 9.
+
+Et sur le plateau, un seul « Imprimer les résultats » : celui de l'encadré
+« Épreuve terminée », le doublon en tête des terminés est retiré.
+
+`lint` ✓, `build` ✓, `test` 175/175. Non essayé sur matériel réel.
 
 ### 2026-09-17 (8) — Troisième case « Temps au chrono », et le message de reconstruction
 

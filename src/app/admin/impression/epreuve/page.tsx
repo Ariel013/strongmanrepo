@@ -21,6 +21,7 @@ import {
   competitionCourante,
   epreuvesCompletes,
   niveauxPour,
+  officielsDe,
   ordrePour,
   passagesDe,
   tousLesResultats,
@@ -111,10 +112,19 @@ export default async function PageFeuilleEpreuve({
   }));
   const epVue = vue.find((e) => e.id === epreuve.id)!;
 
-  const [resultats, niveaux] = await Promise.all([
+  const [resultats, niveaux, officiels] = await Promise.all([
     tousLesResultats(comp.id, vue),
     niveauxPour(comp.id, epreuve.id),
+    officielsDe(comp.id),
   ]);
+  /** Le nom de l'officiel d'un rôle pour une catégorie, sinon une ligne à remplir. */
+  const nomDe = (categorieId: string, role: string) =>
+    officiels.find(
+      (o) =>
+        o.nom.trim() &&
+        o.role === role &&
+        (o.categorieId === categorieId || o.categorieId === null),
+    )?.nom ?? "________________________";
 
   const dateTexte = comp.debutLe
     ? comp.debutLe.toLocaleDateString("fr-FR", {
@@ -214,6 +224,11 @@ export default async function PageFeuilleEpreuve({
           niveaux={niveaux}
           date={dateTexte}
           lieu={comp.lieu ?? ""}
+          staff={{
+            juge: nomDe(f.categorie.id, "juge"),
+            chrono: nomDe(f.categorie.id, "chrono"),
+            secretaire: nomDe(f.categorie.id, "secretaire"),
+          }}
         />
       ))}
     </>
@@ -322,6 +337,7 @@ function Feuille({
   niveaux,
   date,
   lieu,
+  staff,
 }: {
   epreuve: Awaited<ReturnType<typeof epreuvesCompletes>>[number];
   mesure: string;
@@ -331,6 +347,8 @@ function Feuille({
   niveaux: Record<string, string>;
   date: string;
   lieu: string;
+  /** Les officiels affectés à la catégorie, ou une ligne à remplir. */
+  staff: { juge: string; chrono: string; secretaire: string };
 }) {
   const mixte = mesureMixte(mesure);
 
@@ -547,9 +565,9 @@ function Feuille({
           color: C.encre2,
         }}
       >
-        <span>Juge principal : ________________________</span>
-        <span>Chronométreur : ________________________</span>
-        <span>Secrétaire de table : ________________________</span>
+        <span>Juge principal : {staff.juge}</span>
+        <span>Chronométreur : {staff.chrono}</span>
+        <span>Secrétaire de table : {staff.secretaire}</span>
         <span style={{ marginLeft: "auto" }}>
           Reporté dans le logiciel le ________ par ____________
         </span>

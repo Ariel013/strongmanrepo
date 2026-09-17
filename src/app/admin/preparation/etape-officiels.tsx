@@ -9,6 +9,8 @@ import {
   supprimerOfficiel,
 } from "@/lib/actions";
 import type { Officiel } from "@/lib/db/schema";
+import type { CategorieVue } from "@/lib/donnees";
+import { Encart, Etiquette } from "@/components/ui";
 
 /**
  * Étape 3 — les officiels et le corps arbitral.
@@ -21,13 +23,27 @@ import type { Officiel } from "@/lib/db/schema";
 export function EtapeOfficiels({
   competitionId,
   officiels,
+  categories,
 }: {
   competitionId: string;
   officiels: Officiel[];
+  categories: CategorieVue[];
 }) {
   const nommes = officiels.filter((o) => o.nom.trim());
   const compte = (role: string) =>
     nommes.filter((o) => o.role === role).length;
+
+  /**
+   * Un staff par catégorie : chaque catégorie retenue doit avoir au moins un
+   * juge principal qui lui est affecté. Un officiel « toutes catégories »
+   * compte pour toutes.
+   */
+  const retenues = categories.filter((c) => c.active);
+  const staffDe = (categorieId: string) =>
+    nommes.filter((o) => o.categorieId === categorieId || o.categorieId === null);
+  const jugesDe = (categorieId: string) =>
+    staffDe(categorieId).filter((o) => o.role === "juge").length;
+  const sansJuge = retenues.filter((c) => jugesDe(c.id) === 0);
 
   const manques: string[] = [];
   if (compte("juge") < 5)
@@ -91,6 +107,62 @@ export function EtapeOfficiels({
         </div>
       </div>
 
+      {/* ── Un staff par catégorie ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(min(220px,100%),1fr))",
+          gap: 12,
+          marginBottom: 18,
+        }}
+      >
+        {retenues.map((c) => {
+          const staff = staffDe(c.id);
+          const juges = jugesDe(c.id);
+          return (
+            <div
+              key={c.id}
+              style={{
+                background: C.blanc,
+                border: `1px solid ${juges === 0 ? C.ambreBord : C.bordure}`,
+                borderTop: `4px solid ${c.couleur}`,
+                borderRadius: 12,
+                padding: "12px 14px",
+              }}
+            >
+              <Etiquette>Staff arbitral</Etiquette>
+              <div style={{ fontSize: 15, fontWeight: 700 }}>{c.nom}</div>
+              <div style={{ fontSize: 13, color: juges === 0 ? C.ambreEncre : C.encre3, marginTop: 4, lineHeight: 1.45 }}>
+                {juges === 0
+                  ? "Aucun juge principal affecté."
+                  : `${juges} juge${juges > 1 ? "s" : ""} principal${juges > 1 ? "aux" : ""}, ${staff.length} officiel${staff.length > 1 ? "s" : ""} au total`}
+              </div>
+              {staff
+                .filter((o) => o.categorieId === c.id)
+                .map((o) => (
+                  <div key={o.id} style={{ fontSize: 12, color: C.encre2, marginTop: 2 }}>
+                    · {o.nom} — {ROLES.find((r) => r.cle === o.role)?.lbl ?? o.role}
+                  </div>
+                ))}
+            </div>
+          );
+        })}
+        {retenues.length === 0 ? (
+          <Encart ton="ambre">
+            Aucune catégorie retenue : affectez le staff après l&apos;étape Groupes.
+          </Encart>
+        ) : null}
+      </div>
+      {sansJuge.length > 0 ? (
+        <div style={{ marginBottom: 18 }}>
+          <Encart ton="ambre">
+            Il faut un staff par catégorie. Sans juge principal :{" "}
+            {sansJuge.map((c) => c.nom).join(", ")}. Affectez chaque officiel à
+            sa catégorie dans la liste ci-dessous.
+          </Encart>
+        </div>
+      ) : null}
+
       <div
         style={{
           background: C.blanc,
@@ -128,6 +200,21 @@ export function EtapeOfficiels({
                 {ROLES.map((r) => (
                   <option key={r.cle} value={r.cle}>
                     {r.lbl}
+                  </option>
+                ))}
+              </ChoixListe>
+            </div>
+            <div style={{ flex: "2 1 200px", minWidth: 160 }}>
+              <ChoixListe
+                valeur={o.categorieId ?? ""}
+                title="La catégorie que cet officiel arbitre. Un staff par catégorie ; « Toutes » pour les postes communs (directeur, speaker, régie)"
+                enregistrer={(v) => modifierOfficiel(o.id, "categorieId", v)}
+              >
+                <option value="">Toutes les catégories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nom}
+                    {c.active ? "" : " (mise de côté)"}
                   </option>
                 ))}
               </ChoixListe>
