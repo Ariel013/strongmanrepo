@@ -9,6 +9,7 @@
  */
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 export const metadata = {
   title: "Mode d'emploi — Arbitrage Strongman",
@@ -156,14 +157,18 @@ export default function PageAide() {
           compétition.
         </p>
         <p className="mt-6">
-          <a
+          <Link
             href="/connexion"
-            title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
-            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-papier uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            title="Entre dans l'administration — préparation, plateau, régie. Le code d'accès n'est demandé que si aucune session n'est ouverte."
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            // La base globale (reprise de l'original) impose `a { color: vert }`
+            // hors couche Tailwind : elle battait la classe de couleur, et le
+            // texte était vert sur vert. Le style inline gagne sur tout.
+            style={{ color: "#FCFAF6", textDecoration: "none" }}
           >
             Accéder à l&apos;administration
             <span aria-hidden="true">→</span>
-          </a>
+          </Link>
         </p>
       </header>
 
@@ -838,14 +843,18 @@ export default function PageAide() {
           d&apos;attente.
         </p>
         <p className="mt-6">
-          <a
+          <Link
             href="/connexion"
-            title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
-            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-papier uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            title="Entre dans l'administration — préparation, plateau, régie. Le code d'accès n'est demandé que si aucune session n'est ouverte."
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            // La base globale (reprise de l'original) impose `a { color: vert }`
+            // hors couche Tailwind : elle battait la classe de couleur, et le
+            // texte était vert sur vert. Le style inline gagne sur tout.
+            style={{ color: "#FCFAF6", textDecoration: "none" }}
           >
             Accéder à l&apos;administration
             <span aria-hidden="true">→</span>
-          </a>
+          </Link>
         </p>
       </footer>
     </main>

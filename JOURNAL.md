@@ -57,6 +57,23 @@
 
 ## 📓 Journal des sessions
 
+### 2026-09-17 (23) — Le bouton du mode d'emploi ne repasse plus par le code
+
+Kevin : « le CTA a le même problème ». Cause : `/connexion` ne regardait
+jamais si une session était déjà ouverte — depuis le mode d'emploi, on
+retombait sur le formulaire de code, et la navigation en `<a>` rechargeait
+tout. La page de connexion redirige maintenant une session ouverte vers
+`/admin` (ou la `suite` si elle est sous `/admin`), et le bouton est un
+`Link`.
+
+Puis la capture d'écran de Kevin : le bouton était **vert sans texte**.
+Cause vérifiée dans `globals.css:120` : la base reprise de l'original pose
+`a { color: #0b9237 }` hors couche Tailwind, donc elle bat n'importe quelle
+classe de couleur utilitaire — texte vert sur fond vert, à la bonne largeur.
+Couleur et soulignement forcés en style inline sur le bouton. Leçon : sur
+cette page en Tailwind, une classe de couleur sur un `<a>` ne suffit jamais.
+`lint` ✓, `build` ✓.
+
 ### 2026-09-17 (22) — Quatre corrections de terrain : ordre de passage, clubs, chrono, classements
 
 Retours de Kevin après essai en ligne.

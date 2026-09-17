@@ -1,5 +1,8 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { C } from "@/lib/charte";
+import { NOM_COOKIE, lireSession } from "@/lib/auth";
 import { Conteneur } from "@/components/chrome";
 import { FormulaireConnexion } from "./formulaire";
 
@@ -24,6 +27,15 @@ export default async function PageConnexion({
   searchParams: Promise<{ suite?: string }>;
 }) {
   const { suite } = await searchParams;
+
+  // Déjà connecté : pas de formulaire. Depuis le mode d'emploi ou un favori,
+  // on arrive directement dans l'administration, sans ressaisir le code ni
+  // repartir de zéro.
+  const session = await lireSession((await cookies()).get(NOM_COOKIE)?.value);
+  if (session) {
+    const cible = suite && suite.startsWith("/admin") && !suite.startsWith("//") ? suite : "/admin";
+    redirect(cible);
+  }
 
   return (
     <Conteneur>
