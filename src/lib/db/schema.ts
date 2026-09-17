@@ -107,6 +107,12 @@ export const categorie = pgTable(
     /** Une catégorie mise de côté ne concourt pas mais reste dans l'historique. */
     active: boolean("active").notNull().default(true),
     position: integer("position").notNull().default(0),
+    /**
+     * Couleur de la catégorie, `#RRGGBB`, attribuée à la création et
+     * modifiable. Vide sur les catégories d'avant : la lecture retombe alors
+     * sur la palette par rang (`couleurCategorie`).
+     */
+    couleur: text("couleur"),
   },
   (t) => [index("categorie_competition_idx").on(t.competitionId)],
 );
@@ -288,6 +294,12 @@ export const passage = pgTable(
     tempsS: real("temps_s"),
     /** Temps de chaque répétition, pour relire un passage contesté. */
     tours: real("tours").array(),
+    /**
+     * Temps lu au chronomètre quand il s'est arrêté — au bout du temps
+     * imparti ou à l'arrêt de la table. Rempli tout seul, ne départage rien :
+     * c'est `temps_s` (dernière répétition) qui départage.
+     */
+    chronoS: real("chrono_s"),
 
     /** Horodatage de la validation — sert aussi à retrouver le dernier verdict. */
     valideLe: timestamp("valide_le", { withTimezone: true }),

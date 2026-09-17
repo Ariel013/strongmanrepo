@@ -264,6 +264,11 @@ voiture, Piliers d'Hercule (à niveaux), Tirage de camion.
 Titre « Groupes **de poids** ». Championnat masculin, deux groupes par défaut :
 « Moins de 100 kg » (max 100) et « Plus de 100 kg » (min 100).
 
+> **Écart du portage (2026-09-17)** : chaque carte commence par « Couleur de la
+> catégorie » — sept pastilles de la palette et un sélecteur libre. La couleur
+> est attribuée à la création (première de la palette non prise) et enregistrée
+> en base ; dans l'original elle ne dépendait que du rang dans la liste.
+
 Grille `minmax(280px,1fr)`, une carte par groupe (`groupes`), filet supérieur
 4 px (vert pour le premier, orange pour les suivants) :
 

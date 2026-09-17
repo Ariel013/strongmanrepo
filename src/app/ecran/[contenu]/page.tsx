@@ -128,7 +128,8 @@ export default async function PageEcran({
     : categories.filter((c) => c.id === comp.categorieCouranteId);
 
   const couleurDe = (categorieId: string | null): string =>
-    couleurCategorie(categoriesToutes.findIndex((c) => c.id === categorieId));
+    categoriesToutes.find((c) => c.id === categorieId)?.couleur ??
+    couleurCategorie(-1);
   const nomCat = (categorieId: string | null): string =>
     categoriesToutes.find((c) => c.id === categorieId)?.nom ??
     "Sans catégorie";

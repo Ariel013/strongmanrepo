@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   C,
+  LIBELLE_CHRONO,
+  aCaseChrono,
   clubAffiche,
   libelleTemps,
   mesureMixte,
@@ -150,6 +152,7 @@ export default async function PageFeuilleEpreuve({
                         statut: p.resultatStatut,
                         valeur: p.valeur,
                         temps: p.tempsS,
+                        chrono: p.chronoS,
                       }
                     : null,
               }))
@@ -226,6 +229,7 @@ interface Ligne {
     statut: "ok" | "zero" | "forfait" | null;
     valeur: number | null;
     temps: number | null;
+    chrono: number | null;
   } | null;
 }
 
@@ -427,6 +431,7 @@ function Feuille({
             {epreuve.niveau ? <th style={th}>Niveau</th> : null}
             <th style={th}>{uniteValeur(mesure)}</th>
             {mixte ? <th style={th}>{libelleTemps(mesure)}</th> : null}
+            {aCaseChrono(mesure) ? <th style={th}>{LIBELLE_CHRONO}</th> : null}
             {epreuve.tours ? <th style={th}>Tours (barrer à chaque répétition)</th> : null}
             <th style={th}>Verdict</th>
             <th style={{ ...th, width: 90 }}>Juge</th>
@@ -480,6 +485,16 @@ function Feuille({
                 {mixte ? (
                   <td style={td}>
                     <Champ prerempli={preTemps} largeur={90} />
+                  </td>
+                ) : null}
+                {aCaseChrono(mesure) ? (
+                  <td style={td}>
+                    <Champ
+                      prerempli={
+                        valide && r!.chrono !== null ? virgule(r!.chrono) : null
+                      }
+                      largeur={80}
+                    />
                   </td>
                 ) : null}
                 {epreuve.tours ? (

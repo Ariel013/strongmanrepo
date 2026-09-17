@@ -1,6 +1,8 @@
 import Link from "next/link";
 import {
   C,
+  LIBELLE_CHRONO,
+  aCaseChrono,
   clubAffiche,
   nomComplet,
   performanceLisible,
@@ -133,6 +135,7 @@ export default async function PageResultats({
             l.resultat?.valeur ?? null,
             l.resultat?.temps ?? null,
           ),
+          chrono: passageDe.get(l.athleteId)?.chronoS ?? null,
           mention: null,
         }))
         .filter((l) => l.athlete);
@@ -155,7 +158,7 @@ export default async function PageResultats({
                   : p.statut === "plateau"
                     ? "Au plateau"
                     : "À venir";
-          return { athlete: a, rang: null, points: 0, perf: "—", mention };
+          return { athlete: a, rang: null, points: 0, perf: "—", chrono: null, mention };
         });
 
       const restants = passages.filter((p) => p.statut !== "termine").length;
@@ -218,6 +221,7 @@ interface Ligne {
   rang: number | null;
   points: number;
   perf: string;
+  chrono: number | null;
   mention: string | null;
 }
 
@@ -343,6 +347,7 @@ function Feuille({
             <th style={th}>Athlète</th>
             <th style={th}>Club · poids</th>
             <th style={th}>Performance</th>
+            {aCaseChrono(mesure) ? <th style={th}>{LIBELLE_CHRONO}</th> : null}
             <th style={{ ...th, width: 60, textAlign: "right" }}>Points</th>
           </tr>
         </thead>
@@ -361,12 +366,17 @@ function Feuille({
                   : ""}
               </td>
               <td style={{ ...td, fontWeight: 700 }}>{l.perf}</td>
+              {aCaseChrono(mesure) ? (
+                <td style={{ ...td, color: C.encre3 }}>
+                  {l.chrono !== null ? `${virgule(l.chrono)} s` : "—"}
+                </td>
+              ) : null}
               <td style={{ ...td, fontWeight: 700, textAlign: "right" }}>{l.points}</td>
             </tr>
           ))}
           {classes.length === 0 ? (
             <tr>
-              <td colSpan={6} style={{ ...td, color: C.encre4 }}>
+              <td colSpan={7} style={{ ...td, color: C.encre4 }}>
                 Aucun passage validé avec une performance dans cette catégorie.
               </td>
             </tr>
@@ -381,7 +391,7 @@ function Feuille({
               <td style={{ ...td, fontSize: 12, color: C.encre4 }}>
                 {clubAffiche(l.athlete.club)}
               </td>
-              <td style={{ ...td, fontSize: 12, fontStyle: "italic", color: C.encre3 }} colSpan={2}>
+              <td style={{ ...td, fontSize: 12, fontStyle: "italic", color: C.encre3 }} colSpan={aCaseChrono(mesure) ? 3 : 2}>
                 {l.mention}
               </td>
             </tr>

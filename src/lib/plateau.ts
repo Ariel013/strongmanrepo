@@ -99,7 +99,7 @@ export async function remettreEnFile(passageId: string): Promise<Resultat> {
  */
 export async function libererLePlateau(
   passageId: string,
-  releve: { tours?: number[]; tempsS?: number | null } = {},
+  releve: { tours?: number[]; tempsS?: number | null; chronoS?: number | null } = {},
 ): Promise<Resultat> {
   const [cible] = await db
     .select({ statut: passage.statut })
@@ -120,6 +120,7 @@ export async function libererLePlateau(
       valeur: null,
       tempsS: releve.tempsS ?? null,
       tours: releve.tours ?? [],
+      chronoS: releve.chronoS ?? null,
       valideLe: null,
     })
     .where(eq(passage.id, passageId));

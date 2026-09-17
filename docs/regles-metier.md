@@ -255,6 +255,13 @@ Texte libre affiché en bas des écrans publics (l. 1900).
 | Clé | Libellé | Aide affichée | Sens pour le classement |
 |---|---|---|---|
 | `nb_temps` | Nombre, puis temps | « la quantité classe ; à égalité, le temps intermédiaire de la dernière répétition départage » | `valeur` **décroissante**, puis `temps` **croissant** |
+
+> **Portage (2026-09-17)** : une troisième case, « Temps au chrono (s) »
+> (`passage.chrono_s`), se remplit toute seule quand le chronomètre s'arrête —
+> au bout du temps imparti ou à la main. Elle est conservée et imprimée, elle
+> **ne départage pas** : la règle reste nombre puis temps de la dernière
+> répétition. Exemple du client : 4 répétitions à 58 s bat 4 répétitions à
+> 68 s, quel que soit le temps au chrono (90 s pour les deux).
 | `poids` | Charge maximale (kg) | « la charge la plus lourde validée l'emporte » | `valeur` décroissante |
 | `duree` | Temps de maintien | « le temps le plus long l'emporte » | `valeur` décroissante |
 | `distance` | Distance parcourue (m) | « la distance classe ; à distance égale, le temps le plus rapide » | `valeur` décroissante, puis `temps` croissant |

@@ -26,13 +26,6 @@ const CONTENUS = [
   { cle: "mire", lbl: "Mire de lisibilité" },
 ] as const;
 
-interface ClassementCategorie {
-  id: string;
-  nom: string;
-  couleur: string;
-  lignes: { rang: number; nom: string; perf: string; points: number }[];
-}
-
 export function Regie({
   competitionId,
   theme,
@@ -40,7 +33,6 @@ export function Regie({
   nomEpreuveCourante,
   epreuveCouranteId,
   restants,
-  parCategorie,
 }: {
   competitionId: string;
   theme: "nuit" | "jour";
@@ -49,7 +41,6 @@ export function Regie({
   epreuveCouranteId: string | null;
   /** Passages de l'épreuve courante pas encore validés. */
   restants: number;
-  parCategorie: ClassementCategorie[];
 }) {
   return (
     <div>
@@ -93,7 +84,7 @@ export function Regie({
         </a>
       </div>
 
-      {/* ── Résultats de l'épreuve en cours ── */}
+      {/* ── État de l'épreuve en cours : diffuser ou imprimer ses résultats ── */}
       <div
         style={{
           background: C.blanc,
@@ -113,13 +104,13 @@ export function Regie({
           }}
         >
           <div style={{ fontSize: 16, fontWeight: 700 }}>
-            Résultats de l&apos;épreuve en cours
+            Épreuve en cours
           </div>
           <div style={{ fontSize: 13, color: C.orange, fontWeight: 700 }}>
             {nomEpreuveCourante}
           </div>
           <div style={{ marginLeft: "auto", fontSize: 12, color: C.encre4 }}>
-            Classement séparé par catégorie, mis à jour à chaque validation
+            Les résultats s&apos;affichent sur les écrans, pas ici
           </div>
         </div>
 
@@ -129,7 +120,6 @@ export function Regie({
             gap: 10,
             flexWrap: "wrap",
             alignItems: "center",
-            marginBottom: 12,
             padding: "10px 12px",
             borderRadius: 10,
             background: restants === 0 ? "rgba(11,146,55,.07)" : C.ambreFond,
@@ -170,102 +160,6 @@ export function Regie({
           </a>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(min(260px,100%),1fr))",
-            gap: 12,
-          }}
-        >
-          {parCategorie.map((cc) => (
-            <div
-              key={cc.id}
-              style={{
-                border: `1px solid ${C.bordure}`,
-                borderRadius: 12,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  padding: "10px 14px",
-                  background: cc.couleur,
-                  color: C.blanc,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  letterSpacing: ".04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {cc.nom}
-              </div>
-              {cc.lignes.length === 0 ? (
-                <div
-                  style={{
-                    padding: "12px 14px",
-                    fontSize: 13,
-                    color: C.encre4,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  Aucun passage validé pour l&apos;instant dans cette catégorie.
-                </div>
-              ) : null}
-              {cc.lignes.map((l) => (
-                <div
-                  key={`${cc.id}-${l.rang}-${l.nom}`}
-                  style={{
-                    display: "flex",
-                    gap: 10,
-                    alignItems: "center",
-                    padding: "9px 14px",
-                    borderTop: `1px solid ${C.papier3}`,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 22,
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: cc.couleur,
-                      flex: "none",
-                    }}
-                  >
-                    {l.rang}
-                  </div>
-                  <div
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {l.nom}
-                  </div>
-                  <div
-                    style={{ fontSize: 13, color: C.encre2, flex: "none" }}
-                  >
-                    {l.perf}
-                  </div>
-                  <div
-                    style={{
-                      width: 30,
-                      textAlign: "right",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      color: C.vertFonce,
-                      flex: "none",
-                    }}
-                  >
-                    {l.points}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* ── Les sorties vidéo ── */}

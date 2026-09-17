@@ -32,7 +32,8 @@
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **168/168** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
-- **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
+- **Base** : migrations `0001` à `0005` appliquées sur Supabase (dernière le
+  2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `efec8a9`, poussée le
   2026-09-17 (vérifié par `git fetch` puis comparaison des SHA).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
@@ -55,6 +56,53 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (8) — Troisième case « Temps au chrono », et le message de reconstruction
+
+Kevin, avec l'exemple du client : 4 répétitions chacun en 90 s, départage au
+temps de la dernière répétition (58 s bat 68 s). **La règle du classement le
+faisait déjà** (nombre décroissant, puis temps croissant — `regles-metier.md`
+§ 5). Ce qui manquait : la troisième case, le temps lu au chrono à l'arrêt.
+
+- Colonne `passage.chrono_s`, migration `0005` appliquée. Se remplit toute
+  seule pour chaque athlète au plateau quand le chrono s'arrête (temps imparti
+  écoulé → la limite ; arrêt à la main → le temps écoulé au dixième), reste
+  modifiable, part avec la validation et avec la mise en attente. Absente pour
+  les mesures `chrono` et `duree`, où le temps est la performance.
+- Visible : carte du plateau, tableau d'attente (préremplie), ligne des
+  terminés (« · chrono 90 s »), feuille de notation et feuille de résultats
+  (colonne « Temps au chrono (s) »).
+- « Reconstruire l'ordre » : le message disait « déjà validés » alors que des
+  passages pouvaient être en attente de résultat. Il dit maintenant « déjà
+  passés (validés ou en attente) » et rappelle qu'un passage validé ne se
+  reconstruit pas — c'est ce que Kevin a vu : seuls les athlètes pas encore
+  passés sont revenus dans la file, par construction.
+- Lint : `Date.now()` dans `basculerChrono` refusé par la règle de pureté du
+  compilateur React après l'ajout de `releverChrono` ; remplacé par
+  `new Date().getTime()`, même valeur.
+
+`lint` ✓, `build` ✓, `test` 169/169. Non essayé sur matériel réel.
+
+### 2026-09-17 (7) — Couleur propre à chaque catégorie, dossards sur les résultats
+
+Demande de Kevin. **Couleur** : colonne `categorie.couleur` (migration `0004`
+appliquée), attribuée à la création — première couleur de la palette qu'aucune
+catégorie de la compétition ne porte — et modifiable à l'étape Groupes (sept
+pastilles + sélecteur libre, `#RRGGBB` validé côté serveur). Les catégories
+d'avant, sans couleur enregistrée, retombent sur la palette par rang, comme
+avant : `CategorieVue.couleur` est toujours renseignée et les quatre appelants
+de `couleurCategorie(rang)` lisent désormais la catégorie. **Dossards** : sur
+les cartes de la régie (colonne « Dossard »), et en pastille orange sur les
+écrans LED résultats, classement général et podium. La feuille imprimée les
+avait déjà.
+
+Aussi dans ce lot : le bouton « Appeler les 2 athlètes » passe en orange plein.
+Et un retrait demandé par Kevin : la régie n'affiche plus le classement de
+l'épreuve en cours — les résultats se lisent sur les écrans de diffusion, la
+régie ne garde que l'état de l'épreuve (terminée / provisoire) avec « Imprimer
+les résultats » et « Ouvrir l'écran résultats ».
+
+`lint` ✓, `build` ✓, `test` 168/168. Non essayé sur matériel réel.
 
 ### 2026-09-17 (6) — Un passage validé ne s'annule plus ; les résultats s'impriment et se diffusent
 

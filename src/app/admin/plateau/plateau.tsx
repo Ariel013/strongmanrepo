@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   C,
+  LIBELLE_CHRONO,
+  aCaseChrono,
   clubAffiche,
   initiales,
   libelleTemps,
@@ -183,7 +185,7 @@ export function Plateau({
   const [phase, setPhase] = useState<"pret" | "encours" | "arrete">("pret");
   const [ecoule, setEcoule] = useState(0);
   const [saisies, setSaisies] = useState<
-    Record<string, { valeur: string; temps: string; erreur: string }>
+    Record<string, { valeur: string; temps: string; chrono: string; erreur: string }>
   >({});
   const [tours, setTours] = useState<Record<string, number[]>>({});
   const minuteur = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -256,6 +258,7 @@ export function Plateau({
       if (minuteur.current) clearInterval(minuteur.current);
       minuteur.current = null;
       setPhase("arrete");
+      releverChrono(Math.round(passe * 10) / 10);
       publier({ phase: "arrete", dureeS: limite, arretS: reste });
       return;
     }
@@ -265,7 +268,7 @@ export function Plateau({
       publier({ phase: "pret", dureeS: limite });
       return;
     }
-    const t0 = Date.now();
+    const t0 = new Date().getTime();
     setPhase("encours");
     publier({ phase: "encours", dureeS: limite, debutLe: t0 });
     minuteur.current = setInterval(() => {
@@ -276,16 +279,38 @@ export function Plateau({
         minuteur.current = null;
         setEcoule(limite);
         setPhase("arrete");
+        releverChrono(limite);
         publier({ phase: "arrete", dureeS: limite, arretS: 0 });
       }
     }, 100);
   }
 
+  /**
+   * Le chrono s'arrête — au bout du temps imparti ou à la main — et le temps
+   * lu se pose dans la troisième case de chaque athlète au plateau. La table
+   * peut le corriger avant de valider ; il part avec le passage.
+   */
+  function releverChrono(secondes: number) {
+    setSaisies((m) => {
+      const suite = { ...m };
+      for (const p of auPlateau)
+        suite[p.id] = {
+          ...(m[p.id] ?? { valeur: "", temps: "", chrono: "", erreur: "" }),
+          chrono: virgule(secondes),
+        };
+      return suite;
+    });
+  }
+
   /* ── Saisie ───────────────────────────────────────────────────────── */
 
   const saisieDe = (id: string) =>
-    saisies[id] ?? { valeur: "", temps: "", erreur: "" };
-  const majSaisie = (id: string, champ: "valeur" | "temps", v: string) =>
+    saisies[id] ?? { valeur: "", temps: "", chrono: "", erreur: "" };
+  const majSaisie = (
+    id: string,
+    champ: "valeur" | "temps" | "chrono",
+    v: string,
+  ) =>
     setSaisies((s) => ({
       ...s,
       [id]: { ...saisieDe(id), [champ]: v, erreur: "" },
@@ -298,17 +323,18 @@ export function Plateau({
    * que la table avait compté au plateau.
    */
   const [saisiesAttente, setSaisiesAttente] = useState<
-    Record<string, { valeur: string; temps: string; erreur: string }>
+    Record<string, { valeur: string; temps: string; chrono: string; erreur: string }>
   >({});
   const saisieAttenteDe = (p: PassageVue) =>
     saisiesAttente[p.id] ?? {
       valeur: epreuve.tours && p.tours?.length ? String(p.tours.length) : "",
       temps: p.tempsS !== null ? virgule(p.tempsS) : "",
+      chrono: p.chronoS !== null ? virgule(p.chronoS) : "",
       erreur: "",
     };
   const majSaisieAttente = (
     p: PassageVue,
-    champ: "valeur" | "temps",
+    champ: "valeur" | "temps" | "chrono",
     v: string,
   ) =>
     setSaisiesAttente((s) => ({
@@ -377,6 +403,7 @@ export function Plateau({
           valeur: v,
           tempsS: nombreOuNull(s.temps),
           tours: tours[passageId] ?? [],
+          chronoS: nombreOuNull(s.chrono),
         });
         if (!r.ok)
           setSaisies((m) => ({
@@ -412,6 +439,7 @@ export function Plateau({
       const r = await mettreEnAttente(passageId, {
         tours: tours[passageId] ?? [],
         tempsS: nombreOuNull(s.temps),
+        chronoS: nombreOuNull(s.chrono),
       });
       if (r.ok) appelerSuivant(passageId);
       return r;
@@ -440,6 +468,7 @@ export function Plateau({
           valeur: v,
           tempsS: nombreOuNull(s.temps),
           tours: p.tours ?? [],
+          chronoS: nombreOuNull(s.chrono),
         });
         if (!r.ok)
           setSaisiesAttente((m) => ({
@@ -467,13 +496,24 @@ export function Plateau({
    * lignes se valident une à une, en ordre, chacune avec sa propre trace.
    */
   function toutValider() {
-    const pretes: { p: PassageVue; valeur: number; temps: number | null }[] = [];
+    const pretes: {
+      p: PassageVue;
+      valeur: number;
+      temps: number | null;
+      chrono: number | null;
+    }[] = [];
     const vides: PassageVue[] = [];
     for (const p of enAttente) {
       const s = saisieAttenteDe(p);
       const v = nombreOuNull(s.valeur);
       if (v === null) vides.push(p);
-      else pretes.push({ p, valeur: v, temps: nombreOuNull(s.temps) });
+      else
+        pretes.push({
+          p,
+          valeur: v,
+          temps: nombreOuNull(s.temps),
+          chrono: nombreOuNull(s.chrono),
+        });
     }
     if (vides.length > 0) {
       setSaisiesAttente((m) => {
@@ -491,13 +531,14 @@ export function Plateau({
     demarrer(async () => {
       let faits = 0;
       let refuse = "";
-      for (const { p, valeur, temps } of pretes) {
+      for (const { p, valeur, temps, chrono } of pretes) {
         try {
           const r = await validerPassage(p.id, {
             statut: "ok",
             valeur,
             tempsS: temps,
             tours: p.tours ?? [],
+            chronoS: chrono,
           });
           if (r.ok) faits++;
           else refuse = r.erreur ?? "Enregistrement impossible.";
@@ -1184,6 +1225,10 @@ export function Plateau({
                   borderRadius: 11,
                   fontSize: 15,
                   fontWeight: 700,
+                  // Orange plein, à la demande de Kevin : l'appel en duo est
+                  // LE bouton du passage mélangé, il doit se voir de loin.
+                  // Même orange que la pastille dossard (valeur de la charte).
+                  background: C.orange,
                 })}
               >
                 Appeler les {Math.max(2, parCategorie.length)} athlètes (un par
@@ -1574,6 +1619,28 @@ export function Plateau({
                         />
                       </div>
                     ) : null}
+                    {aCaseChrono(epreuve.mesure) ? (
+                      <div>
+                        <Etiquette style={{ minHeight: 16 }}>
+                          {LIBELLE_CHRONO}
+                        </Etiquette>
+                        <input
+                          value={s.chrono}
+                          onChange={(e) =>
+                            majSaisie(p.id, "chrono", e.target.value)
+                          }
+                          placeholder="à l'arrêt du chrono"
+                          title="Se remplit tout seul quand le chronomètre s'arrête, au bout du temps imparti ou à la main. Ne départage pas : c'est le temps de la dernière répétition qui départage."
+                          style={styleChamp({
+                            padding: "11px 12px",
+                            borderRadius: 9,
+                            fontSize: 17,
+                            fontWeight: 700,
+                            background: s.chrono ? C.papier2 : undefined,
+                          })}
+                        />
+                      </div>
+                    ) : null}
                   </div>
 
                   {s.erreur ? (
@@ -1750,7 +1817,10 @@ export function Plateau({
                 ? "ZÉRO"
                 : p.resultatStatut === "forfait"
                   ? "FORFAIT"
-                  : performanceLisible(epreuve.mesure, p.valeur, p.tempsS);
+                  : performanceLisible(epreuve.mesure, p.valeur, p.tempsS) +
+                    (p.chronoS !== null && aCaseChrono(epreuve.mesure)
+                      ? ` · chrono ${virgule(p.chronoS)} s`
+                      : "");
             return (
               <div
                 key={p.id}
@@ -1894,6 +1964,7 @@ export function Plateau({
                     ...(mesureMixte(epreuve.mesure)
                       ? [libelleTemps(epreuve.mesure)]
                       : []),
+                    ...(aCaseChrono(epreuve.mesure) ? [LIBELLE_CHRONO] : []),
                     "Verdict",
                     "",
                   ].map((t, i) => (
@@ -1993,6 +2064,22 @@ export function Plateau({
                             title="Temps rendu par le jury, sert à départager les égalités"
                             style={styleChamp({
                               width: 110,
+                              padding: "9px 10px",
+                              borderRadius: 8,
+                              fontSize: 16,
+                              fontWeight: 700,
+                            })}
+                          />
+                        </td>
+                      ) : null}
+                      {aCaseChrono(epreuve.mesure) ? (
+                        <td style={cellule}>
+                          <input
+                            value={s.chrono}
+                            onChange={(e) => majSaisieAttente(p, "chrono", e.target.value)}
+                            title="Temps lu au chrono à l'arrêt, relevé au plateau"
+                            style={styleChamp({
+                              width: 90,
                               padding: "9px 10px",
                               borderRadius: 8,
                               fontSize: 16,

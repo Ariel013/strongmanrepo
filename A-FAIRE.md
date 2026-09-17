@@ -113,6 +113,8 @@ Settings → Environment Variables dans le `.env` du poste.
 | `0001_graceful_ben_grimm` (programme, récompenses, sorties, logos, niveaux) | Supabase | ✅ appliquée le 2026-09-16 |
 | `0002_clean_marrow` (état du chronomètre) | Supabase | ✅ appliquée le 2026-09-16 |
 | `0003_little_sharon_carter` (date de naissance dans `athlete_contact`, colonne `age` retirée) | Supabase | ✅ appliquée le 2026-09-17 |
+| `0004_slimy_dagger` (colonne `couleur` sur `categorie`) | Supabase | ✅ appliquée le 2026-09-17 |
+| `0005_sturdy_norman_osborn` (colonne `chrono_s` sur `passage`) | Supabase | ✅ appliquée le 2026-09-17 |
 
 > ⚠️ `pnpm run db:push` **échoue sur Supabase** : l'introspection de drizzle-kit
 > trébuche sur les contraintes CHECK des schémas internes. Utiliser

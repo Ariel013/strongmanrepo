@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { C, couleurCategorie, virgule } from "@/lib/charte";
+import { useState, useTransition } from "react";
+import { C, COUL_CAT, virgule } from "@/lib/charte";
 import { TitreSection } from "@/components/chrome";
 import { Encart, Etiquette, styleBouton } from "@/components/ui";
 import { BoutonAction, ChampTexte } from "@/components/saisie";
@@ -64,11 +64,11 @@ export function EtapeGroupes({
           gap: 14,
         }}
       >
-        {categories.map((g, i) => (
+        {categories.map((g) => (
           <FicheGroupe
             key={g.id}
             groupe={g}
-            couleur={couleurCategorie(i)}
+            couleur={g.couleur}
             effectif={effectifs[g.id] ?? 0}
           />
         ))}
@@ -84,6 +84,86 @@ export function EtapeGroupes({
           + Ajouter un groupe
         </BoutonAction>
       </div>
+    </div>
+  );
+}
+
+/**
+ * La couleur de la catégorie : sept pastilles de la palette, plus le sélecteur
+ * natif pour une couleur libre. C'est elle qui teinte le plateau, les écrans
+ * géants, les impressions.
+ */
+function ChoixCouleur({
+  valeur,
+  enregistrer,
+}: {
+  valeur: string;
+  enregistrer: (v: string) => Promise<{ ok: boolean; erreur?: string }>;
+}) {
+  const [erreur, setErreur] = useState("");
+  const [, demarrer] = useTransition();
+  const choisir = (v: string) =>
+    demarrer(async () => {
+      try {
+        const r = await enregistrer(v);
+        setErreur(r.ok ? "" : (r.erreur ?? "Couleur refusée."));
+      } catch {
+        setErreur("Le serveur n'a pas répondu : la couleur n'a pas changé.");
+      }
+    });
+
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <Etiquette>Couleur de la catégorie</Etiquette>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        {COUL_CAT.map((c) => {
+          const active = c.toUpperCase() === valeur.toUpperCase();
+          return (
+            <button
+              key={c}
+              type="button"
+              title={`Choisir ${c}`}
+              onClick={() => choisir(c)}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 8,
+                background: c,
+                border: active ? `3px solid ${C.encre}` : `1px solid ${C.bordure2}`,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            />
+          );
+        })}
+        <label
+          title="Une autre couleur, au choix"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            color: C.encre3,
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="color"
+            value={valeur}
+            onChange={(e) => choisir(e.target.value)}
+            style={{ width: 28, height: 28, padding: 0, border: `1px solid ${C.bordure2}`, borderRadius: 8, background: "transparent", cursor: "pointer" }}
+          />
+          Autre
+        </label>
+        <span style={{ fontSize: 12, color: C.encre4, fontFamily: "monospace" }}>
+          {valeur.toUpperCase()}
+        </span>
+      </div>
+      {erreur ? (
+        <div role="alert" style={{ marginTop: 6, fontSize: 12, color: C.rougeFonce, fontWeight: 600 }}>
+          {erreur}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -119,6 +199,10 @@ function FicheGroupe({
     >
       <div style={{ height: 4, background: couleur }} />
       <div style={{ padding: "18px 20px" }}>
+        <ChoixCouleur
+          valeur={couleur}
+          enregistrer={(v) => modifierCategorie(groupe.id, "couleur", v)}
+        />
         <ChampTexte
           valeur={groupe.nom}
           title="Nom du groupe tel qu'il apparaît sur les classements et les impressions"

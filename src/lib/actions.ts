@@ -16,6 +16,7 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
+import { COUL_CAT, COULEUR_HEX, couleurCategorie } from "./charte";
 import {
   athlete,
   athleteContact,
@@ -315,7 +316,7 @@ export async function construireFile(
     ok: true,
     erreur:
       r.crees === 0
-        ? "Tous les passages de cette épreuve sont déjà validés : l'ordre n'a pas été touché."
+        ? "Tous les athlètes de ce groupe sont déjà passés (validés ou en attente de résultat) : l'ordre n'a pas été touché. Un passage validé ne se reconstruit pas."
         : undefined,
   };
 }
@@ -359,7 +360,7 @@ export async function renvoyerEnFile(passageId: string): Promise<Retour> {
  */
 export async function mettreEnAttente(
   passageId: string,
-  releve: { tours: number[]; tempsS: number | null },
+  releve: { tours: number[]; tempsS: number | null; chronoS: number | null },
 ): Promise<Retour> {
   await exigerSession();
   const r = await libererLePlateau(passageId, releve);
@@ -384,7 +385,14 @@ export async function mettreEnAttente(
 export async function validerPassage(
   passageId: string,
   resultat:
-    | { statut: "ok"; valeur: number; tempsS: number | null; tours?: number[] }
+    | {
+        statut: "ok";
+        valeur: number;
+        tempsS: number | null;
+        tours?: number[];
+        /** Temps lu au chrono à l'arrêt : conservé, ne départage pas. */
+        chronoS?: number | null;
+      }
     | { statut: "zero" | "forfait" },
 ): Promise<Retour> {
   await exigerSession();
@@ -404,6 +412,7 @@ export async function validerPassage(
       valeur: resultat.statut === "ok" ? resultat.valeur : null,
       tempsS: resultat.statut === "ok" ? resultat.tempsS : null,
       tours: resultat.statut === "ok" ? (resultat.tours ?? []) : [],
+      chronoS: resultat.statut === "ok" ? (resultat.chronoS ?? null) : null,
       valideLe: new Date(),
     })
     .where(eq(passage.id, passageId));
@@ -715,7 +724,7 @@ export async function supprimerEpreuve(id: string): Promise<Retour> {
 
 export async function modifierCategorie(
   id: string,
-  champ: "nom" | "poidsMin" | "poidsMax" | "active",
+  champ: "nom" | "poidsMin" | "poidsMax" | "active" | "couleur",
   valeur: string | boolean,
 ): Promise<Retour> {
   await exigerSession();
@@ -723,6 +732,14 @@ export async function modifierCategorie(
   let v: unknown;
   if (champ === "active") {
     v = Boolean(valeur);
+  } else if (champ === "couleur") {
+    const c = String(valeur).trim();
+    if (!COULEUR_HEX.test(c))
+      return {
+        ok: false,
+        erreur: "Couleur attendue au format #RRGGBB, par exemple #EC6D23.",
+      };
+    v = c.toUpperCase();
   } else if (champ === "nom") {
     const r = texteObligatoire(String(valeur), "Le nom du groupe", 60);
     if (!r.ok) return { ok: false, erreur: r.erreur };
@@ -770,10 +787,20 @@ export async function ajouterCategorie(
     .from(categorie)
     .where(eq(categorie.competitionId, competitionId));
 
+  // Une couleur dès la création : la première de la palette qu'aucune
+  // catégorie de la compétition ne porte déjà, sinon celle du rang.
+  const existantes = await db
+    .select({ couleur: categorie.couleur })
+    .from(categorie)
+    .where(eq(categorie.competitionId, competitionId));
+  const prises = new Set(existantes.map((c) => c.couleur?.toUpperCase()));
+  const libre = COUL_CAT.find((c) => !prises.has(c.toUpperCase()));
+
   await db.insert(categorie).values({
     competitionId,
     nom: "Nouveau groupe",
     position: max + 1,
+    couleur: libre ?? couleurCategorie(max),
   });
   revalidatePath("/admin", "layout");
   return { ok: true };

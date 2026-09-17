@@ -1,4 +1,4 @@
-import { C, couleurCategorie } from "@/lib/charte";
+import { C } from "@/lib/charte";
 import { FilAriane } from "@/components/chrome";
 import { Encart } from "@/components/ui";
 import {
@@ -116,7 +116,6 @@ export default async function PagePlateau({
    * change, jamais le barème.
    */
   const parCategorie: CategoriePlateau[] = enJeu.map((cat) => {
-    const rang = categoriesToutes.findIndex((c) => c.id === cat.id);
     const ordre = ordrePour(
       vuePublique.find((e) => e.id === epreuveCourante.id)!,
       cat.id,
@@ -135,7 +134,7 @@ export default async function PagePlateau({
     return {
       id: cat.id,
       nom: cat.nom,
-      couleur: couleurCategorie(rang),
+      couleur: cat.couleur,
       ordre: ordre.map((a) => a.id),
       classementEpreuve: tEpreuve.lignes
         .filter((l) => l.rang !== null)
@@ -195,9 +194,7 @@ export default async function PagePlateau({
         categories={categories.map((c, i) => ({
           id: c.id,
           nom: c.nom,
-          couleur: couleurCategorie(
-            categoriesToutes.findIndex((x) => x.id === c.id),
-          ),
+          couleur: c.couleur,
           ordre: i,
         }))}
         groupeCourantId={groupeCourantId}

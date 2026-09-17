@@ -728,6 +728,7 @@ async function principal() {
     const libere = await libererLePlateau(file[0].id, {
       tours: [12.3, 25.1],
       tempsS: 25.1,
+      chronoS: 90,
     });
     verifier("libérer le plateau accepté", libere.ok);
     etat = await relire();
@@ -735,6 +736,7 @@ async function principal() {
     const attente = etat.find((p) => p.id === file[0].id);
     egal("le passage est « à saisir »", attente?.statut, "a_saisir");
     egal("les tours comptés sont conservés", attente?.tours, [12.3, 25.1]);
+    egal("le temps lu au chrono aussi", attente?.chronoS, 90);
     egal("sans valeur ni verdict", [attente?.valeur, attente?.resultatStatut], [null, null]);
 
     await placerAuPlateau(file[1].id);

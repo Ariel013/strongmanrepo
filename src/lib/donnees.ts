@@ -22,6 +22,7 @@ import {
   sortie,
 } from "./db/schema";
 import { ageDe } from "./age";
+import { couleurCategorie } from "./charte";
 import {
   classementEpreuve,
   classementGeneral,
@@ -71,6 +72,8 @@ export interface CategorieVue {
   poidsMax: number | null;
   active: boolean;
   position: number;
+  /** Toujours renseignée : la couleur enregistrée, sinon celle du rang. */
+  couleur: string;
 }
 
 /** Le décimal de Postgres arrive en chaîne : on le convertit à la lecture. */
@@ -121,13 +124,14 @@ export async function categoriesDe(
     .from(categorie)
     .where(eq(categorie.competitionId, competitionId))
     .orderBy(asc(categorie.position));
-  return lignes.map((c) => ({
+  return lignes.map((c, i) => ({
     id: c.id,
     nom: c.nom,
     poidsMin: c.poidsMin,
     poidsMax: c.poidsMax,
     active: c.active,
     position: c.position,
+    couleur: c.couleur ?? couleurCategorie(i),
   }));
 }
 
@@ -362,6 +366,8 @@ export interface PassageVue {
   valeur: number | null;
   tempsS: number | null;
   tours: number[] | null;
+  /** Temps lu au chrono à l'arrêt, s'il a tourné. */
+  chronoS: number | null;
   valideLe: Date | null;
 }
 
@@ -390,6 +396,7 @@ export async function passagesDe(
     valeur: p.valeur,
     tempsS: p.tempsS,
     tours: p.tours,
+    chronoS: p.chronoS,
     valideLe: p.valideLe,
   }));
 }

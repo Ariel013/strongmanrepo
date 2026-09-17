@@ -1,20 +1,12 @@
-import {
-  C,
-  couleurCategorie,
-  performanceLisible,
-  tempsImpartiLisible,
-} from "@/lib/charte";
+import { C, tempsImpartiLisible } from "@/lib/charte";
 import { FilAriane, TitreSection } from "@/components/chrome";
 import { Encart } from "@/components/ui";
 import {
   athletesDe,
-  categoriesDe,
   competitionCourante,
   epreuvesDe,
   passagesDe,
   sortiesDe,
-  tableauEpreuve,
-  tousLesResultats,
 } from "@/lib/donnees";
 import { Regie } from "./regie";
 
@@ -39,17 +31,13 @@ export default async function PageRegie() {
     );
   }
 
-  const [epreuves, categoriesToutes, athletes, sorties] = await Promise.all([
+  const [epreuves, athletes, sorties] = await Promise.all([
     epreuvesDe(comp.id),
-    categoriesDe(comp.id),
     athletesDe(comp.id),
     sortiesDe(comp.id),
   ]);
-  const categories = categoriesToutes.filter((c) => c.active);
-
   const epreuveCourante =
     epreuves.find((e) => e.id === comp.epreuveCouranteId) ?? epreuves[0];
-  const resultats = await tousLesResultats(comp.id, epreuves);
   const passages = epreuveCourante
     ? await passagesDe(
         epreuveCourante.id,
@@ -57,36 +45,6 @@ export default async function PageRegie() {
       )
     : [];
   const restants = passages.filter((p) => p.statut !== "termine").length;
-
-  const parCategorie = epreuveCourante
-    ? categories.map((cat) => {
-        const rang = categoriesToutes.findIndex((c) => c.id === cat.id);
-        const lignes = tableauEpreuve(
-          epreuveCourante,
-          cat.id,
-          athletes,
-          resultats,
-        ).lignes.filter((l) => l.rang !== null);
-        return {
-          id: cat.id,
-          nom: cat.nom,
-          couleur: couleurCategorie(rang),
-          lignes: lignes.map((l) => {
-            const a = athletes.find((x) => x.id === l.athleteId);
-            return {
-              rang: l.rang!,
-              nom: a ? `${a.nom.toUpperCase()} ${a.prenoms}`.trim() : "—",
-              perf: performanceLisible(
-                epreuveCourante.mesure,
-                l.resultat?.valeur ?? null,
-                l.resultat?.temps ?? null,
-              ),
-              points: l.points,
-            };
-          }),
-        };
-      })
-    : [];
 
   return (
     <>
@@ -112,7 +70,6 @@ export default async function PageRegie() {
         }
         epreuveCouranteId={epreuveCourante?.id ?? null}
         restants={restants}
-        parCategorie={parCategorie}
       />
 
       <div

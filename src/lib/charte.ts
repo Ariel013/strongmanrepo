@@ -66,6 +66,9 @@ export const COUL_CAT = [
 export const couleurCategorie = (index: number): string =>
   COUL_CAT[(index < 0 ? 6 : index) % COUL_CAT.length];
 
+/** Une couleur saisie : `#RRGGBB`, majuscules ou non. */
+export const COULEUR_HEX = /^#[0-9a-f]{6}$/i;
+
 /** Or, argent, bronze — dans cet ordre, pour le podium et les récompenses. */
 export const COUL_METAL = ["#D9A441", "#9AA0A6", "#B4692F"] as const;
 export const METAUX = [
@@ -185,6 +188,12 @@ export const libelleTemps = (mesure: string | null | undefined): string =>
   mesure === "distance" || mesure === "medley" || mesure === "chrono"
     ? "Temps mis (s)"
     : "Temps du dernier tour (s)";
+
+/** La troisième case : le temps lu au chronomètre quand il s'arrête. */
+export const LIBELLE_CHRONO = "Temps au chrono (s)";
+/** Elle n'a pas de sens quand le temps EST la performance. */
+export const aCaseChrono = (mesure: string | null | undefined): boolean =>
+  mesure !== "chrono" && mesure !== "duree";
 
 /** Une deuxième case de saisie n'apparaît que si le temps départage. */
 export const mesureMixte = (mesure: string | null | undefined): boolean =>

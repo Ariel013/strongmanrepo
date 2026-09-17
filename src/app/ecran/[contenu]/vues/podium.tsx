@@ -84,6 +84,24 @@ export async function VuePodium({
             >
               {l.rang}
             </div>
+            <div
+              style={{
+                minWidth: "6vh",
+                height: "5vh",
+                padding: "0 1vh",
+                borderRadius: "1vh",
+                background: C.orange,
+                color: C.blanc,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "3vh",
+                fontWeight: 700,
+                flex: "none",
+              }}
+            >
+              {a.dossard ?? "—"}
+            </div>
             <VignetteEcran
               t={t}
               a={a}

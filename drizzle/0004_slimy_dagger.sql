@@ -1,0 +1,1 @@
+ALTER TABLE "categorie" ADD COLUMN "couleur" text;

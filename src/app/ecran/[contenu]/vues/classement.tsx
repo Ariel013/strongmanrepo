@@ -121,6 +121,24 @@ export async function VueClassement({
                     >
                       {l.rang}
                     </div>
+                    <div
+                      style={{
+                        minWidth: "4.2vh",
+                        height: "3.6vh",
+                        padding: "0 0.6vh",
+                        borderRadius: "0.8vh",
+                        background: C.orange,
+                        color: C.blanc,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "2.2vh",
+                        fontWeight: 700,
+                        flex: "none",
+                      }}
+                    >
+                      {a.dossard ?? "—"}
+                    </div>
                     <VignetteEcran
                       t={t}
                       a={a}

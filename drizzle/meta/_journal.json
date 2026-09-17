@@ -29,6 +29,20 @@
       "when": 1789604221620,
       "tag": "0003_little_sharon_carter",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789614285050,
+      "tag": "0004_slimy_dagger",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789615269634,
+      "tag": "0005_sturdy_norman_osborn",
+      "breakpoints": true
     }
   ]
 }
