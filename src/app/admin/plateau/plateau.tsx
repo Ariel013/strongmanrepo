@@ -17,6 +17,7 @@ import {
   uniteValeur,
   virgule,
 } from "@/lib/charte";
+import { ChiffresStables } from "@/components/chiffres";
 import {
   Drapeau,
   EnteteColonne,
@@ -1022,14 +1023,13 @@ export function Plateau({
                           : C.papier
                       : C.papier,
                   lineHeight: 1,
-                  fontVariantNumeric: "tabular-nums",
                   animation:
                     finale || flash
                       ? "clignote .6s steps(1,end) infinite"
                       : "none",
                 }}
               >
-                {mmss(reste)}
+                <ChiffresStables texte={mmss(reste)} />
               </div>
               <div style={{ fontSize: 12, color: "#9AA79E", marginTop: 6 }}>
                 {limite > 0

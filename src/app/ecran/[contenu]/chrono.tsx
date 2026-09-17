@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { C, mmss } from "@/lib/charte";
+import { ChiffresStables } from "@/components/chiffres";
 
 /**
  * Le chronomètre du mur LED.
@@ -80,14 +81,13 @@ export function Chrono({
           fontSize: taille,
           fontWeight: 700,
           lineHeight: 0.9,
-          fontVariantNumeric: "tabular-nums",
           whiteSpace: "nowrap",
           color: couleur,
           animation:
             finale || flash ? "clignote .6s steps(1,end) infinite" : "none",
         }}
       >
-        {mmss(reste)}
+        <ChiffresStables texte={mmss(reste)} />
       </div>
       <div
         style={{ fontSize: tailleLibelle, color: second, marginTop: "1vh" }}
