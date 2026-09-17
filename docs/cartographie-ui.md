@@ -626,6 +626,10 @@ automatique à chaque décision du plateau, mode sombre par défaut.
    (un par catégorie retenue) : entête plein de la couleur de catégorie, puis les
    lignes rang / nom / performance / points (points en `#03562A`). Bloc vide :
    « Aucun passage validé pour l'instant dans cette catégorie. »
+   > **Écart du portage (2026-09-17, demande de Kevin)** : cette carte n'est
+   > pas reprise. La régie ne montre ni l'épreuve en cours ni ses résultats :
+   > tout cela se lit sur les écrans diffusés (`plateau`, `resultats`). La
+   > feuille de résultats s'imprime depuis le plateau.
 3. **Liste des sorties** (`ecrans`), une carte par sortie :
    - champ **Sortie** (`e.setNom`, ex. « Mur LED principal »),
    - `<select>` **Contenu diffusé** (`e.setContenu`) : `attente` « Écran

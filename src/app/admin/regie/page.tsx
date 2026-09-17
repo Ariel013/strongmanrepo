@@ -1,11 +1,8 @@
-import { C, tempsImpartiLisible } from "@/lib/charte";
+import { C } from "@/lib/charte";
 import { FilAriane, TitreSection } from "@/components/chrome";
 import { Encart } from "@/components/ui";
 import {
-  athletesDe,
   competitionCourante,
-  epreuvesDe,
-  passagesDe,
   sortiesDe,
 } from "@/lib/donnees";
 import { Regie } from "./regie";
@@ -31,21 +28,7 @@ export default async function PageRegie() {
     );
   }
 
-  const [epreuves, athletes, sorties] = await Promise.all([
-    epreuvesDe(comp.id),
-    athletesDe(comp.id),
-    sortiesDe(comp.id),
-  ]);
-  const epreuveCourante =
-    epreuves.find((e) => e.id === comp.epreuveCouranteId) ?? epreuves[0];
-  const passages = epreuveCourante
-    ? await passagesDe(
-        epreuveCourante.id,
-        athletes.filter((a) => a.categorieId !== null).map((a) => a.id),
-      )
-    : [];
-  const restants = passages.filter((p) => p.statut !== "termine").length;
-
+  const sorties = await sortiesDe(comp.id);
   return (
     <>
       <FilAriane>Régie de diffusion</FilAriane>
@@ -63,13 +46,6 @@ export default async function PageRegie() {
           nom: s.nom,
           contenu: s.contenu,
         }))}
-        nomEpreuveCourante={
-          epreuveCourante
-            ? `${epreuveCourante.nom} · ${tempsImpartiLisible(epreuveCourante.tempsLimiteS)}`
-            : "—"
-        }
-        epreuveCouranteId={epreuveCourante?.id ?? null}
-        restants={restants}
       />
 
       <div

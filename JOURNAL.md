@@ -31,11 +31,11 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **168/168** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
+  **169/169** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0005` appliquées sur Supabase (dernière le
   2026-09-17).
-- **Branche** : `main` alignée avec `origin/main` sur `efec8a9`, poussée le
-  2026-09-17 (vérifié par `git fetch` puis comparaison des SHA).
+- **Branche** : `main` alignée avec `origin/main` sur `037a6df`, poussée le
+  2026-09-17 (vérifié par comparaison des SHA).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
   les 7 écrans publics d'alors servent du vrai contenu, la garde d'accès renvoie 307
@@ -81,7 +81,9 @@ faisait déjà** (nombre décroissant, puis temps croissant — `regles-metier.m
   compilateur React après l'ajout de `releverChrono` ; remplacé par
   `new Date().getTime()`, même valeur.
 
-`lint` ✓, `build` ✓, `test` 169/169. Non essayé sur matériel réel.
+`lint` ✓, `build` ✓, `test` 169/169. Non essayé sur matériel réel. Commits
+`be505a0` et `037a6df` poussés sur `origin/main` (SHA vérifiés). Capitalisation
+en fin de session : une seconde occurrence au coffre, fiche projet complétée.
 
 ### 2026-09-17 (7) — Couleur propre à chaque catégorie, dossards sur les résultats
 
@@ -97,10 +99,12 @@ les cartes de la régie (colonne « Dossard »), et en pastille orange sur les
 avait déjà.
 
 Aussi dans ce lot : le bouton « Appeler les 2 athlètes » passe en orange plein.
-Et un retrait demandé par Kevin : la régie n'affiche plus le classement de
-l'épreuve en cours — les résultats se lisent sur les écrans de diffusion, la
-régie ne garde que l'état de l'épreuve (terminée / provisoire) avec « Imprimer
-les résultats » et « Ouvrir l'écran résultats ».
+Et un retrait demandé par Kevin, en deux temps : la régie n'affiche plus le
+classement de l'épreuve en cours, puis plus l'épreuve en cours du tout — ni
+son nom, ni son état, ni les boutons. La régie n'est que la liste des sorties
+et le thème ; l'épreuve et ses résultats se lisent sur les écrans diffusés,
+la feuille de résultats s'imprime depuis le plateau. Écart noté dans la
+cartographie § régie.
 
 `lint` ✓, `build` ✓, `test` 168/168. Non essayé sur matériel réel.
 
@@ -351,6 +355,21 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Un état ajouté rend faux les messages qui énumèrent les états (2026-09-17)
+
+*Au coffre : seconde occurrence dans `brain/10-lecons/une-enumeration-de-champs-se-teste.md`.*
+
+**Symptôme.** Après « Reconstruire l'ordre », Kevin voit revenir « certains
+athlètes mais pas tous » et un message « tous les passages sont déjà validés ».
+
+**Cause.** Le statut « en attente de résultat » avait été ajouté avec ses tests
+et ses filtres, mais le message de reconstruction, écrit pour trois états,
+n'avait pas été relu. Il était faux dès qu'un passage attendait.
+
+**Règle.** Un nouvel état déclenche un grep de tous les `statut ===` **et** de
+tous les messages qui parlent des états. Les tests attrapent les filtres, pas
+les phrases.
 
 ### Un test doit être borné à SA compétition, sans exception (2026-09-17)
 

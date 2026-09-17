@@ -30,17 +30,10 @@ export function Regie({
   competitionId,
   theme,
   sorties,
-  nomEpreuveCourante,
-  epreuveCouranteId,
-  restants,
 }: {
   competitionId: string;
   theme: "nuit" | "jour";
   sorties: { id: string; nom: string; contenu: string }[];
-  nomEpreuveCourante: string;
-  epreuveCouranteId: string | null;
-  /** Passages de l'épreuve courante pas encore validés. */
-  restants: number;
 }) {
   return (
     <div>
@@ -82,84 +75,6 @@ export function Regie({
         >
           Ouvrir la mire
         </a>
-      </div>
-
-      {/* ── État de l'épreuve en cours : diffuser ou imprimer ses résultats ── */}
-      <div
-        style={{
-          background: C.blanc,
-          border: `2px solid ${C.encre}`,
-          borderRadius: 14,
-          padding: "16px 18px",
-          marginBottom: 18,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "baseline",
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ fontSize: 16, fontWeight: 700 }}>
-            Épreuve en cours
-          </div>
-          <div style={{ fontSize: 13, color: C.orange, fontWeight: 700 }}>
-            {nomEpreuveCourante}
-          </div>
-          <div style={{ marginLeft: "auto", fontSize: 12, color: C.encre4 }}>
-            Les résultats s&apos;affichent sur les écrans, pas ici
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "center",
-            padding: "10px 12px",
-            borderRadius: 10,
-            background: restants === 0 ? "rgba(11,146,55,.07)" : C.ambreFond,
-            border: `1px solid ${restants === 0 ? "rgba(11,146,55,.18)" : C.ambreBord}`,
-            fontSize: 13,
-            fontWeight: 600,
-            color: restants === 0 ? C.vertFonce : C.ambreEncre,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 200 }}>
-            {restants === 0
-              ? "Épreuve terminée : résultats définitifs, diffusables sur les écrans « Résultats de l'épreuve »."
-              : `Épreuve en cours : ${restants} passage${restants > 1 ? "s" : ""} pas encore validé${restants > 1 ? "s" : ""}. Les résultats affichés sont provisoires.`}
-          </div>
-          <a
-            href={`/admin/impression/resultats?epreuve=${epreuveCouranteId ?? ""}&categorie=tous`}
-            title="Feuille de résultats de l'épreuve, une par catégorie, prête à signer"
-            style={styleBouton(restants === 0 ? "vert" : "creme", {
-              padding: "9px 14px",
-              borderRadius: 9,
-              fontSize: 13,
-            })}
-          >
-            Imprimer les résultats
-          </a>
-          <a
-            href="/ecran/resultats"
-            target="_blank"
-            rel="noreferrer"
-            title="Ouvre l'écran des résultats de l'épreuve dans une nouvelle fenêtre"
-            style={styleBouton("creme", {
-              padding: "9px 14px",
-              borderRadius: 9,
-              fontSize: 13,
-            })}
-          >
-            Ouvrir l&apos;écran résultats
-          </a>
-        </div>
-
       </div>
 
       {/* ── Les sorties vidéo ── */}
