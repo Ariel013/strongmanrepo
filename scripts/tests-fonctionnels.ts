@@ -39,6 +39,8 @@ import {
   versMesure,
 } from "../src/lib/classement";
 import { performanceLisible, tempsImpartiLisible } from "../src/lib/charte";
+import { ageA, ageDe } from "../src/lib/age";
+import { dateNaissance as validerNaissance } from "../src/lib/validation";
 import { cleRapprochement, lireListe } from "../src/lib/import-liste";
 import { calculerRecadrage, poidsLisible } from "../src/lib/image";
 import {
@@ -876,10 +878,37 @@ async function principal() {
       "nb_temps",
     );
 
-    /* ── 17. Cloisonnement des données personnelles ── */
-    console.log("\n17. Cloisonnement des données personnelles");
+    /* ── 17. Âge calculé au jour de la compétition ── */
+    console.log("\n17. Âge : calculé au jour J, jamais stocké");
+
+    const jourJ = new Date(2026, 8, 19); // 19 septembre 2026
+    egal("anniversaire passé dans l'année", ageA(new Date(1998, 2, 14), jourJ), 28);
+    egal("anniversaire à venir dans l'année", ageA(new Date(1998, 10, 2), jourJ), 27);
+    egal("anniversaire le jour même : l'année est révolue", ageA(new Date(2000, 8, 19), jourJ), 26);
+    egal("anniversaire la veille", ageA(new Date(2000, 8, 18), jourJ), 26);
+    egal("anniversaire le lendemain", ageA(new Date(2000, 8, 20), jourJ), 25);
+    egal("né un 29 février, année non bissextile", ageA(new Date(2000, 1, 29), new Date(2026, 1, 28)), 25);
+    egal("lu depuis la base, au jour J", ageDe("1998-03-14", jourJ), 28);
+    egal("sans date de naissance : pas d'âge", ageDe(null, jourJ), null);
+    egal("date de base illisible : pas d'âge", ageDe("n/a", jourJ), null);
+
+    verifier("naissance au bon format acceptée", validerNaissance("1998-03-14", jourJ).ok);
+    verifier("format libre refusé", !validerNaissance("14/03/1998", jourJ).ok);
+    verifier("jour inexistant refusé", !validerNaissance("1998-02-30", jourJ).ok);
+    verifier("un âge de 4 ans est refusé", !validerNaissance("2022-01-01", jourJ).ok);
+    verifier("un âge de 120 ans est refusé", !validerNaissance("1906-01-01", jourJ).ok);
+    egal("vide accepté, vaut « non renseigné »", validerNaissance("", jourJ), { ok: true, valeur: null });
+
+    // L'import lit les formats des listes ivoiriennes, sans deviner.
+    const av = lireListe("Nom;Prénoms;Date de naissance\nKONÉ;Ibrahim;14/03/1998\nYAO;Serge;1999-07-02\nBAMBA;Cheick;mars 98");
+    egal("import : « 14/03/1998 » devient ISO", av[0].dateNaissance, "1998-03-14");
+    egal("import : ISO conservé", av[1].dateNaissance, "1999-07-02");
+    egal("import : une date illisible reste vide", av[2].dateNaissance, "");
+
+    /* ── 18. Cloisonnement des données personnelles ── */
+    console.log("\n18. Cloisonnement des données personnelles");
     const champs = Object.keys(athVue[0]);
-    for (const interdit of ["telephone", "contactUrgence", "commune", "age"]) {
+    for (const interdit of ["telephone", "contactUrgence", "commune", "age", "dateNaissance"]) {
       verifier(
         `la vue publique ne porte pas « ${interdit} »`,
         !champs.includes(interdit),

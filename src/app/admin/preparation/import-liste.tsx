@@ -90,6 +90,7 @@ export function PanneauImport({
             poids: l.poids,
             telephone: l.telephone,
             urgence: l.urgence,
+            dateNaissance: l.dateNaissance,
             doute: l.motifs.length > 0,
             fusionner: l.doublon && l.fusionner,
           })),

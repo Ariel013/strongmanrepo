@@ -954,12 +954,27 @@ function LigneAthlete({
                 title="Taille déclarée"
                 enregistrer={(v) => modifierAthlete(a.id, "tailleCm", v)}
               />
-              <Champ
-                etiquette="Âge"
-                valeur={a.age === null ? "" : String(a.age)}
-                title="Âge déclaré"
-                enregistrer={(v) => modifierAthlete(a.id, "age", v)}
-              />
+              <div>
+                <Etiquette>
+                  Date de naissance
+                  {a.age !== null ? (
+                    // L'âge est calculé au jour de la compétition, jamais
+                    // stocké : il ne peut pas être faux à l'anniversaire suivant.
+                    <span style={{ color: C.vertFonce, marginLeft: 8 }}>
+                      · {a.age} ans le jour J
+                    </span>
+                  ) : null}
+                </Etiquette>
+                <ChampTexte
+                  valeur={a.dateNaissance ?? ""}
+                  type="date"
+                  title="Date de naissance. L'âge affiché est calculé au jour de la compétition. Jamais affiché sur les écrans du public."
+                  enregistrer={(v) =>
+                    enregistrerContact(a.id, { dateNaissance: v })
+                  }
+                  style={{ background: C.blanc, fontSize: 15 }}
+                />
+              </div>
               <Champ
                 etiquette="Commune"
                 valeur={a.commune ?? ""}

@@ -21,6 +21,8 @@ export interface LigneImport {
   poids: string;
   telephone: string;
   urgence: string;
+  /** `AAAA-MM-JJ` si lisible, sinon vide — on ne devine jamais une date. */
+  dateNaissance: string;
   /** Ce qui a été déduit plutôt que lu. Vide = ligne sûre. */
   motifs: string[];
 }
@@ -41,12 +43,27 @@ const COLONNES: { cle: keyof LigneImport | "nomComplet"; mots: string[] }[] = [
   { cle: "poids", mots: ["poids", "poids declare", "kg", "masse"] },
   { cle: "telephone", mots: ["telephone", "tel", "contact", "numero", "portable"] },
   { cle: "urgence", mots: ["urgence", "contact urgence", "a prevenir", "personne a prevenir"] },
+  { cle: "dateNaissance", mots: ["date de naissance", "naissance", "ne le", "nee le", "ddn"] },
 ];
+
+/**
+ * Lit une date telle qu'on l'écrit sur une liste ivoirienne — « 14/03/1998 »
+ * ou « 14-03-1998 » — ou déjà au format ISO. Tout le reste reste vide : une
+ * date devinée serait un âge faux sur la fiche.
+ */
+function lireDate(v: string): string {
+  const t = v.trim();
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return t;
+  m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return "";
+}
 
 /** Le fichier vierge proposé par « Télécharger le modèle ». */
 export const MODELE_CSV =
-  "Nom;Prénoms;Club;Poids;Téléphone;Contact d'urgence\n" +
-  "KONÉ;Ibrahim;Iron Club Abidjan;118;07 00 00 00 00;Awa Koné 05 00 00 00 00\n";
+  "Nom;Prénoms;Club;Poids;Téléphone;Contact d'urgence;Date de naissance\n" +
+  "KONÉ;Ibrahim;Iron Club Abidjan;118;07 00 00 00 00;Awa Koné 05 00 00 00 00;14/03/1998\n";
 
 /** Le séparateur majoritaire des lignes non vides : `;`, `,` ou tabulation. */
 function separateur(lignes: string[]): string | null {
@@ -135,6 +152,7 @@ function lireTexteLibre(brut: string): LigneImport {
     poids,
     telephone: (tels[0] ?? "").trim(),
     urgence: (tels[1] ?? "").trim(),
+    dateNaissance: "",
     motifs,
   };
 }
@@ -202,12 +220,13 @@ export function lireListe(texte: string): LigneImport[] {
         poids: (lire("poids").match(POIDS)?.[1] ?? "").trim(),
         telephone: lire("telephone"),
         urgence: lire("urgence"),
+        dateNaissance: lireDate(lire("dateNaissance")),
         motifs,
       };
     }
 
     // Colonnes non nommées : on suppose l'ordre du modèle, et on le dit.
-    const [a = "", b = "", d = "", e = "", f = "", g = ""] = c;
+    const [a = "", b = "", d = "", e = "", f = "", g = "", h = ""] = c;
     const motifs = ["colonnes non nommées, ordre du modèle supposé"];
     const coupe = b ? { nom: a, prenoms: b, devine: false } : couperNom(a);
     if (coupe.devine) motifs.push("nom et prénoms séparés au jugé");
@@ -218,6 +237,7 @@ export function lireListe(texte: string): LigneImport[] {
       poids: (e.match(POIDS)?.[1] ?? "").trim(),
       telephone: f,
       urgence: g,
+      dateNaissance: lireDate(h),
       motifs,
     };
   });

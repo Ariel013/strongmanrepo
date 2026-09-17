@@ -40,6 +40,7 @@ import {
 } from "./plateau";
 import {
   dateFrancaise,
+  dateNaissance,
   decimalFacultatif,
   entierFacultatif,
   entierObligatoire,
@@ -215,13 +216,33 @@ export async function validerPesee(
 /** Coordonnées personnelles — écrites à part, jamais lues par le public. */
 export async function enregistrerContact(
   athleteId: string,
-  donnees: { telephone?: string; contactUrgence?: string; commune?: string },
+  donnees: {
+    telephone?: string;
+    contactUrgence?: string;
+    commune?: string;
+    dateNaissance?: string;
+  },
 ): Promise<Retour> {
   await exigerSession();
+
+  // La date de naissance est vérifiée ; une année tapée avec un chiffre en
+  // moins donnerait sinon un « 4 ans » sur la fiche sans un mot.
+  const valeurs: {
+    telephone?: string;
+    contactUrgence?: string;
+    commune?: string;
+    dateNaissance?: string | null;
+  } = { ...donnees };
+  if (donnees.dateNaissance !== undefined) {
+    const r = dateNaissance(donnees.dateNaissance);
+    if (!r.ok) return { ok: false, erreur: r.erreur };
+    valeurs.dateNaissance = r.valeur;
+  }
+
   await db
     .insert(athleteContact)
-    .values({ athleteId, ...donnees })
-    .onConflictDoUpdate({ target: athleteContact.athleteId, set: donnees });
+    .values({ athleteId, ...valeurs })
+    .onConflictDoUpdate({ target: athleteContact.athleteId, set: valeurs });
   // Le journal ne recopie pas les coordonnées : tracer une donnée
   // personnelle la duplique dans une table qu'on ne purge jamais.
   await tracer("contact.modifie", "athlete", athleteId);
@@ -963,7 +984,6 @@ export async function modifierAthlete(
     | "dossard"
     | "note"
     | "tailleCm"
-    | "age"
     | "poidsDeclare",
   valeur: string,
 ): Promise<Retour> {
@@ -1011,12 +1031,6 @@ export async function modifierAthlete(
     }
     case "tailleCm": {
       const r = entierFacultatif(valeur, "La taille (en cm)", 100, 250);
-      if (!r.ok) return { ok: false, erreur: r.erreur };
-      v = r.valeur;
-      break;
-    }
-    case "age": {
-      const r = entierFacultatif(valeur, "L'âge", 10, 99);
       if (!r.ok) return { ok: false, erreur: r.erreur };
       v = r.valeur;
       break;
@@ -1601,6 +1615,7 @@ export async function importerAthletes(
     poids: string;
     telephone: string;
     urgence: string;
+    dateNaissance: string;
     /** La ligne portait un doute : la fiche naîtra « À vérifier ». */
     doute: boolean;
     /** Compléter la fiche existante plutôt que l'ignorer. */
@@ -1650,13 +1665,14 @@ export async function importerAthletes(
           poidsDeclare: deja.poidsDeclare ?? poidsValide,
         })
         .where(eq(athlete.id, deja.id));
-      if (l.telephone.trim() || l.urgence.trim())
+      if (l.telephone.trim() || l.urgence.trim() || l.dateNaissance)
         await db
           .insert(athleteContact)
           .values({
             athleteId: deja.id,
             telephone: l.telephone.trim() || null,
             contactUrgence: l.urgence.trim() || null,
+            dateNaissance: l.dateNaissance || null,
           })
           .onConflictDoNothing();
       resume.fusionnes++;
@@ -1675,11 +1691,12 @@ export async function importerAthletes(
       })
       .returning();
 
-    if (l.telephone.trim() || l.urgence.trim())
+    if (l.telephone.trim() || l.urgence.trim() || l.dateNaissance)
       await db.insert(athleteContact).values({
         athleteId: cree.id,
         telephone: l.telephone.trim() || null,
         contactUrgence: l.urgence.trim() || null,
+        dateNaissance: l.dateNaissance || null,
       });
 
     parCle.set(cleRapprochement(nom, l.prenoms), cree);

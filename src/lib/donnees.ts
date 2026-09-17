@@ -21,6 +21,7 @@ import {
   recompense,
   sortie,
 } from "./db/schema";
+import { ageDe } from "./age";
 import {
   classementEpreuve,
   classementGeneral,
@@ -466,6 +467,9 @@ export async function logosDe(
 export interface FicheAthlete extends AthletePublic {
   poidsDeclare: number | null;
   tailleCm: number | null;
+  /** `AAAA-MM-JJ`, ou `null`. Donnée personnelle : jamais dans la vue publique. */
+  dateNaissance: string | null;
+  /** Calculé au jour de la compétition, jamais stocké. */
   age: number | null;
   note: string | null;
   niveaux: Record<string, string>;
@@ -478,6 +482,14 @@ export interface FicheAthlete extends AthletePublic {
 export async function fichesAthletes(
   competitionId: string,
 ): Promise<FicheAthlete[]> {
+  // L'âge se compte au jour de la compétition : c'est la règle sportive, et
+  // une fiche ne doit pas changer d'âge entre la pesée et le podium.
+  const [comp] = await db
+    .select({ debutLe: competition.debutLe })
+    .from(competition)
+    .where(eq(competition.id, competitionId));
+  const jourJ = comp?.debutLe ?? null;
+
   const lignes = await db
     .select()
     .from(athlete)
@@ -508,7 +520,8 @@ export async function fichesAthletes(
       photoUrl: a.photoUrl,
       poidsDeclare: nombre(a.poidsDeclare),
       tailleCm: a.tailleCm,
-      age: a.age,
+      dateNaissance: c?.dateNaissance ?? null,
+      age: ageDe(c?.dateNaissance ?? null, jourJ),
       note: a.note,
       niveaux,
       aVerifier: a.aVerifier,

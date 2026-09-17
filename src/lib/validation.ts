@@ -14,6 +14,8 @@
  * la table saisit vite, debout, entre deux passages.
  */
 
+import { ageA } from "./age";
+
 export type Verdict<T> = { ok: true; valeur: T } | { ok: false; erreur: string };
 
 const bon = <T,>(valeur: T): Verdict<T> => ({ ok: true, valeur });
@@ -226,4 +228,31 @@ export function heureFrancaise(v: string): Verdict<{
   if (heures > 23) return mauvais("Heure : les heures vont de 0 à 23.");
   if (minutes > 59) return mauvais("Heure : les minutes vont de 0 à 59.");
   return bon({ heures, minutes });
+}
+
+/**
+ * Date de naissance, au format du sélecteur natif (`AAAA-MM-JJ`).
+ *
+ * Refusée si elle donne un âge impossible pour un athlète — une année tapée
+ * avec un chiffre en moins passe sinon inaperçue et donne un « 4 ans » sur la
+ * fiche.
+ */
+export function dateNaissance(
+  v: string,
+  reference: Date = new Date(),
+): Verdict<string | null> {
+  const t = v.trim();
+  if (!t) return bon(null);
+  const m = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m)
+    return mauvais("Date de naissance : attendue au format AAAA-MM-JJ.");
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (d.getMonth() !== Number(m[2]) - 1)
+    return mauvais("Date de naissance : ce jour n'existe pas dans ce mois.");
+  const age = ageA(d, reference);
+  if (age < 10 || age > 99)
+    return mauvais(
+      `Date de naissance : elle donne ${age} ans, ce n'est pas un âge d'athlète.`,
+    );
+  return bon(t);
 }

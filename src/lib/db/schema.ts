@@ -16,6 +16,7 @@
 
 import {
   boolean,
+  date,
   index,
   integer,
   numeric,
@@ -203,7 +204,6 @@ export const athlete = pgTable(
     photoUrl: text("photo_url"),
 
     tailleCm: integer("taille_cm"),
-    age: integer("age"),
     note: text("note"),
 
     /**
@@ -242,6 +242,15 @@ export const athleteContact = pgTable("athlete_contact", {
   telephone: text("telephone"),
   contactUrgence: text("contact_urgence"),
   commune: text("commune"),
+
+  /**
+   * La date de naissance vit ICI, pas sur `athlete` : c'est une donnée
+   * personnelle au même titre que le téléphone, et un écran public n'a aucune
+   * raison de la lire. L'âge, lui, se CALCULE — il n'est jamais stocké. Un
+   * âge saisi à la main était faux dès l'anniversaire suivant, et l'ancienne
+   * colonne `age` a été retirée pour cette raison.
+   */
+  dateNaissance: date("date_naissance"),
 });
 
 /* ── Passages ─────────────────────────────────────────────────────────── */

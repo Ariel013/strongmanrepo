@@ -20,6 +20,7 @@ import { db } from "@/lib/db";
 // quoi la compilation chercherait à joindre la base pour figer un résultat.
 export const dynamic = "force-dynamic";
 import { athlete, athleteContact, passage } from "@/lib/db/schema";
+import { ageDe } from "@/lib/age";
 import {
   athletesDe,
   categoriesDe,
@@ -111,6 +112,8 @@ export async function GET(requete: Request) {
       c?.commune ?? "",
       c?.telephone ?? "",
       c?.contactUrgence ?? "",
+      c?.dateNaissance ?? "",
+      ageDe(c?.dateNaissance ?? null, comp.debutLe) ?? "",
     ];
   });
 
@@ -160,7 +163,7 @@ export async function GET(requete: Request) {
       [
         "Dossard", "Nom", "Prenoms", "Club", "Nationalite", "Poids",
         "Categorie", "Classement", "Pesee validee", "Commune", "Telephone",
-        "Contact urgence",
+        "Contact urgence", "Date de naissance", "Age le jour J",
       ],
       feuilleAthletes,
     );

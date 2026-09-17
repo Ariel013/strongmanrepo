@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **130/130** ✓. Les routes répondent 200 sur un build de production local.
+  **149/149** ✓. Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
@@ -93,6 +93,24 @@
   aucun n'est un oubli.
 - Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
   de la table.
+
+### 2026-09-17 (4) — L'âge se calcule, il ne se saisit plus
+
+Demande de Kevin : afficher l'âge à partir de la date de naissance. Deux
+décisions :
+
+- **La date de naissance vit dans `athlete_contact`**, la table que les écrans
+  publics n'interrogent jamais — c'est une donnée personnelle au même titre
+  que le téléphone. Le test de cloisonnement la couvre.
+- **L'âge se compte au jour de la compétition**, pas au jour où l'on regarde
+  l'écran : règle sportive, et une fiche ne change pas d'âge entre la pesée et
+  le podium. Jamais stocké ; l'ancienne colonne `age` est retirée — un âge
+  saisi à la main était faux dès l'anniversaire suivant.
+
+Saisie par le sélecteur natif (clavier de date sur téléphone), refusée si elle
+donne un âge impossible pour un athlète. L'import lit « 14/03/1998 » et l'ISO,
+et laisse vide tout le reste plutôt que de deviner. L'export porte la date et
+l'âge au jour J. Migration `0003` appliquée.
 
 ### 2026-09-17 (3) — Feuille de notation par épreuve
 
