@@ -179,6 +179,7 @@ export default async function PagePreparation({
         <EtapeRecompenses
           competitionId={comp.id}
           recompenses={recs}
+          categories={categories}
           partenaires={comp.partenaires ?? ""}
           recompenseClub={comp.recompenseClub ?? ""}
           palmares={await palmares(comp.id)}

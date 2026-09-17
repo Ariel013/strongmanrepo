@@ -3,6 +3,7 @@ import { C, METAUX, POINTS_CLUB_LISIBLE, clubAffiche, couleurMetal, nomComplet }
 import { FilAriane } from "@/components/chrome";
 import { Encart, styleBouton } from "@/components/ui";
 import { competitionCourante, recompensesDe } from "@/lib/donnees";
+import { recompensesPour } from "@/lib/classement";
 import { palmares } from "@/lib/palmares";
 import { BoutonImprimer } from "../fiches/imprimer";
 
@@ -67,24 +68,26 @@ export default async function PagePalmares() {
           ) : null}
         </div>
 
-        {recompenses.length === 0 ? (
-          <div style={{ marginTop: 14, fontSize: 13, color: C.encre4 }}>
-            Aucune place dotée : renseignez les récompenses à l&apos;étape Récompenses.
-          </div>
-        ) : null}
-
-        {pal.categories.map((cat) => (
+        {pal.categories.map((cat) => {
+          const { lignes: dotations, propres } = recompensesPour(recompenses, cat.id);
+          return (
           <div key={cat.id} style={{ marginTop: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700, paddingBottom: 4, borderBottom: `1px solid ${C.encre}`, marginBottom: 4 }}>
               <span style={{ width: 12, height: 12, borderRadius: 3, background: cat.couleur }} />
               {cat.nom}
               <span style={{ fontSize: 12, fontWeight: 500, color: C.encre3 }}>
                 · {cat.classes} classé{cat.classes > 1 ? "s" : ""}
+                {propres ? "" : " · dotation commune"}
               </span>
             </div>
+            {dotations.length === 0 ? (
+              <div style={{ fontSize: 13, color: C.encre4, padding: "6px 0" }}>
+                Aucune place dotée pour cette catégorie : renseignez-la à l&apos;étape Récompenses.
+              </div>
+            ) : null}
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <tbody>
-                {recompenses.map((r, i) => {
+                {dotations.map((r, i) => {
                   const l = cat.laureats.find((x) => x.rang === i + 1);
                   const couleur = couleurMetal(i);
                   return (
@@ -106,7 +109,8 @@ export default async function PagePalmares() {
               </tbody>
             </table>
           </div>
-        ))}
+          );
+        })}
         {pal.categories.length === 0 ? (
           <div style={{ marginTop: 14, fontSize: 13, color: C.encre4 }}>Aucune catégorie retenue.</div>
         ) : null}

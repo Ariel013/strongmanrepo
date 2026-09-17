@@ -117,6 +117,7 @@ Settings → Environment Variables dans le `.env` du poste.
 | `0005_sturdy_norman_osborn` (colonne `chrono_s` sur `passage`) | Supabase | ✅ appliquée le 2026-09-17 |
 | `0006_closed_pestilence` (colonne `categorie_id` sur `officiel`) | Supabase | ✅ appliquée le 2026-09-17 |
 | `0007_confused_jazinda` (colonne `recompense_club` sur `competition`) | Supabase | ✅ appliquée le 2026-09-17 |
+| `0008_little_ben_urich` (colonne `categorie_id` sur `recompense`) | Supabase | ✅ appliquée le 2026-09-17 |
 
 > ⚠️ `pnpm run db:push` **échoue sur Supabase** : l'introspection de drizzle-kit
 > trébuche sur les contraintes CHECK des schémas internes. Utiliser

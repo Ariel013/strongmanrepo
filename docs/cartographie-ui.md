@@ -428,7 +428,9 @@ Pied : `resumePesee` (« 8 pesée(s) validée(s) sur 12. … »).
 
 > **Écart du portage (2026-09-17, demande de Kevin)** : les récompenses et le
 > bandeau partenaires sortent de cette étape vers une **septième étape,
-> « Récompenses »** (`?etape=6`). L'original les rangeait sous le programme.
+> « Récompenses »** (`?etape=6`). L'original les rangeait sous le programme,
+> et les dotait pour toutes les catégories à la fois ; le portage les dote
+> **par catégorie**, avec des récompenses communes en repli.
 
 Titre « Programme **de la journée** ». Alimente l'écran d'attente et la fiche du
 speaker.

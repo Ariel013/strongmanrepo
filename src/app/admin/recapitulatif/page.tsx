@@ -11,7 +11,7 @@ import {
   programmeDe,
   recompensesDe,
 } from "@/lib/donnees";
-import { incoherencesCategories } from "@/lib/classement";
+import { incoherencesCategories, recompensesPour } from "@/lib/classement";
 
 /**
  * Le récapitulatif de préparation — la vue « estRecap » du logiciel d'origine.
@@ -119,9 +119,19 @@ export default async function PageRecapitulatif() {
       etape: 5,
     },
     {
-      ok: recs.length >= 3,
+      ok:
+        retenus >= 1 &&
+        categories
+          .filter((c) => c.active)
+          .every((c) => recompensesPour(recs, c.id).lignes.length >= 3),
       titre: "Récompenses",
-      detail: `${recs.length} place(s) dotée(s) — l'écran podium en montre trois`,
+      detail: categories
+        .filter((c) => c.active)
+        .map((c) => {
+          const { lignes, propres } = recompensesPour(recs, c.id);
+          return `${c.nom} : ${lignes.length} place(s)${propres ? "" : " (commune)"}`;
+        })
+        .join(" · ") || "aucune catégorie retenue",
       etape: 6,
     },
   ];

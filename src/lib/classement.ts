@@ -103,6 +103,26 @@ export interface LigneGenerale {
   places: [number, number, number];
 }
 
+/* ── Récompenses ──────────────────────────────────────────────────────── */
+
+/**
+ * Les récompenses d'une catégorie : les siennes si elle en a, sinon les
+ * communes (`categorieId` vide). Une catégorie ne mélange jamais les deux.
+ * Pure : sert aux écrans, au papier et à l'étape de saisie, côté client.
+ */
+export function recompensesPour<T extends { categorieId: string | null; rang: number }>(
+  toutes: T[],
+  categorieId: string,
+): { lignes: T[]; propres: boolean } {
+  const propres = toutes.filter((r) => r.categorieId === categorieId);
+  if (propres.length > 0)
+    return { lignes: [...propres].sort((a, b) => a.rang - b.rang), propres: true };
+  return {
+    lignes: toutes.filter((r) => r.categorieId === null).sort((a, b) => a.rang - b.rang),
+    propres: false,
+  };
+}
+
 /* ── Classement des clubs ────────────────────────────────────────────── */
 
 /**

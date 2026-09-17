@@ -32,7 +32,7 @@
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **176/176** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
-- **Base** : migrations `0001` à `0007` appliquées sur Supabase (dernière le
+- **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
   2026-09-17 (vérifié par comparaison des SHA).
@@ -56,6 +56,24 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (19) — Les récompenses se dotent par catégorie
+
+Kevin : 1er, 2e, 3e **par catégorie**. Colonne `recompense.categorie_id`
+(migration `0008`), vide = récompense commune. `recompensesPour(toutes, cat)`
+rend les propres d'une catégorie, sinon les communes — jamais un mélange. À
+l'étape Récompenses : un bloc par catégorie retenue, avec ses places (titre,
+prime, lot, lauréat) ou, tant qu'elle n'en a pas, les communes en lecture et
+un bouton « Personnaliser pour … » qui les copie ; puis le bloc des communes,
+le meilleur club, les partenaires. Podium LED, palmarès imprimé et
+récapitulatif lisent par catégorie ; le récapitulatif exige trois places par
+catégorie retenue. Les récompenses déjà saisies restent, en communes : rien
+n'est perdu.
+
+Raté puis corrigé : `recompensesPour` d'abord posée dans `donnees.ts`, que le
+composant client importait — Turbopack refuse (`fs`, `net` : le module ouvre la
+base). Déplacée dans `classement.ts`, module pur. Le build l'a dit, pas
+`tsc`. `lint` ✓, `build` ✓, `test` 176/176.
 
 ### 2026-09-17 (18) — Les lauréats à côté des récompenses, et le palmarès imprimé
 

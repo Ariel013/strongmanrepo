@@ -387,6 +387,15 @@ export const recompense = pgTable(
     titre: text("titre").notNull().default(""),
     prime: text("prime").notNull().default(""),
     lot: text("lot").notNull().default(""),
+    /**
+     * La catégorie dotée. Les récompenses se décident par catégorie : le
+     * podium de « Moins de 105 kg » n'a pas forcément la prime de « Plus de
+     * 105 kg ». Vide : récompense commune, qui sert à toute catégorie sans
+     * dotation propre.
+     */
+    categorieId: uuid("categorie_id").references(() => categorie.id, {
+      onDelete: "cascade",
+    }),
   },
   (t) => [index("recompense_competition_idx").on(t.competitionId)],
 );

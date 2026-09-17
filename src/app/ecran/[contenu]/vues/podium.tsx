@@ -4,6 +4,7 @@
  */
 
 import { C, METAUX, couleurMetal, nomComplet } from "@/lib/charte";
+import { recompensesPour } from "@/lib/classement";
 import {
   recompensesDe,
   tableauGeneral,
@@ -26,7 +27,7 @@ export async function VuePodium({
   athletes: AthletePublic[];
   competitionId: string;
 }) {
-  const [resultats, recompenses] = await Promise.all([
+  const [resultats, toutesRecompenses] = await Promise.all([
     tousLesResultats(competitionId, epreuves),
     recompensesDe(competitionId),
   ]);
@@ -34,6 +35,7 @@ export async function VuePodium({
   const cat = categories[0];
 
   if (!cat) return <Message t={t} texte="Aucune catégorie retenue" />;
+  const recompenses = recompensesPour(toutesRecompenses, cat.id).lignes;
 
   const podium = tableauGeneral(cat, epreuves, athletes, resultats).lignes.slice(
     0,

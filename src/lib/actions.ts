@@ -12,7 +12,7 @@
  * de réclamation, c'est la seule pièce qui dise ce qui a été saisi et quand.
  */
 
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
@@ -963,15 +963,61 @@ const RECOMPENSES_OFFICIELLES = [
   { rang: 3, titre: "Médaille de bronze", prime: "200 000 fr", lot: "" },
 ];
 
+/** Le périmètre d'une récompense : une catégorie, ou les communes (`null`). */
+const perimetreRecompense = (competitionId: string, categorieId: string | null) =>
+  categorieId === null
+    ? and(eq(recompense.competitionId, competitionId), isNull(recompense.categorieId))
+    : and(eq(recompense.competitionId, competitionId), eq(recompense.categorieId, categorieId));
+
 export async function ajouterRecompense(
   competitionId: string,
+  categorieId: string | null = null,
 ): Promise<Retour> {
   await exigerSession();
+  if (categorieId !== null && !UUID.test(categorieId))
+    return { ok: false, erreur: "Catégorie inconnue." };
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${recompense.rang}), 0)` })
     .from(recompense)
-    .where(eq(recompense.competitionId, competitionId));
-  await db.insert(recompense).values({ competitionId, rang: max + 1 });
+    .where(perimetreRecompense(competitionId, categorieId));
+  await db.insert(recompense).values({ competitionId, categorieId, rang: max + 1 });
+  revalidatePath("/admin", "layout");
+  revalidatePath("/ecran", "layout");
+  return { ok: true };
+}
+
+/**
+ * Donne à une catégorie ses propres récompenses, copiées des communes : à
+ * partir de là, modifier l'une ne touche plus l'autre.
+ */
+export async function personnaliserRecompenses(
+  competitionId: string,
+  categorieId: string,
+): Promise<Retour> {
+  await exigerSession();
+  if (!UUID.test(categorieId)) return { ok: false, erreur: "Catégorie inconnue." };
+  const deja = await db
+    .select({ id: recompense.id })
+    .from(recompense)
+    .where(perimetreRecompense(competitionId, categorieId));
+  if (deja.length > 0)
+    return { ok: false, erreur: "Cette catégorie a déjà ses propres récompenses." };
+  const communes = await db
+    .select()
+    .from(recompense)
+    .where(perimetreRecompense(competitionId, null));
+  const source = communes.length > 0 ? communes : RECOMPENSES_OFFICIELLES;
+  await db.insert(recompense).values(
+    source.map((r) => ({
+      competitionId,
+      categorieId,
+      rang: r.rang,
+      titre: r.titre,
+      prime: r.prime,
+      lot: r.lot,
+    })),
+  );
+  await tracer("recompenses.personnalisees", "categorie", categorieId);
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
   return { ok: true };
@@ -1004,13 +1050,16 @@ export async function supprimerRecompense(id: string): Promise<Retour> {
 
 export async function retablirRecompenses(
   competitionId: string,
+  categorieId: string | null = null,
 ): Promise<Retour> {
   await exigerSession();
-  await db.delete(recompense).where(eq(recompense.competitionId, competitionId));
+  if (categorieId !== null && !UUID.test(categorieId))
+    return { ok: false, erreur: "Catégorie inconnue." };
+  await db.delete(recompense).where(perimetreRecompense(competitionId, categorieId));
   await db
     .insert(recompense)
-    .values(RECOMPENSES_OFFICIELLES.map((r) => ({ ...r, competitionId })));
-  await tracer("recompenses.retablies", "competition", competitionId);
+    .values(RECOMPENSES_OFFICIELLES.map((r) => ({ ...r, competitionId, categorieId })));
+  await tracer("recompenses.retablies", categorieId ? "categorie" : "competition", categorieId ?? competitionId);
   revalidatePath("/admin", "layout");
   revalidatePath("/ecran", "layout");
   return { ok: true };
