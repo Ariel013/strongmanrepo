@@ -139,6 +139,15 @@ Settings → Environment Variables dans le `.env` du poste.
   (`/api/admin/export`), qui produit un classeur Excel complet — athlètes,
   épreuves, résultats, classements. À lancer **avant la compétition et après
   chaque épreuve**, et à déposer hors du poste : clé USB, second ordinateur.
+- **Mise en pause Supabase** : en offre gratuite, un projet sans requête
+  pendant une semaine est **mis en pause** — les données restent, mais la base
+  est injoignable jusqu'à une reprise manuelle, qui prend du temps. Le jour de
+  la compétition, c'est le scénario à exclure. ✅ **Un cron Vercel appelle
+  `/api/sante` chaque jour à 06 h UTC** (`vercel.json`), ce qui interroge la
+  base et le stockage. ⬜ **Vérifier dans Vercel → Settings → Cron Jobs** que le
+  cron est bien enregistré après le déploiement, et qu'il a tourné au moins
+  une fois (onglet Logs). La pause et la perte sont deux choses différentes :
+  le cron évite la première, pas la seconde.
 - **Sauvegarde base** : celle de Supabase, selon le plan souscrit. ⬜ **Non
   vérifiée à ce jour** — une sauvegarde qu'on n'a jamais restaurée n'est pas
   une sauvegarde. À tester une fois sur une base jetable avant le jour J.

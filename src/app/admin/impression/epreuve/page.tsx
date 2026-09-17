@@ -230,22 +230,22 @@ interface Ligne {
 }
 
 const th: React.CSSProperties = {
-  fontSize: 9,
-  fontWeight: 600,
-  letterSpacing: ".08em",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: ".06em",
   textTransform: "uppercase",
-  color: C.encre3,
+  color: C.encre2,
   textAlign: "left",
-  padding: "6px 6px",
+  padding: "8px 6px",
   borderBottom: `2px solid ${C.encre}`,
   whiteSpace: "nowrap",
 };
 
 const td: React.CSSProperties = {
-  padding: "7px 6px",
+  padding: "9px 6px",
   borderBottom: `1px solid ${C.bordure2}`,
   verticalAlign: "middle",
-  fontSize: 12,
+  fontSize: 14,
 };
 
 /** Une case blanche à remplir, ou la valeur déjà validée, grisée. */
@@ -260,12 +260,12 @@ function Champ({
     <div
       style={{
         width: largeur,
-        height: 30,
+        height: 38,
         border: `1.5px solid ${prerempli === null ? C.encre : C.bordure2}`,
         borderRadius: 5,
         background: prerempli === null ? C.blanc : C.papier2,
         color: C.encre3,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: 600,
         display: "flex",
         alignItems: "center",
@@ -283,16 +283,16 @@ function Coche({ libelle, cochee }: { libelle: string; cochee?: boolean }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
-        fontSize: 10,
+        gap: 5,
+        fontSize: 12,
         fontWeight: 600,
-        marginRight: 8,
+        marginRight: 10,
       }}
     >
       <span
         style={{
-          width: 12,
-          height: 12,
+          width: 15,
+          height: 15,
           border: `1.5px solid ${C.encre}`,
           borderRadius: 3,
           display: "inline-flex",
@@ -372,10 +372,10 @@ function Feuille({
             {date ? ` · ${date}` : ""}
             {lieu ? ` · ${lieu}` : ""}
           </div>
-          <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.15 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>
             {epreuve.nom}
             <span style={{ color: C.orange }}> · {categorieNom}</span>
-            <span style={{ fontSize: 12, fontWeight: 500, color: C.encre3 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: C.encre3 }}>
               {" "}
               · {tempsImpartiLisible(epreuve.tempsLimiteS)}
             </span>
@@ -383,7 +383,7 @@ function Feuille({
           {epreuve.critere ? (
             <div
               style={{
-                fontSize: 10,
+                fontSize: 12,
                 color: C.encre3,
                 fontStyle: "italic",
                 marginTop: 2,
@@ -395,7 +395,7 @@ function Feuille({
         </div>
         <div
           style={{
-            fontSize: 10,
+            fontSize: 12,
             color: C.encre3,
             textAlign: "right",
             flex: "none",
@@ -448,7 +448,7 @@ function Feuille({
                 <td style={{ ...td, fontWeight: 700, color: C.encre4 }}>
                   {i + 1}
                 </td>
-                <td style={{ ...td, fontWeight: 700, fontSize: 15 }}>
+                <td style={{ ...td, fontWeight: 700, fontSize: 18 }}>
                   {a.dossard ?? "—"}
                 </td>
                 <td style={{ ...td, fontWeight: 600, whiteSpace: "nowrap" }}>
@@ -465,12 +465,12 @@ function Feuille({
                     </span>
                   ) : null}
                 </td>
-                <td style={{ ...td, fontSize: 11, color: C.encre3 }}>
+                <td style={{ ...td, fontSize: 12, color: C.encre3 }}>
                   {clubAffiche(a.club)}
                   {a.poidsCorps !== null ? ` · ${virgule(a.poidsCorps)} kg` : ""}
                 </td>
                 {epreuve.niveau ? (
-                  <td style={{ ...td, fontSize: 11 }}>
+                  <td style={{ ...td, fontSize: 13 }}>
                     {niveaux[a.id] ?? "________"}
                   </td>
                 ) : null}
@@ -489,11 +489,11 @@ function Feuille({
                         key={k}
                         style={{
                           display: "inline-block",
-                          width: 13,
-                          height: 13,
+                          width: 16,
+                          height: 16,
                           border: `1px solid ${C.encre3}`,
-                          borderRadius: 2,
-                          marginRight: 2,
+                          borderRadius: 3,
+                          marginRight: 3,
                           verticalAlign: "middle",
                         }}
                       />
@@ -528,7 +528,7 @@ function Feuille({
           marginTop: 12,
           paddingTop: 8,
           borderTop: `2px solid ${C.encre}`,
-          fontSize: 10,
+          fontSize: 12,
           color: C.encre2,
         }}
       >
