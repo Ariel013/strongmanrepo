@@ -57,6 +57,15 @@
 
 ## 📓 Journal des sessions
 
+### 2026-09-17 (20) — Mode d'emploi : file d'attente, écrans résultats et clubs, bouton
+
+Kevin. Le cycle d'un passage compte cinq étapes, la quatrième étant la mise
+en attente de résultat (file, tableau, « Tout valider », plus d'annulation).
+Les contenus disponibles gagnent « Résultats de l'épreuve par catégorie » et
+« Classement des clubs ». Le bouton dit « Accéder à l'administration » ; il
+passe de `text-white` à `text-papier`, couleur du thème — Kevin voyait le
+bouton sans texte, ce qui pointe une classe non générée. `lint` ✓, `build` ✓.
+
 ### 2026-09-17 (19) — Les récompenses se dotent par catégorie
 
 Kevin : 1er, 2e, 3e **par catégorie**. Colonne `recompense.categorie_id`

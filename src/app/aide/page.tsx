@@ -159,9 +159,9 @@ export default function PageAide() {
           <a
             href="/connexion"
             title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
-            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-papier uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
-            Se connecter à l&apos;administration
+            Accéder à l&apos;administration
             <span aria-hidden="true">→</span>
           </a>
         </p>
@@ -552,12 +552,37 @@ export default function PageAide() {
                 </p>
               </Etape>
 
-              <Etape numero={4} titre="Valider le résultat">
+              <Etape numero={4} titre="Si le jury n'a pas encore rendu la performance : mettre en attente">
                 <p>
-                  Quand le juge a rendu son verdict, validez. La performance est
-                  enregistrée, les points sont recalculés immédiatement, et
-                  l&apos;athlète suivant de la catégorie est appelé
-                  automatiquement.
+                  Sur un grand terrain, la feuille du jury arrive après la fin
+                  du chronomètre. N&apos;attendez pas à plateau vide : appuyez
+                  sur « Passage fini, résultat plus tard ». Le plateau se
+                  libère, l&apos;athlète suivant est appelé, et le passage
+                  entre dans la <strong>file d&apos;attente de résultat</strong>,
+                  un tableau sous les trois colonnes du plateau.
+                </p>
+                <p>
+                  Ce que la table a déjà compté part avec lui : les tours, le
+                  temps de la dernière répétition, le temps au chrono. Tant
+                  qu&apos;il attend, le passage ne compte nulle part — ni au
+                  classement, ni sur le mur LED.
+                </p>
+              </Etape>
+
+              <Etape numero={5} titre="Valider le résultat">
+                <p>
+                  Quand le juge a rendu son verdict, validez — depuis la fiche
+                  au plateau, ou ligne à ligne dans la file d&apos;attente
+                  quand la feuille arrive. « Tout valider » enregistre d&apos;un
+                  coup toutes les lignes renseignées ; une ligne vide reste en
+                  attente. La performance est enregistrée, les points sont
+                  recalculés immédiatement.
+                </p>
+                <p>
+                  Depuis le plateau, l&apos;athlète suivant de la catégorie est
+                  appelé automatiquement. Un passage validé ne s&apos;annule
+                  pas depuis le plateau : une correction passe par la feuille
+                  de notation et la signature du juge principal.
                 </p>
               </Etape>
             </ol>
@@ -640,12 +665,20 @@ export default function PageAide() {
                   "La performance qui vient d'être validée, en très grand : la valeur en vert, ou « ZÉRO » / « FORFAIT » en rouge.",
                 ],
                 [
+                  "Résultats de l'épreuve par catégorie",
+                  "Le tableau de l'épreuve en cours, une colonne par catégorie : rang, dossard, athlète, performance et points. Marqué « provisoires » tant que des passages restent à faire, « définitifs » quand tout est validé. Un passage en attente de résultat n'y figure pas.",
+                ],
+                [
                   "Classement général",
-                  "Une colonne par catégorie, les dix premiers avec leur total de points.",
+                  "Une colonne par catégorie, les dix premiers avec leur dossard et leur total de points.",
                 ],
                 [
                   "Podium",
-                  "Les trois premiers de la catégorie affichée, avec leur médaille et leur prime.",
+                  "Les trois premiers de la catégorie affichée, avec leur médaille et leur prime — celles de leur catégorie.",
+                ],
+                [
+                  "Classement des clubs",
+                  "Les clubs classés par points, toutes catégories confondues, selon le barème de la rubrique 3.",
                 ],
                 [
                   "Mire de lisibilité",
@@ -806,9 +839,9 @@ export default function PageAide() {
           <a
             href="/connexion"
             title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
-            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-papier uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
-            Se connecter à l&apos;administration
+            Accéder à l&apos;administration
             <span aria-hidden="true">→</span>
           </a>
         </p>
