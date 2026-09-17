@@ -574,6 +574,22 @@ export async function enregistrerIdentite(
   return { ok: true };
 }
 
+/** La récompense du meilleur club, en clair ; le club, lui, se calcule. */
+export async function enregistrerRecompenseClub(
+  competitionId: string,
+  texte: string,
+): Promise<Retour> {
+  await exigerSession();
+  const r = texteFacultatif(texte, "La récompense du meilleur club", 200);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
+  await db
+    .update(competition)
+    .set({ recompenseClub: r.valeur, majLe: new Date() })
+    .where(eq(competition.id, competitionId));
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}
+
 export async function enregistrerPartenaires(
   competitionId: string,
   partenaires: string,

@@ -58,6 +58,12 @@ export const competition = pgTable("competition", {
    */
   partenaires: text("partenaires"),
 
+  /**
+   * Ce que reçoit le meilleur club — trophée, prime — en clair, comme une
+   * récompense de place. Le club lui-même se calcule (`tableauClubs`).
+   */
+  recompenseClub: text("recompense_club"),
+
   /** Réglage du mur LED : `nuit` (défaut, extérieur) ou `jour`. */
   themeEcran: text("theme_ecran").notNull().default("nuit"),
 

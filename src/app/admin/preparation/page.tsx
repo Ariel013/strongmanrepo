@@ -19,6 +19,7 @@ import { EtapeAthletes } from "./etape-athletes";
 import { EtapePesee } from "./etape-pesee";
 import { EtapeProgramme } from "./etape-programme";
 import { EtapeRecompenses } from "./etape-recompenses";
+import { palmares } from "@/lib/palmares";
 
 /**
  * Le parcours guidé en sept étapes — six reprises du logiciel d'origine, plus
@@ -179,6 +180,8 @@ export default async function PagePreparation({
           competitionId={comp.id}
           recompenses={recs}
           partenaires={comp.partenaires ?? ""}
+          recompenseClub={comp.recompenseClub ?? ""}
+          palmares={await palmares(comp.id)}
         />
       ) : null}
 

@@ -50,6 +50,13 @@
       "when": 1789616453501,
       "tag": "0006_closed_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789619779563,
+      "tag": "0007_confused_jazinda",
+      "breakpoints": true
     }
   ]
 }

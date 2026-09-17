@@ -295,6 +295,17 @@ export default async function PageAccueil() {
           Imprimer le programme
         </Link>
         <Link
+          href="/admin/impression/palmares"
+          title="Le palmarès : lauréats de chaque place par catégorie et meilleur club, à signer"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer le palmarès
+        </Link>
+        <Link
           href="/admin/clubs"
           title="Classement des meilleurs clubs, barème 15 / 10 / 5 / 4 / 3 / 1 sur le rang final de chaque athlète"
           style={styleBouton("blanc", {

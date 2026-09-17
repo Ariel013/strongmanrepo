@@ -32,7 +32,7 @@
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **176/176** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
-- **Base** : migrations `0001` à `0006` appliquées sur Supabase (dernière le
+- **Base** : migrations `0001` à `0007` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
   2026-09-17 (vérifié par comparaison des SHA).
@@ -56,6 +56,18 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (18) — Les lauréats à côté des récompenses, et le palmarès imprimé
+
+Kevin. `src/lib/palmares.ts` calcule qui a gagné quoi depuis les classements
+(jamais saisi) : par catégorie retenue, les lauréats avec rang, club, dossard,
+total ; et le classement des clubs. À l'étape Récompenses, chaque place montre
+son lauréat dans chaque catégorie (ou « pas encore classé »), et un bloc
+« Meilleur club » affiche le club en tête avec un champ pour sa récompense —
+colonne `competition.recompense_club`, migration `0007`. Feuille
+`/admin/impression/palmares` : par catégorie, chaque place dotée avec son
+lauréat, puis le meilleur club, ses points et sa récompense, signatures.
+Accès depuis l'étape et l'accueil. `lint` ✓, `build` ✓, `test` 176/176.
 
 ### 2026-09-17 (17) — Les récompenses deviennent la septième étape
 
