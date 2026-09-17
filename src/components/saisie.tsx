@@ -8,7 +8,7 @@ import { styleBouton, styleChamp, type TonBouton } from "./ui";
  * Saisie qui s'enregistre toute seule.
  *
  * Le poste d'origine écrivait dans son fichier à chaque frappe. Ici, l'écriture
- * part au serveur : on attend donc que la frappe se calme (600 ms) ou que le
+ * part au serveur : on attend donc que la frappe se calme (900 ms) ou que le
  * champ soit quitté. Ce délai n'est pas un confort d'implémentation, c'est ce
  * qui évite d'envoyer douze requêtes pour saisir « Atlas Stones » pendant que
  * la compétition tourne.
@@ -40,42 +40,63 @@ export function ChampTexte({
   const [erreur, setErreur] = useState("");
   const minuterie = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, demarrer] = useTransition();
+  /** Le curseur est dans le champ : ce qui est tapé prime sur le serveur. */
+  const [enEdition, setEnEdition] = useState(false);
+  /** Enregistrements partis et pas encore revenus. */
+  const [enVol, setEnVol] = useState(0);
+  /** Une frappe attend la fin de sa pause avant de partir. */
+  const [frappeEnAttente, setFrappeEnAttente] = useState(false);
 
   // La valeur venue du serveur ne reprend la main que lorsqu'elle change
-  // VRAIMENT : sinon, un rafraîchissement en pleine frappe effacerait ce qui
-  // est tapé. Ajustement pendant le rendu plutôt que dans un effet — c'est la
-  // forme recommandée, et elle évite un rendu intermédiaire à l'ancienne
-  // valeur, visible comme un clignotement du champ.
+  // VRAIMENT, et seulement si le champ est au repos. Sinon, le scénario est
+  // celui-ci : on tape « Kon », pause, « Kon » part au serveur ; on continue
+  // « é Ibrahim » ; la page revient rafraîchie avec « Kon » — et l'écrasait.
+  // Avec la latence Abidjan → serveur, ça arrivait à chaque nom un peu long.
+  // Ajustement pendant le rendu plutôt que dans un effet — la forme
+  // recommandée, sans rendu intermédiaire à l'ancienne valeur.
   if (valeur !== precedente) {
     setPrecedente(valeur);
-    setV(valeur);
+    if (!enEdition && enVol === 0 && !frappeEnAttente) setV(valeur);
   }
 
   const pousser = (val: string) => {
+    setEnVol((n) => n + 1);
     demarrer(async () => {
       try {
         const r = await enregistrer(val);
         setErreur(r.ok ? "" : (r.erreur ?? "Enregistrement refusé."));
       } catch {
         setErreur(MESSAGE_TRANSPORT);
+      } finally {
+        setEnVol((n) => n - 1);
       }
     });
   };
 
   const changer = (val: string) => {
     setV(val);
+    setFrappeEnAttente(true);
     if (minuterie.current) clearTimeout(minuterie.current);
-    minuterie.current = setTimeout(() => pousser(val), 600);
+    minuterie.current = setTimeout(() => {
+      setFrappeEnAttente(false);
+      pousser(val);
+    }, 900);
   };
 
   const quitter = () => {
+    setEnEdition(false);
     if (minuterie.current) clearTimeout(minuterie.current);
-    if (v !== valeur) pousser(v);
+    minuterie.current = null;
+    // Ce qui n'est pas encore parti part maintenant ; ce qui est déjà en base
+    // n'a pas besoin d'un second envoi.
+    if (frappeEnAttente || v !== valeur) pousser(v);
+    setFrappeEnAttente(false);
   };
 
   const commun = {
     value: v,
     onChange: (e: { target: { value: string } }) => changer(e.target.value),
+    onFocus: () => setEnEdition(true),
     onBlur: quitter,
     style: styleChamp({
       ...style,

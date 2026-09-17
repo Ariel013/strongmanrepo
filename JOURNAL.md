@@ -57,6 +57,23 @@
 
 ## 📓 Journal des sessions
 
+### 2026-09-17 (11) — La frappe prime sur le rafraîchissement du serveur
+
+Kevin : « quand on remplit un champ, ça se supprime ou déconne, il faut
+réécrire plusieurs fois ». Cause dans `ChampTexte` : après 600 ms de pause, la
+valeur partielle part au serveur ; la page revient rafraîchie avec cette
+valeur partielle ; le composant l'adoptait dès qu'elle différait de la
+précédente — et écrasait ce qui avait été tapé depuis. Avec la latence
+Abidjan → serveur, l'aller-retour dépasse la pause : chaque nom un peu long
+était tronqué.
+
+Correction : la valeur du serveur ne reprend la main que si le champ est au
+repos — curseur sorti, aucun enregistrement en vol, aucune frappe en attente.
+Pause portée à 900 ms. La fiche d'identité (`identite.tsx`) n'était pas
+touchée : elle n'enregistre qu'à la sortie du champ et ne se resynchronise
+pas. Leçon ci-dessous. `lint` ✓, `build` ✓. Non essayé sur matériel réel :
+**à vérifier en ligne en tapant un nom long sans s'arrêter.**
+
 ### 2026-09-17 (10) — Le temps au chrono est le temps imparti, pour tous
 
 Précision de Kevin : la troisième case porte le temps imparti de l'épreuve
@@ -390,6 +407,22 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Un champ qui se resynchronise depuis le serveur écrase la frappe en cours (2026-09-17)
+
+**Symptôme.** « Ça se supprime, il faut réécrire plusieurs fois. » Un nom tapé
+d'une traite perdait sa fin.
+
+**Cause.** Enregistrement automatique après une pause de frappe, puis
+rafraîchissement de la page par le serveur. Le champ adoptait la valeur
+serveur dès qu'elle changeait — or elle change précisément parce qu'on vient
+d'envoyer une version partielle. En local, l'aller-retour tient dans la pause
+et le défaut ne se voit pas ; en ligne, il dépasse et le défaut est
+systématique.
+
+**Règle.** Un champ contrôlé qui s'enregistre tout seul n'adopte la valeur du
+serveur qu'**au repos** : curseur sorti, rien en vol, rien en attente. Et une
+saisie automatique se teste sur la latence réelle, pas en local.
 
 ### Un sélecteur sans option est un blanc muet, signalé comme une panne de sauvegarde (2026-09-17)
 
