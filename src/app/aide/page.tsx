@@ -158,10 +158,10 @@ export default function PageAide() {
         <p className="mt-6">
           <a
             href="/connexion"
-            title="Ouvre la connexion à l'administration : préparation, plateau, régie"
+            title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
             className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
-            Accès à l&apos;administration
+            Se connecter à l&apos;administration
             <span aria-hidden="true">→</span>
           </a>
         </p>
@@ -805,10 +805,10 @@ export default function PageAide() {
         <p className="mt-6">
           <a
             href="/connexion"
-            title="Ouvre la connexion à l'administration : préparation, plateau, régie"
+            title="Ouvre la page de connexion : avec le code d'accès, vous entrez dans l'administration — préparation, plateau, régie"
             className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
-            Accès à l&apos;administration
+            Se connecter à l&apos;administration
             <span aria-hidden="true">→</span>
           </a>
         </p>
