@@ -24,14 +24,14 @@
 
 ## 📍 État actuel & prochaine action
 
-*(Mis à jour le 2026-09-16.)*
+*(Mis à jour le 2026-09-17.)*
 
 - **Front** : portage fidèle du poste autonome terminé. Relevé automatique :
   **96 % des textes visibles** de l'original retrouvés ; les 4 % restants sont
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **149/149** ✓. Les routes répondent 200 sur un build de production local.
+  **168/168** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
 - **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
   2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
@@ -54,6 +54,26 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (5) — Le plateau se libère avant que le jury ait rendu la valeur
+
+Souci de terrain signalé par Kevin : sur un grand terrain, le jury rend la
+performance bien après la fin du chrono. La validation étant la seule sortie
+du plateau, la table attendait à vide avant d'appeler le suivant.
+
+Quatrième état de passage, `a_saisir` → [ADR 0004](docs/decisions/0004-un-passage-peut-attendre-son-resultat.md).
+Bouton « Passage fini, résultat plus tard » sur la carte du plateau (refusé
+chrono en marche) : les tours comptés partent avec le passage, le suivant est
+appelé. Tableau « En attente de résultat » sous les trois colonnes, une ligne
+par athlète, prérempli, choix de Kevin (forme de la feuille papier). Tant que
+non validé : ni classement, ni mur LED, ni file ; feuille imprimée en ligne
+vide. Fin d'épreuve et verrou d'annulation exigent zéro passage en attente ;
+« Reconstruire l'ordre » les conserve ; « Annuler la dernière validation »
+renvoie en attente si le plateau est pris. Trace `passage.en_attente`.
+
+`pnpm run lint` ✓, `build` ✓, `test` 168/168 (7 ajoutés sur `libererLePlateau`,
+la reconstruction et le retour en file). Pas de migration : `statut` est du
+texte. Non essayé sur matériel réel.
 
 ### 2026-09-16 — Portage fidèle du front, et une lenteur enfin expliquée
 

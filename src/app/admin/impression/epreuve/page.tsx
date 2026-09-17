@@ -221,7 +221,7 @@ export default async function PageFeuilleEpreuve({
 
 interface Ligne {
   athlete: AthletePublic;
-  statut: "avenir" | "plateau" | "termine";
+  statut: "avenir" | "plateau" | "a_saisir" | "termine";
   resultat: {
     statut: "ok" | "zero" | "forfait" | null;
     valeur: number | null;

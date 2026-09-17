@@ -46,6 +46,7 @@ import { calculerRecadrage, poidsLisible } from "../src/lib/image";
 import {
   affecterCategorieA,
   completerFile,
+  libererLePlateau,
   placerAuPlateau,
   reconstruireFile,
   remettreEnFile,
@@ -714,6 +715,60 @@ async function principal() {
       "et aucun passage perdu",
       etat.filter((p) => p.statut === "avenir").length,
       3,
+    );
+
+    // Plateau libéré sans résultat : le jury n'a pas fini, on appelle quand
+    // même le suivant. Le passage attend sa valeur sans compter nulle part.
+    const relire = () =>
+      db.select().from(passage).where(eq(passage.epreuveId, eps[0].id));
+    const refus = await libererLePlateau(file[0].id);
+    verifier("libérer un passage qui n'est pas au plateau est refusé", !refus.ok);
+
+    await placerAuPlateau(file[0].id);
+    const libere = await libererLePlateau(file[0].id, {
+      tours: [12.3, 25.1],
+      tempsS: 25.1,
+    });
+    verifier("libérer le plateau accepté", libere.ok);
+    etat = await relire();
+    egal("plateau vide après libération", etat.filter((p) => p.statut === "plateau").length, 0);
+    const attente = etat.find((p) => p.id === file[0].id);
+    egal("le passage est « à saisir »", attente?.statut, "a_saisir");
+    egal("les tours comptés sont conservés", attente?.tours, [12.3, 25.1]);
+    egal("sans valeur ni verdict", [attente?.valeur, attente?.resultatStatut], [null, null]);
+
+    await placerAuPlateau(file[1].id);
+    etat = await relire();
+    egal(
+      "appeler le suivant ne touche pas le passage en attente",
+      etat.find((p) => p.id === file[0].id)?.statut,
+      "a_saisir",
+    );
+    egal(
+      "un passage en attente ne compte pas comme résultat",
+      (await tousLesResultats(comp.id, epreuvesVue)).get(eps[0].id)?.get(file[0].athleteId),
+      undefined,
+    );
+
+    const reconstruit = await reconstruireFile(
+      comp.id,
+      eps[0].id,
+      file.map((p) => p.athleteId),
+    );
+    etat = await relire();
+    egal(
+      "reconstruire l'ordre conserve le passage en attente",
+      etat.find((p) => p.athleteId === file[0].athleteId)?.statut,
+      "a_saisir",
+    );
+    egal("et ne recrée que les autres", reconstruit.crees, file.length - 1);
+
+    await remettreEnFile(file[0].id);
+    etat = await relire();
+    egal(
+      "retour en file depuis l'attente : redevient à venir, sans trace",
+      [etat.find((p) => p.id === file[0].id)?.statut, etat.find((p) => p.id === file[0].id)?.tours],
+      ["avenir", []],
     );
 
     /* ── 13. Les refus disent la bonne raison ── */

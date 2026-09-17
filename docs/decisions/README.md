@@ -8,6 +8,7 @@ Un ADR se déclenche quand **plusieurs options existaient**. Pas pour acter une
 | [0001](0001-le-chronometre-publie-son-etat-en-base.md) | Le chronomètre publie son état en base, pas seulement dans le navigateur | adopté |
 | [0002](0002-les-niveaux-declares-vivent-en-json-sur-l-athlete.md) | Les niveaux déclarés vivent en JSON sur l'athlète, pas dans une table | adopté |
 | [0003](0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md) | Un seul espace de données : pas de mode démonstration | adopté |
+| [0004](0004-un-passage-peut-attendre-son-resultat.md) | Un passage peut attendre son résultat, plateau libéré | adopté |
 
 ## Avant le n° 0001
 

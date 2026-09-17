@@ -259,7 +259,8 @@ export const athleteContact = pgTable("athlete_contact", {
  * Un passage = un athlète sur une épreuve. Il porte à la fois la file
  * d'attente (`statut`, `ordre`) et la performance (`resultat*`).
  *
- * `statut` : avenir | plateau | termine
+ * `statut` : avenir | plateau | a_saisir | termine — « a_saisir » : l'athlète
+ * est passé, le plateau est libéré, le jury n'a pas encore rendu la valeur.
  * `resultatStatut` : ok | zero | forfait — « zero » et « forfait » closent le
  * passage sans performance : rang nul, zéro point.
  */

@@ -31,6 +31,7 @@ import {
   choisirEpreuve,
   construireFile,
   majChrono,
+  mettreEnAttente,
   preparerToutes,
   renvoyerEnFile,
   reprendre,
@@ -168,6 +169,10 @@ export function Plateau({
   const auPlateau = passages
     .filter((p) => p.statut === "plateau")
     .sort((a, b) => a.ordre - b.ordre);
+  /** Passés, plateau libéré, résultat attendu du jury. */
+  const enAttente = passages
+    .filter((p) => p.statut === "a_saisir")
+    .sort((a, b) => a.ordre - b.ordre);
   const termines = passages
     .filter((p) => p.statut === "termine")
     .sort((a, b) => a.ordre - b.ordre)
@@ -288,6 +293,31 @@ export function Plateau({
     }));
 
   /**
+   * La saisie des passages en attente vit à part : elle ne se remet pas à
+   * zéro quand le plateau change, puisque c'est précisément pendant qu'un
+   * autre athlète concourt que la feuille du jury arrive. Préremplie avec ce
+   * que la table avait compté au plateau.
+   */
+  const [saisiesAttente, setSaisiesAttente] = useState<
+    Record<string, { valeur: string; temps: string; erreur: string }>
+  >({});
+  const saisieAttenteDe = (p: PassageVue) =>
+    saisiesAttente[p.id] ?? {
+      valeur: epreuve.tours && p.tours?.length ? String(p.tours.length) : "",
+      temps: p.tempsS !== null ? virgule(p.tempsS) : "",
+      erreur: "",
+    };
+  const majSaisieAttente = (
+    p: PassageVue,
+    champ: "valeur" | "temps",
+    v: string,
+  ) =>
+    setSaisiesAttente((s) => ({
+      ...s,
+      [p.id]: { ...saisieAttenteDe(p), [champ]: v, erreur: "" },
+    }));
+
+  /**
    * Un appui = une répétition validée. Le temps du tour est relevé à l'appui :
    * c'est lui qui départage deux athlètes à égalité de nombre.
    */
@@ -367,6 +397,69 @@ export function Plateau({
     });
   }
 
+  /**
+   * Le passage est fini mais le jury n'a pas rendu la performance : on libère
+   * le plateau et on appelle le suivant. Ce que la table a compté part avec
+   * le passage, pour préremplir la saisie quand la feuille arrivera.
+   */
+  function libererSansResultat(passageId: string) {
+    if (phase === "encours") {
+      setMessage("Arrêtez le chronomètre avant de libérer le plateau.");
+      setMessageOk(false);
+      return;
+    }
+    const s = saisieDe(passageId);
+    agir(async () => {
+      const r = await mettreEnAttente(passageId, {
+        tours: tours[passageId] ?? [],
+        tempsS: nombreOuNull(s.temps),
+      });
+      if (r.ok) appelerSuivant(passageId);
+      return r;
+    }, "Plateau libéré : la performance se saisit dans « En attente de résultat ».");
+  }
+
+  /** Validation depuis la liste d'attente : même écriture, sans appel du suivant. */
+  function validerEnAttente(p: PassageVue, statut: "ok" | "zero" | "forfait") {
+    const s = saisieAttenteDe(p);
+    if (statut !== "ok") {
+      agir(() => validerPassage(p.id, { statut }));
+      return;
+    }
+    const v = nombreOuNull(s.valeur);
+    if (v === null) {
+      setSaisiesAttente((m) => ({
+        ...m,
+        [p.id]: { ...s, erreur: "Saisissez la performance mesurée avant de valider." },
+      }));
+      return;
+    }
+    demarrer(async () => {
+      try {
+        const r = await validerPassage(p.id, {
+          statut: "ok",
+          valeur: v,
+          tempsS: nombreOuNull(s.temps),
+          tours: p.tours ?? [],
+        });
+        if (!r.ok)
+          setSaisiesAttente((m) => ({
+            ...m,
+            [p.id]: { ...s, erreur: r.erreur ?? "Enregistrement impossible." },
+          }));
+      } catch {
+        setSaisiesAttente((m) => ({
+          ...m,
+          [p.id]: {
+            ...s,
+            erreur:
+              "Le serveur n'a pas répondu. Rien n'a été enregistré : réessayez.",
+          },
+        }));
+      }
+    });
+  }
+
   /** Après une validation, l'athlète suivant de la même catégorie est appelé. */
   function appelerSuivant(passageValide: string) {
     const cat = parId.get(
@@ -385,10 +478,12 @@ export function Plateau({
     .map((s) => s.trim())
     .filter(Boolean);
 
-  const annulationOuverte =
-    termines.length > 0 && !(avenir.length === 0 && auPlateau.length === 0);
-  const annulationVerrouillee =
-    termines.length > 0 && avenir.length === 0 && auPlateau.length === 0;
+  // Une catégorie n'a fini son épreuve que quand plus personne n'attend :
+  // ni en file, ni au plateau, ni un résultat du jury.
+  const toutEstRendu =
+    avenir.length === 0 && auPlateau.length === 0 && enAttente.length === 0;
+  const annulationOuverte = termines.length > 0 && !toutEstRendu;
+  const annulationVerrouillee = termines.length > 0 && toutEstRendu;
 
   return (
     <div>
@@ -1485,6 +1580,22 @@ export function Plateau({
                       Forfait
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    title="Le passage est fini mais le jury n'a pas encore rendu la performance : libère le plateau, appelle le suivant, et garde ce passage dans « En attente de résultat » où la valeur se saisira à l'arrivée de la feuille"
+                    onClick={() => libererSansResultat(p.id)}
+                    style={styleBouton("blanc", {
+                      width: "100%",
+                      marginTop: 8,
+                      padding: 12,
+                      borderRadius: 10,
+                      fontSize: 14,
+                      fontWeight: 600,
+                    })}
+                  >
+                    Passage fini, résultat plus tard → appeler le suivant
+                  </button>
                 </div>
               );
             })}
@@ -1492,7 +1603,7 @@ export function Plateau({
             {annulationOuverte ? (
               <button
                 type="button"
-                title="Annule la dernière validation : l'athlète précédent revient au plateau, sa performance est effacée"
+                title="Annule la dernière validation : sa performance est effacée. L'athlète revient au plateau s'il est libre, sinon dans « En attente de résultat »"
                 onClick={() =>
                   agir(() => rouvrirPassage(termines[0].id))
                 }
@@ -1642,6 +1753,222 @@ export function Plateau({
           ) : null}
         </div>
       </div>
+
+      {/* ── En attente de résultat : la feuille du jury se recopie ici ── */}
+      {enAttente.length > 0 ? (
+        <div
+          style={{
+            marginTop: 22,
+            background: C.blanc,
+            border: `1px solid ${C.bordure}`,
+            borderRadius: 14,
+            overflow: "hidden",
+          }}
+        >
+          <EnteteColonne fond={C.ambreFond} encre={C.ambreEncre}>
+            En attente de résultat · {enAttente.length}
+          </EnteteColonne>
+          <div
+            style={{
+              padding: "10px 16px",
+              fontSize: 13,
+              color: C.encre3,
+              lineHeight: 1.45,
+              borderBottom: `1px solid ${C.papier3}`,
+            }}
+          >
+            Ces athlètes sont passés, le plateau a été libéré. Recopiez la
+            feuille du jury ligne à ligne : un passage ne compte au classement
+            qu&apos;une fois validé ici.
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 14,
+              }}
+            >
+              <thead>
+                <tr style={{ background: C.papier2 }}>
+                  {[
+                    "Dossard",
+                    "Athlète",
+                    ...(melange ? ["Catégorie"] : []),
+                    ...(epreuve.tours ? ["Tours comptés"] : []),
+                    uniteValeur(epreuve.mesure),
+                    ...(mesureMixte(epreuve.mesure)
+                      ? [libelleTemps(epreuve.mesure)]
+                      : []),
+                    "Verdict",
+                    "",
+                  ].map((t, i) => (
+                    <th
+                      key={`${t}-${i}`}
+                      style={{
+                        textAlign: "left",
+                        padding: "8px 10px",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        letterSpacing: ".1em",
+                        textTransform: "uppercase",
+                        color: C.encre4,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {t}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {enAttente.map((p) => {
+                  const a = parId.get(p.athleteId);
+                  if (!a) return null;
+                  const cat = catDe(p.athleteId);
+                  const s = saisieAttenteDe(p);
+                  const lp = p.tours ?? [];
+                  const cellule = {
+                    padding: "8px 10px",
+                    borderTop: `1px solid ${C.papier3}`,
+                    verticalAlign: "middle" as const,
+                  };
+                  return (
+                    <tr key={p.id}>
+                      <td style={{ ...cellule, fontWeight: 700, fontSize: 16 }}>
+                        {a.dossard ?? "—"}
+                      </td>
+                      <td style={{ ...cellule, fontWeight: 600, whiteSpace: "nowrap" }}>
+                        {nomComplet(a)}
+                        {s.erreur ? (
+                          <div
+                            role="alert"
+                            style={{
+                              marginTop: 4,
+                              fontSize: 12,
+                              fontWeight: 600,
+                              color: C.rougeFonce,
+                              whiteSpace: "normal",
+                            }}
+                          >
+                            {s.erreur}
+                          </div>
+                        ) : null}
+                      </td>
+                      {melange ? (
+                        <td style={cellule}>
+                          <PastilleCategorie
+                            nom={cat?.nom ?? "—"}
+                            couleur={cat?.couleur ?? C.orange}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              padding: "3px 9px",
+                              fontSize: 11,
+                              letterSpacing: ".08em",
+                            }}
+                          />
+                        </td>
+                      ) : null}
+                      {epreuve.tours ? (
+                        <td style={{ ...cellule, fontSize: 12, color: C.encre3, whiteSpace: "nowrap" }}>
+                          {lp.length
+                            ? `${lp.length} au plateau · dernier à ${virgule(lp[lp.length - 1])} s`
+                            : "Aucun tour compté"}
+                        </td>
+                      ) : null}
+                      <td style={cellule}>
+                        <input
+                          value={s.valeur}
+                          onChange={(e) => majSaisieAttente(p, "valeur", e.target.value)}
+                          title="Performance rendue par le jury"
+                          style={styleChamp({
+                            width: 110,
+                            padding: "9px 10px",
+                            borderRadius: 8,
+                            fontSize: 16,
+                            fontWeight: 700,
+                          })}
+                        />
+                      </td>
+                      {mesureMixte(epreuve.mesure) ? (
+                        <td style={cellule}>
+                          <input
+                            value={s.temps}
+                            onChange={(e) => majSaisieAttente(p, "temps", e.target.value)}
+                            title="Temps rendu par le jury, sert à départager les égalités"
+                            style={styleChamp({
+                              width: 110,
+                              padding: "9px 10px",
+                              borderRadius: 8,
+                              fontSize: 16,
+                              fontWeight: 700,
+                            })}
+                          />
+                        </td>
+                      ) : null}
+                      <td style={{ ...cellule, whiteSpace: "nowrap" }}>
+                        <button
+                          type="button"
+                          title="Enregistre la performance rendue par le jury et met à jour le classement"
+                          onClick={() => validerEnAttente(p, "ok")}
+                          style={styleBouton("vert", {
+                            padding: "9px 14px",
+                            borderRadius: 9,
+                            fontSize: 14,
+                            marginRight: 6,
+                          })}
+                        >
+                          Valider
+                        </button>
+                        <button
+                          type="button"
+                          title="Essai nul : a concouru, aucune performance validée, 0 point"
+                          onClick={() => validerEnAttente(p, "zero")}
+                          style={styleBouton("creme", {
+                            padding: "9px 12px",
+                            borderRadius: 9,
+                            fontSize: 13,
+                            marginRight: 6,
+                          })}
+                        >
+                          Zéro
+                        </button>
+                        <button
+                          type="button"
+                          title="Forfait de l'athlète sur cette épreuve"
+                          onClick={() => validerEnAttente(p, "forfait")}
+                          style={styleBouton("creme", {
+                            padding: "9px 12px",
+                            borderRadius: 9,
+                            fontSize: 13,
+                          })}
+                        >
+                          Forfait
+                        </button>
+                      </td>
+                      <td style={{ ...cellule, textAlign: "right" }}>
+                        <button
+                          type="button"
+                          title="Erreur : remet cet athlète dans la liste À venir, sans résultat"
+                          onClick={() => agir(() => renvoyerEnFile(p.id))}
+                          style={styleBouton("blanc", {
+                            padding: "7px 11px",
+                            borderRadius: 8,
+                            fontSize: 12,
+                          })}
+                        >
+                          ← Retour file
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
 
       {/* ── Ordre de passage par catégorie (passage mélangé) ── */}
       {melange ? (

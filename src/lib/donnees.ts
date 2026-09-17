@@ -356,7 +356,8 @@ export interface PassageVue {
   id: string;
   athleteId: string;
   ordre: number;
-  statut: "avenir" | "plateau" | "termine";
+  /** `a_saisir` : passé au plateau, résultat attendu du jury. */
+  statut: "avenir" | "plateau" | "a_saisir" | "termine";
   resultatStatut: "ok" | "zero" | "forfait" | null;
   valeur: number | null;
   tempsS: number | null;

@@ -178,7 +178,7 @@ Créés par `construireFile`, `assurerFile`, `preparerToutes`, ou l'import Excel
 | `groupeId` | id ou `"tous"` | **Vue** sous laquelle la file a été construite, pas nécessairement la catégorie de l'athlète |
 | `athleteId` | id | Athlète |
 | `ordre` | entier ≥ 1 | Rang dans la file (1-based) |
-| `statut` | `"avenir"` / `"plateau"` / `"termine"` | § 8 |
+| `statut` | `"avenir"` / `"plateau"` / `"termine"` (+ `"a_saisir"` dans le portage) | § 8 |
 | `resultat` | objet ou `null` | voir ci-dessous |
 | `ts` | ISO-8601 ou `null` | Horodatage du dernier changement d'état (appel ou officialisation) |
 | `votes` | `[null,null,null]` | Écrit **uniquement** par `construireFile` (l. 851), jamais lu |
@@ -586,12 +586,13 @@ C'est l'ordre d'entrée qui départage les ex aequo résiduels du classement gé
 
 ## 8. Cycle de vie d'un passage
 
-### 8.1 Les trois statuts
+### 8.1 Les trois statuts (quatre dans le portage)
 
 | Statut | Sens |
 |---|---|
 | `avenir` | En file d'attente |
 | `plateau` | Appelé, en cours de prestation |
+| `a_saisir` | **Portage seulement** — passé, plateau libéré, valeur attendue du jury. Ne compte nulle part tant qu'il n'est pas validé. Voir [ADR 0004](decisions/0004-un-passage-peut-attendre-son-resultat.md) |
 | `termine` | Verdict rendu (`resultat` renseigné) |
 
 Le passage de `avenir` → `plateau` renseigne `ts` (horodatage de l'appel), le passage

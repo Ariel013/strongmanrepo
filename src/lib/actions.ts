@@ -12,7 +12,7 @@
  * de réclamation, c'est la seule pièce qui dise ce qui a été saisi et quand.
  */
 
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "./db";
@@ -35,6 +35,7 @@ import { cleRapprochement } from "./import-liste";
 import {
   affecterCategorieA,
   completerFile,
+  libererLePlateau,
   placerAuPlateau,
   reconstruireFile,
   remettreEnFile,
@@ -350,7 +351,31 @@ export async function renvoyerEnFile(passageId: string): Promise<Retour> {
 }
 
 /**
+ * Libère le plateau sans verdict : le passage attend la feuille du jury.
+ *
+ * Ce que la table a relevé — tours comptés, temps du dernier — part avec lui
+ * pour préremplir la saisie. Tracé : c'est le moment où l'athlète a quitté le
+ * plateau, ce qu'une réclamation peut vouloir dater.
+ */
+export async function mettreEnAttente(
+  passageId: string,
+  releve: { tours: number[]; tempsS: number | null },
+): Promise<Retour> {
+  await exigerSession();
+  const r = await libererLePlateau(passageId, releve);
+  if (!r.ok) return r;
+
+  await tracer("passage.en_attente", "passage", passageId, releve);
+  revalidatePath("/admin/plateau");
+  revalidatePath("/ecran", "layout");
+  return { ok: true };
+}
+
+/**
  * Valide la performance d'un passage.
+ *
+ * Depuis le plateau, ou depuis la liste des passages en attente de résultat :
+ * c'est la même écriture et la même trace.
  *
  * Trois issues : « ok » avec une valeur mesurée, « zero » (a concouru sans
  * rien valider) ou « forfait » (ne s'est pas présenté). Les deux dernières
@@ -394,14 +419,36 @@ export async function validerPassage(
  * Rouvre le dernier passage validé, pour corriger une erreur de saisie.
  * La correction est tracée : c'est précisément ce qu'une réclamation vient
  * contester.
+ *
+ * Le passage revient au plateau si celui-ci est libre pour sa catégorie.
+ * Si un autre athlète y est déjà — la table a appelé le suivant avant que la
+ * feuille n'arrive — il revient « en attente de résultat » : on ne chasse pas
+ * quelqu'un en plein essai pour corriger une saisie.
  */
 export async function rouvrirPassage(passageId: string): Promise<Retour> {
   await exigerSession();
   const [avant] = await db.select().from(passage).where(eq(passage.id, passageId));
+  if (!avant) return { ok: false, erreur: "Passage introuvable." };
+
+  const [sien] = await db
+    .select({ categorieId: athlete.categorieId })
+    .from(athlete)
+    .where(eq(athlete.id, avant.athleteId));
+  const occupants = await db
+    .select({ categorieId: athlete.categorieId })
+    .from(passage)
+    .innerJoin(athlete, eq(athlete.id, passage.athleteId))
+    .where(
+      and(eq(passage.epreuveId, avant.epreuveId), eq(passage.statut, "plateau")),
+    );
+  const plateauPris = occupants.some(
+    (o) => o.categorieId === (sien?.categorieId ?? null),
+  );
+
   await db
     .update(passage)
     .set({
-      statut: "plateau",
+      statut: plateauPris ? "a_saisir" : "plateau",
       resultatStatut: null,
       valeur: null,
       tempsS: null,
@@ -410,9 +457,8 @@ export async function rouvrirPassage(passageId: string): Promise<Retour> {
     })
     .where(eq(passage.id, passageId));
   await tracer("passage.rouvert", "passage", passageId, {
-    ancienResultat: avant
-      ? { statut: avant.resultatStatut, valeur: avant.valeur }
-      : null,
+    ancienResultat: { statut: avant.resultatStatut, valeur: avant.valeur },
+    revenu: plateauPris ? "a_saisir" : "plateau",
   });
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");

@@ -24,8 +24,9 @@ L'interface reprend le poste autonome d'origine, conservé tel quel dans
   de l'original — pas Tailwind. Les couleurs et libellés passent par
   `src/lib/charte.ts`, qui ne contient que des valeurs de l'original.
 - Un écart avec l'original **se décide et se dit**, il ne s'improvise pas.
-  Les trois écarts en vigueur sont nommés dans le commit de portage et,
-  pour le principal, dans `docs/decisions/0003-*`.
+  Les trois écarts du portage sont nommés dans son commit et, pour le
+  principal, dans `docs/decisions/0003-*`. Le quatrième — un passage peut
+  attendre son résultat, plateau libéré — est dans `docs/decisions/0004-*`.
 - Devant un doute sur un comportement : **relire `docs/reference/`**, pas
   raisonner sur ce qui semblerait juste.
 

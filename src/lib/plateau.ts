@@ -86,10 +86,52 @@ export async function remettreEnFile(passageId: string): Promise<Resultat> {
 }
 
 /**
+ * Libère le plateau sans verdict : le passage attend son résultat.
+ *
+ * Sur un grand terrain, le jury rend la performance bien après la fin du
+ * chronomètre. Attendre pour appeler le suivant bloque la compétition ; ce
+ * statut « à saisir » laisse la table appeler tout de suite, et remplir la
+ * performance quand la feuille arrive. Ce que la table sait déjà — les tours
+ * comptés, le temps du dernier — est conservé pour préremplir la saisie.
+ *
+ * Tant qu'il est « à saisir », le passage ne compte nulle part : ni au
+ * classement, ni sur le mur LED, ni dans la file.
+ */
+export async function libererLePlateau(
+  passageId: string,
+  releve: { tours?: number[]; tempsS?: number | null } = {},
+): Promise<Resultat> {
+  const [cible] = await db
+    .select({ statut: passage.statut })
+    .from(passage)
+    .where(eq(passage.id, passageId));
+  if (!cible) return { ok: false, erreur: "Passage introuvable." };
+  if (cible.statut !== "plateau")
+    return {
+      ok: false,
+      erreur: "Seul un athlète au plateau peut être mis en attente de résultat.",
+    };
+
+  await db
+    .update(passage)
+    .set({
+      statut: "a_saisir",
+      resultatStatut: null,
+      valeur: null,
+      tempsS: releve.tempsS ?? null,
+      tours: releve.tours ?? [],
+      valideLe: null,
+    })
+    .where(eq(passage.id, passageId));
+  return { ok: true };
+}
+
+/**
  * Reconstruit la file de passage d'une épreuve, DANS UN PÉRIMÈTRE.
  *
  * Les passages déjà terminés sont conservés : refaire l'ordre ne doit jamais
- * effacer une performance validée.
+ * effacer une performance validée. Ceux qui attendent leur résultat aussi :
+ * l'athlète est passé, sa feuille est entre les mains du jury.
  *
  * Le périmètre est la liste des athlètes concernés par la reconstruction — en
  * pratique ceux des catégories affichées au plateau. Sans lui, reconstruire
@@ -110,12 +152,14 @@ export async function reconstruireFile(
     .where(eq(passage.epreuveId, epreuveId));
 
   const dedans = new Set(perimetre);
+  const conserve = (statut: string) =>
+    statut === "termine" || statut === "a_saisir";
   const termines = new Set(
-    existants.filter((p) => p.statut === "termine").map((p) => p.athleteId),
+    existants.filter((p) => conserve(p.statut)).map((p) => p.athleteId),
   );
 
   const aSupprimer = existants
-    .filter((p) => p.statut !== "termine" && dedans.has(p.athleteId))
+    .filter((p) => !conserve(p.statut) && dedans.has(p.athleteId))
     .map((p) => p.id);
   if (aSupprimer.length > 0) {
     await db
@@ -129,7 +173,7 @@ export async function reconstruireFile(
   // nouveaux se rangent après, pour ne pas s'intercaler dans une file qu'on
   // n'a pas demandé à toucher.
   const restants = existants.filter(
-    (p) => p.statut !== "termine" && !dedans.has(p.athleteId),
+    (p) => !conserve(p.statut) && !dedans.has(p.athleteId),
   );
   const depart = restants.reduce((m, p) => Math.max(m, p.ordre), 0);
 
