@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   C,
   LIBELLE_CHRONO,
+  POINTS_CLUB_LISIBLE,
   aCaseChrono,
   clubAffiche,
   initiales,
@@ -41,6 +42,7 @@ import {
   validerPassage,
 } from "@/lib/actions";
 import type { AthletePublic, PassageVue } from "@/lib/donnees";
+import type { LigneClub } from "@/lib/classement";
 
 /* ── Ce que la page serveur prépare pour chaque catégorie ─────────────── */
 
@@ -88,6 +90,7 @@ const nombreOuNull = (s: string): number | null => {
  */
 export function Plateau({
   competitionId,
+  clubs,
   epreuve,
   epreuves,
   categories,
@@ -101,6 +104,8 @@ export function Plateau({
   motifSuspension,
 }: {
   competitionId: string;
+  /** Classement des clubs, toutes catégories retenues, barème 15/10/5/4/3/1. */
+  clubs: LigneClub[];
   epreuve: EpreuvePlateau;
   epreuves: { id: string; nom: string }[];
   categories: { id: string; nom: string; couleur: string }[];
@@ -2432,6 +2437,94 @@ export function Plateau({
             ) : null}
           </div>
         ))}
+
+        {/* Classement des clubs : toutes catégories retenues confondues */}
+        <div
+          style={{
+            background: C.blanc,
+            border: `1px solid ${C.bordure}`,
+            borderRadius: 14,
+            overflow: "hidden",
+          }}
+        >
+          <EnteteColonne fond={C.encre} encre={C.papier}>
+            Classement des clubs · toutes catégories
+          </EnteteColonne>
+          <div
+            style={{
+              padding: "8px 18px",
+              fontSize: 11,
+              color: C.encre4,
+              borderTop: `1px solid ${C.papier3}`,
+              lineHeight: 1.4,
+            }}
+          >
+            {POINTS_CLUB_LISIBLE}
+          </div>
+          {clubs.map((l, i) => (
+            <div
+              key={l.club}
+              style={{
+                display: "flex",
+                gap: 12,
+                alignItems: "center",
+                padding: "11px 18px",
+                borderTop: `1px solid ${C.papier3}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 26,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: C.orange,
+                  flex: "none",
+                }}
+              >
+                {i + 1}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 15, fontWeight: 600 }}>{l.club}</div>
+                <div style={{ fontSize: 12, color: C.encre4 }}>
+                  {l.athletes} athlète{l.athletes > 1 ? "s" : ""} classé{l.athletes > 1 ? "s" : ""}
+                  {l.places[0] > 0 ? ` · ${l.places[0]} titre${l.places[0] > 1 ? "s" : ""}` : ""}
+                </div>
+              </div>
+              <div
+                style={{
+                  width: 70,
+                  textAlign: "right",
+                  fontSize: 15,
+                  fontWeight: 700,
+                  flex: "none",
+                }}
+              >
+                {l.points} pts
+              </div>
+            </div>
+          ))}
+          {clubs.length === 0 ? (
+            <div style={{ padding: "20px 18px", fontSize: 14, color: C.encre4 }}>
+              Aucun résultat validé : le classement des clubs se remplit au fil
+              des épreuves.
+            </div>
+          ) : (
+            <Link
+              href="/admin/clubs"
+              title="Le classement des clubs complet, imprimable"
+              style={{
+                display: "block",
+                padding: "10px 18px",
+                borderTop: `1px solid ${C.papier3}`,
+                fontSize: 13,
+                fontWeight: 600,
+                color: C.vertFonce,
+              }}
+            >
+              Voir et imprimer le classement des clubs →
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

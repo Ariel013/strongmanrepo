@@ -60,6 +60,7 @@ import {
   parmi,
   tempsImparti,
   texteObligatoire,
+  trierProgramme,
   type Verdict,
 } from "../src/lib/validation";
 
@@ -1048,6 +1049,22 @@ async function principal() {
       classementClubs([{ club: "X", rang: 6 }])[0].points,
       classementClubs([{ club: "X", rang: 5 }])[0].points,
     ], [1, 3]);
+
+    /* ── 20. Programme : l'heure ordonne, pas la saisie ── */
+    console.log("\n20. Programme : l'heure ordonne, pas l'ordre de saisie");
+    const prog = trierProgramme([
+      { heure: "18h00", texte: "Podium", position: 1 },
+      { heure: "vers midi", texte: "Pause", position: 2 },
+      { heure: "12h00", texte: "Épreuve 2", position: 3 },
+      { heure: "9h30", texte: "Pesée", position: 4 },
+      { heure: "", texte: "Sans heure", position: 5 },
+      { heure: "12:00", texte: "Même heure, saisie après", position: 6 },
+    ]);
+    egal(
+      "ordre : 9h30, 12h00, 12:00, 18h00, puis les heures illisibles dans l'ordre de saisie",
+      prog.map((p) => p.texte),
+      ["Pesée", "Épreuve 2", "Même heure, saisie après", "Podium", "Pause", "Sans heure"],
+    );
 
     /* ── 18. Cloisonnement des données personnelles ── */
     console.log("\n18. Cloisonnement des données personnelles");

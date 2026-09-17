@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **175/175** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
+  **176/176** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0006` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
@@ -56,6 +56,58 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (17) — Les récompenses deviennent la septième étape
+
+Kevin. Récompenses et bandeau partenaires sortent de l'étape Programme vers
+`etape-recompenses.tsx`, septième onglet (`?etape=6`), après Programme. Le
+récapitulatif gagne une ligne « Récompenses » (au moins trois places dotées,
+ce que l'écran podium affiche). Écart avec l'original noté dans la
+cartographie § 4.6. `lint` ✓, `build` ✓, `test` 176/176.
+
+### 2026-09-17 (16) — Le programme se range par heure, pas par ordre de saisie
+
+Kevin : une ligne créée après coup à 12h restait sous celle de 18h. Le
+programme était lu dans l'ordre de création (`position`). `trierProgramme`
+(`validation.ts`, pure, testée en § 20) range par heure lue avec
+`heureFrancaise` — « 14h00 », « 14:00 », « 9h30 » — puis par ordre de saisie ;
+une heure illisible (« vers midi », vide) passe en fin. Appliqué dans
+`programmeDe`, donc partout : étape, écran d'attente, impression,
+récapitulatif. `lint` ✓, `build` ✓, `test` 176/176.
+
+### 2026-09-17 (15) — Liste des officiels et feuilles de pesée imprimables
+
+Kevin. `/admin/impression/officiels` : les postes communs puis le staff de
+chaque catégorie retenue, colonne signature, signatures du directeur et du
+responsable arbitrage. `/admin/impression/pesee` : une feuille par catégorie
+(dossard, athlète, club, poids déclaré, case « Poids pesé (kg) », coche
+« Pesée validée », signature), plus une feuille « À ranger à la pesée » pour
+les athlètes sans catégorie et une pour les invités. Les valeurs déjà
+validées sont préremplies et grisées, comme sur la feuille de notation.
+Accès depuis les étapes Officiels et Pesée, et l'accueil. `lint` ✓, `build` ✓.
+
+### 2026-09-17 (14) — Le programme de la journée s'imprime
+
+Kevin. `/admin/impression/programme` : une page A4 avec l'en-tête de la
+compétition (nom, date, lieu, adresse), le déroulé saisi à l'étape Programme,
+les épreuves dans l'ordre avec temps imparti, critère et matériel, les
+catégories retenues avec leur couleur, et les officiels avec leur rôle et leur
+catégorie. Accès depuis l'étape Programme et l'accueil de l'administration.
+`lint` ✓, `build` ✓.
+
+### 2026-09-17 (13) — Un vrai bouton « Accès à l'administration » dans le mode d'emploi
+
+Kevin : un CTA plutôt que le lien souligné en pied de page. Bouton vert
+plein, en tête du mode d'emploi sous le chapeau et en pied de page, vers
+`/connexion`. Et la rubrique 3 du mode d'emploi explique le barème des clubs,
+avec sa table et un exemple. `lint` ✓, `build` ✓.
+
+### 2026-09-17 (12) — Le classement des clubs sur le plateau
+
+Kevin : sur le plateau, à côté des classements d'épreuve et généraux par
+catégorie, le rang des clubs. Carte « Classement des clubs · toutes
+catégories » en fin de la grille des classements, même `tableauClubs` que la
+page `/admin/clubs`, lien vers la version imprimable. `lint` ✓, `build` ✓.
 
 ### 2026-09-17 (11) — La frappe prime sur le rafraîchissement du serveur
 

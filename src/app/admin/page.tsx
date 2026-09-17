@@ -131,7 +131,7 @@ export default async function PageAccueil() {
         >
           <Link
             href="/admin/preparation"
-            title="Ouvre le parcours guidé en 6 étapes : épreuves, groupes, officiels, athlètes, pesée, programme"
+            title="Ouvre le parcours guidé en 7 étapes : épreuves, groupes, officiels, athlètes, pesée, programme, récompenses"
             style={styleBouton("vert", {
               padding: "13px 22px",
               borderRadius: 11,
@@ -260,6 +260,39 @@ export default async function PageAccueil() {
           })}
         >
           Imprimer les fiches de notation
+        </Link>
+        <Link
+          href="/admin/impression/pesee"
+          title="Une feuille de pesée par catégorie, à remplir à la balance puis à reporter"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer les feuilles de pesée
+        </Link>
+        <Link
+          href="/admin/impression/officiels"
+          title="La liste des officiels à signer"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer la liste des officiels
+        </Link>
+        <Link
+          href="/admin/impression/programme"
+          title="Le programme de la journée sur une page A4 : déroulé, épreuves, catégories, officiels"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer le programme
         </Link>
         <Link
           href="/admin/clubs"

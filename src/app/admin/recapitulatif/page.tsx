@@ -9,6 +9,7 @@ import {
   fichesAthletes,
   officielsDe,
   programmeDe,
+  recompensesDe,
 } from "@/lib/donnees";
 import { incoherencesCategories } from "@/lib/classement";
 
@@ -33,13 +34,15 @@ export default async function PageRecapitulatif() {
     );
   }
 
-  const [epreuves, categories, officiels, athletes, prog] = await Promise.all([
-    epreuvesDe(comp.id),
-    categoriesDe(comp.id),
-    officielsDe(comp.id),
-    fichesAthletes(comp.id),
-    programmeDe(comp.id),
-  ]);
+  const [epreuves, categories, officiels, athletes, prog, recs] =
+    await Promise.all([
+      epreuvesDe(comp.id),
+      categoriesDe(comp.id),
+      officielsDe(comp.id),
+      fichesAthletes(comp.id),
+      programmeDe(comp.id),
+      recompensesDe(comp.id),
+    ]);
 
   const nommes = officiels.filter((o) => o.nom.trim());
   const juges = nommes.filter((o) => o.role === "juge").length;
@@ -114,6 +117,12 @@ export default async function PageRecapitulatif() {
       titre: "Programme",
       detail: `${prog.length} ligne(s) au programme`,
       etape: 5,
+    },
+    {
+      ok: recs.length >= 3,
+      titre: "Récompenses",
+      detail: `${recs.length} place(s) dotée(s) — l'écran podium en montre trois`,
+      etape: 6,
     },
   ];
 

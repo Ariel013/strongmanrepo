@@ -18,9 +18,11 @@ import { EtapeOfficiels } from "./etape-officiels";
 import { EtapeAthletes } from "./etape-athletes";
 import { EtapePesee } from "./etape-pesee";
 import { EtapeProgramme } from "./etape-programme";
+import { EtapeRecompenses } from "./etape-recompenses";
 
 /**
- * Le parcours guidé en six étapes, repris du logiciel d'origine.
+ * Le parcours guidé en sept étapes — six reprises du logiciel d'origine, plus
+ * les récompenses, sorties du programme à la demande de Kevin.
  *
  * L'étape vit dans l'URL (`?etape=3`) et non dans l'état du navigateur : un
  * officiel qui veut envoyer « regarde la pesée » à un collègue lui envoie un
@@ -36,6 +38,7 @@ const TITRES = [
   "Athlètes",
   "Pesée",
   "Programme",
+  "Récompenses",
 ] as const;
 
 export default async function PagePreparation({
@@ -44,7 +47,7 @@ export default async function PagePreparation({
   searchParams: Promise<{ etape?: string }>;
 }) {
   const { etape: brut } = await searchParams;
-  const etape = Math.min(5, Math.max(0, Number.parseInt(brut ?? "0", 10) || 0));
+  const etape = Math.min(6, Math.max(0, Number.parseInt(brut ?? "0", 10) || 0));
 
   const comp = await competitionCourante();
   if (!comp) {
@@ -74,7 +77,7 @@ export default async function PagePreparation({
     <>
       <FilAriane>Préparation · {TITRES[etape]}</FilAriane>
 
-      {/* ── Les six onglets ── */}
+      {/* ── Les sept onglets ── */}
       <div
         style={{
           display: "flex",
@@ -169,9 +172,11 @@ export default async function PagePreparation({
         <EtapePesee athletes={athletes} categories={categories} />
       ) : null}
       {etape === 5 ? (
-        <EtapeProgramme
+        <EtapeProgramme competitionId={comp.id} programme={prog} />
+      ) : null}
+      {etape === 6 ? (
+        <EtapeRecompenses
           competitionId={comp.id}
-          programme={prog}
           recompenses={recs}
           partenaires={comp.partenaires ?? ""}
         />
@@ -195,7 +200,7 @@ export default async function PagePreparation({
         >
           Étape précédente
         </Link>
-        {etape < 5 ? (
+        {etape < 6 ? (
           <Link
             href={`/admin/preparation?etape=${etape + 1}`}
             title="Passer à l'étape suivante ; la saisie est conservée"

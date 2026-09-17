@@ -6,7 +6,14 @@ import { styleBouton } from "@/components/ui";
  * Le bouton d'impression. `window.print()` n'existe que côté navigateur, d'où
  * ce composant client minuscule au milieu d'une page servie par le serveur.
  */
-export function BoutonImprimer({ nombre }: { nombre: number }) {
+export function BoutonImprimer({
+  nombre,
+  mot = "fiche",
+}: {
+  nombre: number;
+  /** Ce qu'on imprime : « fiche », « feuille »… accordé au pluriel par un s. */
+  mot?: string;
+}) {
   return (
     <button
       type="button"
@@ -14,7 +21,7 @@ export function BoutonImprimer({ nombre }: { nombre: number }) {
       onClick={() => window.print()}
       style={styleBouton("vert", { padding: "11px 18px" })}
     >
-      Imprimer {nombre === 1 ? "la fiche" : `les ${nombre} fiches`}
+      Imprimer {nombre === 1 ? `la ${mot}` : `les ${nombre} ${mot}s`}
     </button>
   );
 }

@@ -10,7 +10,8 @@ import {
 } from "@/lib/actions";
 import type { Officiel } from "@/lib/db/schema";
 import type { CategorieVue } from "@/lib/donnees";
-import { Encart, Etiquette } from "@/components/ui";
+import Link from "next/link";
+import { Encart, Etiquette, styleBouton } from "@/components/ui";
 
 /**
  * Étape 3 — les officiels et le corps arbitral.
@@ -248,7 +249,7 @@ export function EtapeOfficiels({
         ) : null}
       </div>
 
-      <div style={{ marginTop: 16 }}>
+      <div style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <BoutonAction
           ton="pointille"
           title="Ajoute un officiel : juge, chronométreur, secrétaire, régie, speaker"
@@ -257,6 +258,13 @@ export function EtapeOfficiels({
         >
           + Ajouter un officiel
         </BoutonAction>
+        <Link
+          href="/admin/impression/officiels"
+          title="La liste des officiels à signer, postes communs puis staff de chaque catégorie"
+          style={styleBouton("creme", { padding: "11px 16px", borderRadius: 9 })}
+        >
+          Imprimer la liste des officiels
+        </Link>
       </div>
 
       <div

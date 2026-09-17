@@ -231,6 +231,35 @@ export function heureFrancaise(v: string): Verdict<{
 }
 
 /**
+ * Rang d'un moment du programme dans la journée, en minutes depuis minuit.
+ * `null` quand l'heure n'est pas lisible (« vers midi », vide) : ces moments
+ * se rangent après les heures connues, dans l'ordre de saisie.
+ */
+export function minutesDuProgramme(heure: string): number | null {
+  const r = heureFrancaise(heure);
+  if (!r.ok || r.valeur === null) return null;
+  return r.valeur.heures * 60 + r.valeur.minutes;
+}
+
+/**
+ * Trie un programme par heure, puis par ordre de saisie. Un moment ajouté
+ * après coup à 12h passe ainsi avant celui de 18h, au lieu de rester en
+ * bas parce qu'il a été créé en dernier.
+ */
+export function trierProgramme<T extends { heure: string; position: number }>(
+  lignes: T[],
+): T[] {
+  return [...lignes].sort((a, b) => {
+    const ma = minutesDuProgramme(a.heure);
+    const mb = minutesDuProgramme(b.heure);
+    if (ma === null && mb === null) return a.position - b.position;
+    if (ma === null) return 1;
+    if (mb === null) return -1;
+    return ma - mb || a.position - b.position;
+  });
+}
+
+/**
  * Date de naissance, au format du sélecteur natif (`AAAA-MM-JJ`).
  *
  * Refusée si elle donne un âge impossible pour un athlète — une année tapée

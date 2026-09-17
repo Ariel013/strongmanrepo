@@ -155,6 +155,16 @@ export default function PageAide() {
           nécessaire. Vous pouvez le consulter depuis votre téléphone pendant la
           compétition.
         </p>
+        <p className="mt-6">
+          <a
+            href="/connexion"
+            title="Ouvre la connexion à l'administration : préparation, plateau, régie"
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+          >
+            Accès à l&apos;administration
+            <span aria-hidden="true">→</span>
+          </a>
+        </p>
       </header>
 
       <nav
@@ -407,6 +417,51 @@ export default function PageAide() {
               plateau.
             </p>
           </Encadre>
+
+          <Carte titre="Le classement des meilleurs clubs">
+            <p>
+              Une fois le classement général de chaque catégorie établi, le
+              rang final de chaque athlète rapporte des points à son club.
+              Toutes les catégories retenues comptent, ensemble.
+            </p>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-bordure text-left text-xs tracking-wide text-encre-3 uppercase">
+                  <th className="py-2 pr-4">Rang final dans sa catégorie</th>
+                  <th className="py-2 text-right">Points pour le club</th>
+                </tr>
+              </thead>
+              <tbody className="text-encre-2">
+                {[
+                  ["1er", "15"],
+                  ["2e", "10"],
+                  ["3e", "5"],
+                  ["4e", "4"],
+                  ["5e", "3"],
+                  ["Tout autre athlète classé", "1"],
+                ].map(([rang, pts]) => (
+                  <tr key={rang} className="border-b border-bordure">
+                    <td className="py-2 pr-4">{rang}</td>
+                    <td className="py-2 text-right font-semibold text-encre">
+                      {pts}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-encre-2">
+              Un club qui place un premier et un sixième marque donc 16 points.
+              À égalité de points, le club qui a le plus de titres passe devant,
+              puis le plus de deuxièmes places, puis de troisièmes. Un athlète
+              sans club, ou invité hors classement, ne rapporte rien à
+              personne : vérifiez le club sur chaque fiche.
+            </p>
+            <p className="text-encre-2">
+              Le classement des clubs se lit sur le plateau, sur la page
+              « Classement des clubs » de l&apos;administration (imprimable) et
+              sur l&apos;écran public du même nom, à choisir dans la régie.
+            </p>
+          </Carte>
         </Section>
 
         {/* ── 4 ───────────────────────────────────────────────────────── */}
@@ -747,9 +802,14 @@ export default function PageAide() {
           fausse validée est toujours plus coûteuse qu&apos;une minute
           d&apos;attente.
         </p>
-        <p className="mt-4">
-          <a href="/connexion" className="underline hover:text-encre">
+        <p className="mt-6">
+          <a
+            href="/connexion"
+            title="Ouvre la connexion à l'administration : préparation, plateau, régie"
+            className="inline-flex items-center gap-2 rounded-xl bg-vert px-6 py-3.5 font-titre text-base font-bold tracking-wide text-white uppercase shadow-sm transition hover:bg-vert-fonce focus:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+          >
             Accès à l&apos;administration
+            <span aria-hidden="true">→</span>
           </a>
         </p>
       </footer>

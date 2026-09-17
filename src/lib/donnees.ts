@@ -22,6 +22,7 @@ import {
   sortie,
 } from "./db/schema";
 import { ageDe } from "./age";
+import { trierProgramme } from "./validation";
 import { couleurCategorie } from "./charte";
 import {
   classementEpreuve,
@@ -449,12 +450,14 @@ export async function officielsDe(competitionId: string) {
     .orderBy(asc(officiel.position));
 }
 
+/** Le programme de la journée, dans l'ordre des heures — voir `trierProgramme`. */
 export async function programmeDe(competitionId: string) {
-  return db
+  const lignes = await db
     .select()
     .from(programme)
     .where(eq(programme.competitionId, competitionId))
     .orderBy(asc(programme.position));
+  return trierProgramme(lignes);
 }
 
 export async function recompensesDe(competitionId: string) {

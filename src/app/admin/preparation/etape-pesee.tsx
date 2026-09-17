@@ -1,8 +1,9 @@
 "use client";
 
 import { C, clubAffiche, nomComplet, virgule } from "@/lib/charte";
+import Link from "next/link";
 import { TitreSection } from "@/components/chrome";
-import { Etiquette } from "@/components/ui";
+import { Etiquette, styleBouton } from "@/components/ui";
 import { BoutonAction, ChampTexte, ChoixListe } from "@/components/saisie";
 import {
   affecterCategorie,
@@ -36,6 +37,15 @@ export function EtapePesee({
         suite="et vérification"
         chapeau="14h00 — 15h00 : accueil, pesée, vérification des équipements. La validation attribue le groupe et le dossard, puis verrouille la ligne."
       />
+      <div style={{ marginBottom: 16 }}>
+        <Link
+          href="/admin/impression/pesee"
+          title="Une feuille de pesée par catégorie : l'officiel note le poids pesé, la table reporte ici"
+          style={styleBouton("creme", { padding: "11px 16px", borderRadius: 9 })}
+        >
+          Imprimer les feuilles de pesée
+        </Link>
+      </div>
 
       <div
         style={{

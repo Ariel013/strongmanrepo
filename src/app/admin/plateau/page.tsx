@@ -10,6 +10,7 @@ import {
   ordrePour,
   passagesDe,
   tableauEpreuve,
+  tableauClubs,
   tableauGeneral,
   tousLesResultats,
   type EpreuveVue,
@@ -179,6 +180,7 @@ export default async function PagePlateau({
 
       <Plateau
         competitionId={comp.id}
+        clubs={tableauClubs(categoriesToutes, vuePublique, athletes, resultats)}
         epreuve={{
           id: epreuveCourante.id,
           nom: epreuveCourante.nom,
