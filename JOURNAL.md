@@ -94,6 +94,19 @@
 - Aucun essai sur matériel réel : ni vidéoprojecteur, ni mur LED, ni téléphone
   de la table.
 
+### 2026-09-17 (3) — Feuille de notation par épreuve
+
+Précision de Kevin : c'est **par épreuve** qu'on imprime, depuis le plateau,
+avec tous les athlètes à venir dans l'ordre de passage — l'arbitre remplit
+ligne à ligne. `/admin/impression/epreuve?epreuve=&categorie=` reprend les
+paramètres du plateau ; bouton « Imprimer la feuille » dans sa barre. Une
+feuille A4 paysage par catégorie, même en passage mélangé : les classements
+ne se mélangent pas, la feuille non plus. Les résultats déjà validés y
+apparaissent préremplis et grisés, pour ne pas être ressaisis. Si la file
+n'est pas construite, l'ordre théorique est imprimé et la feuille le dit.
+
+La fiche par athlète (toutes épreuves) reste, depuis l'étape Athlètes.
+
 ### 2026-09-17 (2) — Fiches de notation papier
 
 Demande de Kevin : imprimer une fiche par athlète, avec des cases vides que

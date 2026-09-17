@@ -146,6 +146,8 @@ Settings → Environment Variables dans le `.env` du poste.
 - **Coupure réseau le jour J** : les écrans publics et la table dépendent tous
   du serveur. Il n'y a pas de repli hors ligne — c'est le principal écart avec
   le poste autonome d'origine. ✅ **Procédure papier en place le 2026-09-17** :
-  `/admin/impression/fiches` imprime une fiche de notation par athlète, dont
-  les cases portent exactement les intitulés du plateau. ⬜ **À imprimer la
-  veille**, un jeu complet, et à garder à la table.
+  depuis le plateau, **« Imprimer la feuille »** sort la feuille de notation de
+  l'épreuve en cours — tous les athlètes dans l'ordre de passage, une ligne à
+  remplir chacun, colonnes aux intitulés exacts de l'écran. ⬜ **À imprimer
+  pour chaque épreuve la veille**, et à garder à la table. (La fiche par
+  athlète, toutes épreuves, reste disponible depuis l'étape Athlètes.)

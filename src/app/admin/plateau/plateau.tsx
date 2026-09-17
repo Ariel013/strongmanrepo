@@ -513,6 +513,14 @@ export function Plateau({
         </button>
 
         <Link
+          href={`/admin/impression/epreuve?epreuve=${epreuve.id}&categorie=${groupeCourantId}`}
+          title="Feuille de notation de cette épreuve : tous les athlètes dans l'ordre de passage, une ligne à remplir chacun. L'arbitre note sur le terrain, la table reporte ici."
+          style={styleBouton("creme")}
+        >
+          Imprimer la feuille
+        </Link>
+
+        <Link
           href="/admin/regie"
           title="Raccourci vers la régie : changer ce qu'affichent les écrans géants sans quitter le plateau"
           style={styleBouton("orange")}
