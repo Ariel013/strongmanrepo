@@ -106,7 +106,7 @@ const ROLES_ADMIS = [
 
 /** Les contenus qu'un écran public sait afficher. */
 const CONTENUS_ADMIS = [
-  "attente", "plateau", "ordre", "verdict",
+  "attente", "plateau", "ordre", "verdict", "resultats",
   "classement", "podium", "mire",
 ] as const;
 

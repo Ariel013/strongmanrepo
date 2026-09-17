@@ -36,6 +36,9 @@ Option 3. Le cycle devient `avenir → plateau → a_saisir → termine`, l'éta
   une ligne par athlète, prérempli avec le relevé de la table — la forme de
   la feuille papier que le jury renvoie. Valider écrit exactement ce que
   valider depuis le plateau écrit, avec la même trace `passage.valide`.
+  « Tout valider » enregistre en une passe toutes les lignes qui portent une
+  valeur, une à une et chacune avec sa trace ; une ligne vide reste en attente
+  et le dit — Zéro et Forfait se décident ligne à ligne, jamais en lot.
 - **Invisible tant que non rempli** : un passage « à saisir » n'est ni au
   classement, ni sur le mur LED, ni dans la file ; la feuille de notation
   l'imprime en ligne vide.

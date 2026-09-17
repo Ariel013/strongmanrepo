@@ -9,6 +9,7 @@ Un ADR se déclenche quand **plusieurs options existaient**. Pas pour acter une
 | [0002](0002-les-niveaux-declares-vivent-en-json-sur-l-athlete.md) | Les niveaux déclarés vivent en JSON sur l'athlète, pas dans une table | adopté |
 | [0003](0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md) | Un seul espace de données : pas de mode démonstration | adopté |
 | [0004](0004-un-passage-peut-attendre-son-resultat.md) | Un passage peut attendre son résultat, plateau libéré | adopté |
+| [0005](0005-un-passage-valide-ne-s-annule-plus-depuis-le-plateau.md) | Un passage validé ne s'annule plus depuis le plateau | adopté |
 
 ## Avant le n° 0001
 

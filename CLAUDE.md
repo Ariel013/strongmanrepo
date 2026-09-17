@@ -25,8 +25,9 @@ L'interface reprend le poste autonome d'origine, conservé tel quel dans
   `src/lib/charte.ts`, qui ne contient que des valeurs de l'original.
 - Un écart avec l'original **se décide et se dit**, il ne s'improvise pas.
   Les trois écarts du portage sont nommés dans son commit et, pour le
-  principal, dans `docs/decisions/0003-*`. Le quatrième — un passage peut
-  attendre son résultat, plateau libéré — est dans `docs/decisions/0004-*`.
+  principal, dans `docs/decisions/0003-*`. Les suivants ont chacun leur ADR :
+  `0004` (un passage peut attendre son résultat), `0005` (un passage validé
+  ne s'annule plus depuis le plateau ; résultats imprimables et diffusables).
 - Devant un doute sur un comportement : **relire `docs/reference/`**, pas
   raisonner sur ce qui semblerait juste.
 

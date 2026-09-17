@@ -31,6 +31,7 @@ import {
 import { versMesure } from "@/lib/classement";
 import { Cadre, Message } from "./commun";
 import { VuePlateau } from "./vues/plateau";
+import { VueResultats } from "./vues/resultats";
 import { VueOrdre } from "./vues/ordre";
 import { VueVerdict } from "./vues/verdict";
 import { VueClassement } from "./vues/classement";
@@ -50,6 +51,7 @@ const CONTENUS = [
   "plateau",
   "ordre",
   "verdict",
+  "resultats",
   "classement",
   "podium",
   "attente",
@@ -207,6 +209,18 @@ export default async function PageEcran({
           {...commun}
           passages={passages}
           mesure={epreuveCourante?.mesure ?? null}
+        />
+      ) : null}
+
+      {contenu === "resultats" ? (
+        <VueResultats
+          {...commun}
+          epreuve={epreuves.find((e) => e.id === epreuveCourante?.id) ?? null}
+          categories={enJeu.length > 0 ? enJeu : categories}
+          epreuves={epreuves}
+          athletes={athletes}
+          competitionId={comp.id}
+          restants={passages.filter((p) => p.statut !== "termine").length}
         />
       ) : null}
 

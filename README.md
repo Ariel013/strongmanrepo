@@ -21,7 +21,7 @@ L'application est en trois parties, aux accès distincts :
 | `/ecran/…` | Mur LED, public | libre, lecture seule |
 | `/aide` | Officiels en formation | libre |
 
-Sept écrans publics : `plateau`, `ordre`, `verdict`, `classement`, `podium`,
+Huit écrans publics : `plateau`, `ordre`, `verdict`, `resultats`, `classement`, `podium`,
 `attente`, `mire`. Chacun s'ouvre en plein écran sur sa sortie vidéo ; la régie
 dit seulement lequel va où.
 

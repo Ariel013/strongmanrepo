@@ -33,11 +33,11 @@
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
   **168/168** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` et `0002` appliquées sur Supabase le 2026-09-16.
-- **Branche** : `main` alignée avec `origin/main` sur `14b8ca5`, poussée le
-  2026-09-16 (vérifié par `git fetch` puis comparaison des SHA).
+- **Branche** : `main` alignée avec `origin/main` sur `efec8a9`, poussée le
+  2026-09-17 (vérifié par `git fetch` puis comparaison des SHA).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
-  les 7 écrans publics servent du vrai contenu, la garde d'accès renvoie 307
+  les 7 écrans publics d'alors servent du vrai contenu, la garde d'accès renvoie 307
   et 401, les 5 en-têtes de sécurité sont posés, le manifeste PWA et ses
   icônes répondent.
 - **Vitesse en ligne** : sur connexion réutilisée, `/ecran/classement` répond
@@ -47,13 +47,36 @@
 
 - **Prochaine action** : rien ne bloque la compétition. Le plus utile
   maintenant est de **se connecter à l'administration en ligne et de dérouler
-  une épreuve de bout en bout** — appel, chrono, validation, mur LED — sur du
-  matériel réel. **Critère de fin** : un passage validé apparaît sur
-  `/ecran/classement` en moins de deux secondes.
+  une épreuve de bout en bout** — appel, chrono, « résultat plus tard »,
+  saisie différée, mur LED — sur du matériel réel. **Critère de fin** : un
+  passage validé apparaît sur `/ecran/classement` en moins de deux secondes,
+  et un passage en attente n'y apparaît pas.
 
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-17 (6) — Un passage validé ne s'annule plus ; les résultats s'impriment et se diffusent
+
+Trois demandes de Kevin, [ADR 0005](docs/decisions/0005-un-passage-valide-ne-s-annule-plus-depuis-le-plateau.md) :
+
+- **Plus d'annulation depuis le plateau** : ni le bouton « Annuler » par ligne
+  des terminés, ni « Annuler la dernière validation ». Une correction passe par
+  la feuille de notation et le juge principal. L'action `rouvrirPassage` reste
+  en base de code, sans bouton, pour un futur parcours « juge principal ».
+- **Résultats imprimables** : `/admin/impression/resultats?epreuve=&categorie=`,
+  une feuille A4 portrait par catégorie, classement recalculé par
+  `tableauEpreuve`, zéros / forfaits / non passés listés sous le classement
+  avec leur motif. Bandeau « définitifs » ou « provisoires · n passages à
+  faire ». Liens depuis la colonne des terminés, l'encadré « Épreuve
+  terminée » et la régie.
+- **Huitième écran public** `/ecran/resultats` : résultats de l'épreuve
+  courante par catégorie (rang, photo, nom, performance, points), bandeau
+  définitif / provisoire. Ajouté au menu de la régie et aux contenus admis.
+  La régie dit maintenant si l'épreuve courante est terminée.
+
+`lint` ✓, `build` ✓, `test` 168/168 (rien d'ajouté : aucune écriture nouvelle).
+Non essayé sur matériel réel.
 
 ### 2026-09-17 (5) — Le plateau se libère avant que le jury ait rendu la valeur
 
@@ -65,7 +88,9 @@ Quatrième état de passage, `a_saisir` → [ADR 0004](docs/decisions/0004-un-pa
 Bouton « Passage fini, résultat plus tard » sur la carte du plateau (refusé
 chrono en marche) : les tours comptés partent avec le passage, le suivant est
 appelé. Tableau « En attente de résultat » sous les trois colonnes, une ligne
-par athlète, prérempli, choix de Kevin (forme de la feuille papier). Tant que
+par athlète, prérempli, choix de Kevin (forme de la feuille papier), avec un
+bouton « Tout valider » demandé ensuite : les lignes renseignées passent en une
+fois, les vides restent en attente et le disent. Tant que
 non validé : ni classement, ni mur LED, ni file ; feuille imprimée en ligne
 vide. Fin d'épreuve et verrou d'annulation exigent zéro passage en attente ;
 « Reconstruire l'ordre » les conserve ; « Annuler la dernière validation »
@@ -73,7 +98,13 @@ renvoie en attente si le plateau est pris. Trace `passage.en_attente`.
 
 `pnpm run lint` ✓, `build` ✓, `test` 168/168 (7 ajoutés sur `libererLePlateau`,
 la reconstruction et le retour en file). Pas de migration : `statut` est du
-texte. Non essayé sur matériel réel.
+texte. Non essayé sur matériel réel. Commit `efec8a9`, poussé sur `origin/main`
+le 2026-09-17 (SHA vérifiés).
+
+Capitalisation : première du projet. Trois leçons montées au coffre, deux
+occurrences ajoutées à des notes existantes, fiche `brain/20-projets/strongman.md`
+créée. La leçon « la référence est l'original, pas l'intuition » reste ici :
+propre au portage.
 
 ### 2026-09-16 — Portage fidèle du front, et une lenteur enfin expliquée
 
@@ -227,6 +258,8 @@ venir » **sans filtrer par compétition** — voir la leçon du 2026-09-17.
 
 ### Un cache « seulement en développement » est un cache absent là où il compte (2026-09-16)
 
+*Au coffre : `brain/10-lecons/un-cache-seulement-en-developpement-est-absent-la-ou-il-compte.md`.*
+
 **Symptôme.** Les pages mettaient 5 à 8 secondes en production, sans que la
 requête SQL elle-même soit lente.
 
@@ -245,6 +278,8 @@ lenteur se **mesure** avant d'être expliquée : c'est le compteur de pools, pas
 le raisonnement, qui a tranché.
 
 ### Des tests qui n'écrivent jamais ne protègent pas les écritures (2026-09-16)
+
+*Au coffre : `brain/10-lecons/des-tests-qui-n-ecrivent-jamais-ne-protegent-pas-les-ecritures.md`.*
 
 **Symptôme.** Trois actions d'écriture plantaient en production —
 `affecterCategorie`, `appelerAuPlateau`, `construireFile` — alors que la suite
@@ -271,6 +306,8 @@ qui décide de l'état de la compétition doit pouvoir être appelé par un test
 
 ### Un test doit être borné à SA compétition, sans exception (2026-09-17)
 
+*Au coffre : `brain/10-lecons/un-test-se-borne-a-son-propre-jeu-de-donnees.md`.*
+
 **Symptôme.** Un test de l'empreinte de fraîcheur échouait par intermittence.
 
 **Cause.** La requête qui cherchait « un passage à venir » n'était filtrée que
@@ -288,6 +325,8 @@ bac à sable et la compétition. Vérifié depuis par un contrôle sur le fichie
 tests lui-même.
 
 ### Un symptôme local ne se reporte pas en production sans l'avoir mesuré (2026-09-16)
+
+*Au coffre : seconde occurrence dans `brain/10-lecons/verifier-chaque-commit-du-decoupage.md`.*
 
 **Symptôme.** J'ai annoncé, dans un rapport et dans `A-FAIRE.md`, que
 `ADMIN_PASSWORD_HASH` était malformée et **bloquait toute connexion, en local
@@ -318,6 +357,8 @@ exactement pareil. Le code était fidèle, l'attente ne l'était pas.
 le code vers ce qu'on croit juste.
 
 ### Un écran qui ne montre que ce qui existe doit dire ce qui manque (2026-09-17)
+
+*Au coffre : seconde occurrence dans `brain/10-lecons/une-fonctionnalite-invisible-est-absente.md`.*
 
 **Symptôme.** Deux athlètes de « Plus de 105 kg », rangés, pesés, numérotés,
 n'apparaissaient pas au plateau — ni dans leur catégorie, ni « toutes

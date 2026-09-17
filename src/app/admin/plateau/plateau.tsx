@@ -35,7 +35,6 @@ import {
   preparerToutes,
   renvoyerEnFile,
   reprendre,
-  rouvrirPassage,
   suspendre,
   validerPassage,
 } from "@/lib/actions";
@@ -460,6 +459,70 @@ export function Plateau({
     });
   }
 
+  /**
+   * Valide d'un coup toutes les lignes en attente qui portent une valeur.
+   *
+   * Une ligne vide n'est pas un zéro : elle reste en attente et se signale.
+   * « Zéro » et « Forfait » se décident ligne à ligne, jamais en lot. Les
+   * lignes se valident une à une, en ordre, chacune avec sa propre trace.
+   */
+  function toutValider() {
+    const pretes: { p: PassageVue; valeur: number; temps: number | null }[] = [];
+    const vides: PassageVue[] = [];
+    for (const p of enAttente) {
+      const s = saisieAttenteDe(p);
+      const v = nombreOuNull(s.valeur);
+      if (v === null) vides.push(p);
+      else pretes.push({ p, valeur: v, temps: nombreOuNull(s.temps) });
+    }
+    if (vides.length > 0) {
+      setSaisiesAttente((m) => {
+        const suite = { ...m };
+        for (const p of vides)
+          suite[p.id] = { ...saisieAttenteDe(p), erreur: "Valeur manquante : reste en attente." };
+        return suite;
+      });
+    }
+    if (pretes.length === 0) {
+      setMessage("Aucune ligne n'a de valeur : rien à valider.");
+      setMessageOk(false);
+      return;
+    }
+    demarrer(async () => {
+      let faits = 0;
+      let refuse = "";
+      for (const { p, valeur, temps } of pretes) {
+        try {
+          const r = await validerPassage(p.id, {
+            statut: "ok",
+            valeur,
+            tempsS: temps,
+            tours: p.tours ?? [],
+          });
+          if (r.ok) faits++;
+          else refuse = r.erreur ?? "Enregistrement impossible.";
+        } catch {
+          refuse = "Le serveur n'a pas répondu.";
+        }
+        if (refuse) {
+          setSaisiesAttente((m) => ({
+            ...m,
+            [p.id]: { ...saisieAttenteDe(p), erreur: refuse },
+          }));
+          break;
+        }
+      }
+      const restent = vides.length + (pretes.length - faits);
+      setMessage(
+        `${faits} passage${faits > 1 ? "s" : ""} validé${faits > 1 ? "s" : ""}` +
+          (restent > 0
+            ? `, ${restent} encore en attente${refuse ? ` — ${refuse}` : ""}`
+            : "."),
+      );
+      setMessageOk(!refuse);
+    });
+  }
+
   /** Après une validation, l'athlète suivant de la même catégorie est appelé. */
   function appelerSuivant(passageValide: string) {
     const cat = parId.get(
@@ -482,8 +545,8 @@ export function Plateau({
   // ni en file, ni au plateau, ni un résultat du jury.
   const toutEstRendu =
     avenir.length === 0 && auPlateau.length === 0 && enAttente.length === 0;
-  const annulationOuverte = termines.length > 0 && !toutEstRendu;
-  const annulationVerrouillee = termines.length > 0 && toutEstRendu;
+  const epreuveTerminee = termines.length > 0 && toutEstRendu;
+  const lienResultats = `/admin/impression/resultats?epreuve=${epreuve.id}&categorie=${groupeCourantId}`;
 
   return (
     <div>
@@ -1600,42 +1663,36 @@ export function Plateau({
               );
             })}
 
-            {annulationOuverte ? (
-              <button
-                type="button"
-                title="Annule la dernière validation : sa performance est effacée. L'athlète revient au plateau s'il est libre, sinon dans « En attente de résultat »"
-                onClick={() =>
-                  agir(() => rouvrirPassage(termines[0].id))
-                }
-                style={styleBouton("rouge", {
-                  width: "100%",
-                  marginTop: 14,
-                  padding: 12,
-                  fontWeight: 600,
-                })}
-              >
-                ← Annuler la dernière validation
-              </button>
-            ) : null}
-
-            {annulationVerrouillee ? (
+            {epreuveTerminee ? (
               <div
                 style={{
                   marginTop: 14,
                   padding: "12px 14px",
                   borderRadius: 10,
-                  background: C.papier2,
-                  border: `1px solid ${C.bordure2}`,
-                  color: C.encre3,
+                  background: "rgba(11,146,55,.07)",
+                  border: "1px solid rgba(11,146,55,.18)",
+                  color: C.vertFonce,
                   fontSize: 13,
                   lineHeight: 1.45,
                   fontWeight: 600,
                   textWrap: "pretty",
                 }}
               >
-                Épreuve terminée pour cette catégorie : l&apos;annulation est
-                verrouillée. Une correction passe désormais par la feuille de
-                notation et la signature du juge principal.
+                Épreuve terminée pour {melange ? "toutes les catégories" : "cette catégorie"} :
+                {" "}{termines.length} passage{termines.length > 1 ? "s" : ""} validé{termines.length > 1 ? "s" : ""}.
+                <Link
+                  href={lienResultats}
+                  style={styleBouton("vert", {
+                    display: "block",
+                    marginTop: 10,
+                    padding: 12,
+                    borderRadius: 10,
+                    textAlign: "center",
+                    fontSize: 14,
+                  })}
+                >
+                  Imprimer les résultats
+                </Link>
               </div>
             ) : null}
           </div>
@@ -1651,6 +1708,38 @@ export function Plateau({
           }}
         >
           <EnteteColonne>Passages terminés · {termines.length}</EnteteColonne>
+          {termines.length > 0 ? (
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                alignItems: "center",
+                flexWrap: "wrap",
+                padding: "10px 16px",
+                borderTop: `1px solid ${C.papier3}`,
+                fontSize: 12,
+                color: C.encre4,
+                lineHeight: 1.45,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 160 }}>
+                Un passage validé ne s&apos;annule pas ici. Une correction passe
+                par la feuille de notation et la signature du juge principal.
+              </div>
+              <Link
+                href={lienResultats}
+                title="Résultats de cette épreuve, classés par catégorie, prêts à signer — provisoires tant que des passages restent à faire"
+                style={styleBouton("creme", {
+                  flex: "none",
+                  padding: "7px 11px",
+                  borderRadius: 8,
+                  fontSize: 12,
+                })}
+              >
+                Imprimer les résultats
+              </Link>
+            </div>
+          ) : null}
           {termines.map((p) => {
             const a = parId.get(p.athleteId);
             if (!a) return null;
@@ -1720,21 +1809,6 @@ export function Plateau({
                     {texte}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  title="Annule l'officialisation et renvoie le passage dans À venir"
-                  onClick={() =>
-                    agir(() => renvoyerEnFile(p.id))
-                  }
-                  style={styleBouton("blanc", {
-                    padding: "7px 11px",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    flex: "none",
-                  })}
-                >
-                  Annuler
-                </button>
               </div>
             );
           })}
@@ -1770,6 +1844,10 @@ export function Plateau({
           </EnteteColonne>
           <div
             style={{
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              flexWrap: "wrap",
               padding: "10px 16px",
               fontSize: 13,
               color: C.encre3,
@@ -1777,9 +1855,25 @@ export function Plateau({
               borderBottom: `1px solid ${C.papier3}`,
             }}
           >
-            Ces athlètes sont passés, le plateau a été libéré. Recopiez la
-            feuille du jury ligne à ligne : un passage ne compte au classement
-            qu&apos;une fois validé ici.
+            <div style={{ flex: 1, minWidth: 240 }}>
+              Ces athlètes sont passés, le plateau a été libéré. Recopiez la
+              feuille du jury ligne à ligne : un passage ne compte au classement
+              qu&apos;une fois validé ici.
+            </div>
+            <button
+              type="button"
+              title="Valide d'un coup toutes les lignes qui portent une valeur. Une ligne vide reste en attente ; Zéro et Forfait se décident ligne à ligne."
+              onClick={toutValider}
+              style={styleBouton("vert", {
+                flex: "none",
+                padding: "11px 16px",
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+              })}
+            >
+              Tout valider ({enAttente.length})
+            </button>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table

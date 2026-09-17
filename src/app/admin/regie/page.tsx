@@ -11,6 +11,7 @@ import {
   categoriesDe,
   competitionCourante,
   epreuvesDe,
+  passagesDe,
   sortiesDe,
   tableauEpreuve,
   tousLesResultats,
@@ -49,6 +50,13 @@ export default async function PageRegie() {
   const epreuveCourante =
     epreuves.find((e) => e.id === comp.epreuveCouranteId) ?? epreuves[0];
   const resultats = await tousLesResultats(comp.id, epreuves);
+  const passages = epreuveCourante
+    ? await passagesDe(
+        epreuveCourante.id,
+        athletes.filter((a) => a.categorieId !== null).map((a) => a.id),
+      )
+    : [];
+  const restants = passages.filter((p) => p.statut !== "termine").length;
 
   const parCategorie = epreuveCourante
     ? categories.map((cat) => {
@@ -102,6 +110,8 @@ export default async function PageRegie() {
             ? `${epreuveCourante.nom} · ${tempsImpartiLisible(epreuveCourante.tempsLimiteS)}`
             : "—"
         }
+        epreuveCouranteId={epreuveCourante?.id ?? null}
+        restants={restants}
         parCategorie={parCategorie}
       />
 

@@ -563,6 +563,9 @@ Titre `libPlateau` (« Au plateau » ou « Au plateau · 2 athlètes »).
    `annulationOuverte` ; remplacé par un encadré gris explicatif quand
    `annulationVerrouillee` (épreuve terminée pour la catégorie : la correction
    passe par la feuille de notation signée).
+   > **Écart du portage (2026-09-17, [ADR 0005](decisions/0005-un-passage-valide-ne-s-annule-plus-depuis-le-plateau.md))** :
+   > aucune annulation. À la place, quand tout est rendu, un encadré vert
+   > « Épreuve terminée » avec « Imprimer les résultats ».
 
 #### Colonne 3 — « Passages terminés · N » (`termines`, du plus récent au plus ancien)
 
@@ -570,6 +573,11 @@ Pastille dossard, nom (rouge `#A6371C` si forfait), résultat `t.texte`
 (valeur + unité, éventuellement « · temps s », ou « ZÉRO » / « FORFAIT » en
 rouge), fond de ligne `#FBEFEA` pour un zéro ou un forfait. Bouton « Annuler »
 (`t.renvoyer`) qui renvoie le passage dans « À venir ».
+> **Écart du portage** : pas de bouton « Annuler » par ligne (ADR 0005). En
+> tête de colonne, un rappel et un lien « Imprimer les résultats » vers
+> `/admin/impression/resultats`. Le portage ajoute aussi un huitième écran
+> public, `/ecran/resultats` (résultats de l'épreuve par catégorie), et son
+> entrée dans la régie.
 
 ### 6.5 « Ordre de passage par catégorie » (si `melange`)
 
