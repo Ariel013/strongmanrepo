@@ -34,8 +34,13 @@
   **193/193** ✓ (2026-09-19). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
-- **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
-  2026-09-17 (vérifié par comparaison des SHA).
+- **Branche** : `main` alignée avec `origin/main` sur `c46b319`, poussée le
+  2026-09-19 (vérifié par comparaison des SHA). Le commit de capitalisation
+  qui suit n'est pas compté ici.
+- **Dernier déploiement vérifié** : `c46b319`, le 2026-09-19 — statut Vercel
+  `success`, et `/aide` en ligne porte le texte des alertes de pesée, propre
+  à ce commit. **Non vu à l'écran** : les alertes elles-mêmes à l'étape Pesée,
+  derrière la connexion.
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
   les 7 écrans publics d'alors servent du vrai contenu, la garde d'accès renvoie 307
@@ -46,6 +51,9 @@
   au-dessus du plancher réseau. Le reste est le trajet Abidjan → `cpt1` →
   `dub1`, qui ne se règle pas depuis le code.
 
+- **À contrôler par Kevin, deux minutes** : à l'étape Pesée en ligne, un poids
+  au-dessus du déclaré (bandeau ambre), un poids hors de la catégorie annoncée
+  (bandeau rouge), et le décompte au-dessus de la liste.
 - **Prochaine action** : rien ne bloque la compétition. Le plus utile
   maintenant est de **se connecter à l'administration en ligne et de dérouler
   une épreuve de bout en bout** — appel, chrono, « résultat plus tard »,
@@ -73,6 +81,12 @@ réel ni en ligne.
 Suite : commit `e96805c` poussé (SHA vérifiés), statut Vercel `success`,
 `/api/sante` en ordre en ligne. Le mode d'emploi, étape Pesée, explique les
 deux alertes et qu'elles ne bloquent rien. `lint` ✓, `build` ✓.
+
+Puis : phrase fausse du mode d'emploi corrigée (« la validation attribue le
+dossard » — il se saisit à la main, la validation l'exige). Commit `c46b319`
+poussé, déploiement vérifié par le contenu de `/aide` en ligne. Le chapeau de
+l'étape Pesée garde la formule de l'original, laissée telle quelle.
+Capitalisation : deux occurrences ajoutées au coffre, fiche projet complétée.
 
 ### 2026-09-17 (24) — Le mode d'emploi rattrape tout ce qui a été fait
 
@@ -643,6 +657,34 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Un libellé hérité de l'original ne dit pas ce que fait le bouton (2026-09-19)
+
+*Au coffre : seconde occurrence dans `brain/10-lecons/une-consigne-executable-se-redige-contre-le-code.md`.*
+
+**Symptôme.** Le mode d'emploi disait que valider la pesée « attribue le
+dossard ». Personne ne l'avait signalé.
+
+**Cause.** La phrase vient du chapeau de l'écran d'origine, repris au portage.
+Dans le code, le dossard se saisit à la main et la validation le réclame. La
+réécriture du mode d'emploi « contre le code » (session 24) l'avait laissée
+passer : elle ressemblait à une citation de l'écran, donc à un fait.
+
+**Règle.** Dans le mode d'emploi, un verbe d'action prêté au logiciel
+(« attribue », « calcule », « range ») se vérifie dans l'action serveur, pas
+dans le libellé de l'écran — même quand ce libellé vient de l'original.
+
+### Un déploiement se prouve par un contenu propre au commit (2026-09-19)
+
+*Au coffre : troisième occurrence dans `brain/10-lecons/verifier-chaque-commit-du-decoupage.md`.*
+
+**Symptôme.** Statut Vercel `pending` alors que la production servait déjà le
+nouveau build ; au push précédent, `success` sans preuve que l'alias suivait.
+
+**Règle.** Après un push, chercher sur une page publique (`/aide`) une phrase
+qui n'existe que dans le commit, et vérifier que l'ancienne a disparu. Le
+statut se lit sans `gh` : `api.github.com/repos/Ariel013/strongmanrepo/commits/<sha>/status`.
+Ce qui est derrière la connexion se dit « déployé, non vu à l'écran ».
 
 ### Un champ qui se resynchronise depuis le serveur écrase la frappe en cours (2026-09-17)
 
