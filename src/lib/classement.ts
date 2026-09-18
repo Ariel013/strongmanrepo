@@ -427,3 +427,86 @@ export function incoherencesCategories(cats: BornesCategorie[]): string[] {
   }
   return soucis;
 }
+
+/* ── Alertes de pesée ─────────────────────────────────────────────────── */
+
+export interface CategorieBornee extends BornesCategorie {
+  id: string;
+}
+
+export interface AlertesPesee {
+  /** Le poids pesé dépasse le poids annoncé à l'inscription, de `ecart` kg. */
+  depassement: { declare: number; ecart: number } | null;
+  /**
+   * Le poids pesé sort de la catégorie annoncée. `reelle` est la catégorie
+   * dont il relève, `null` si aucune catégorie retenue ne l'accepte.
+   */
+  sortie: { annoncee: string; reelle: string | null } | null;
+}
+
+/** La catégorie qui accepte ce poids : `poidsMin < poids <= poidsMax`. */
+export function categoriePourPoids<T extends BornesCategorie>(
+  poids: number | null,
+  cats: T[],
+): T | undefined {
+  if (poids === null) return undefined;
+  return cats.find(
+    (c) =>
+      (c.poidsMin === null || poids > c.poidsMin) &&
+      (c.poidsMax === null || poids <= c.poidsMax),
+  );
+}
+
+/**
+ * Compare le poids pesé à ce que l'athlète avait annoncé.
+ *
+ * Deux constats distincts, du moins grave au plus grave :
+ * - il pèse plus que déclaré, mais reste dans sa catégorie ;
+ * - il sort de la catégorie annoncée — celle qu'on lui a affectée, ou à
+ *   défaut celle que son poids déclaré désignait.
+ *
+ * Ce sont des alertes, pas des refus : l'officiel de pesée décide. Un invité
+ * hors classement n'a pas de catégorie à quitter ; seul le dépassement le
+ * concerne.
+ */
+export function alertesPesee(
+  a: {
+    poidsCorps: number | null;
+    poidsDeclare: number | null;
+    categorieId: string | null;
+    horsClassement: boolean;
+  },
+  cats: CategorieBornee[],
+): AlertesPesee {
+  const rien: AlertesPesee = { depassement: null, sortie: null };
+  if (a.poidsCorps === null) return rien;
+
+  const depassement =
+    a.poidsDeclare !== null && a.poidsCorps > a.poidsDeclare
+      ? {
+          declare: a.poidsDeclare,
+          // Un dixième de kilo : la précision de la bascule et de la colonne.
+          ecart: Math.round((a.poidsCorps - a.poidsDeclare) * 10) / 10,
+        }
+      : null;
+  if (a.horsClassement) return { depassement, sortie: null };
+
+  const reelle = categoriePourPoids(a.poidsCorps, cats);
+  const affectee = cats.find((c) => c.id === a.categorieId);
+  const declaree = categoriePourPoids(a.poidsDeclare, cats);
+  // L'affectation prime ; mais une fois la pesée validée elle suit le poids
+  // pesé, et c'est alors le poids déclaré qui garde la mémoire de l'annonce.
+  const annoncee =
+    affectee && affectee.id !== reelle?.id
+      ? affectee
+      : declaree && declaree.id !== reelle?.id
+        ? declaree
+        : undefined;
+
+  return {
+    depassement,
+    sortie: annoncee
+      ? { annoncee: annoncee.nom, reelle: reelle?.nom ?? null }
+      : null,
+  };
+}

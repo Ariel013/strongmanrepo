@@ -24,14 +24,14 @@
 
 ## 📍 État actuel & prochaine action
 
-*(Mis à jour le 2026-09-17.)*
+*(Mis à jour le 2026-09-19.)*
 
 - **Front** : portage fidèle du poste autonome terminé. Relevé automatique :
   **96 % des textes visibles** de l'original retrouvés ; les 4 % restants sont
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **179/179** ✓ (2026-09-17). Les routes répondent 200 sur un build de production local.
+  **193/193** ✓ (2026-09-19). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `2210a22`, poussée le
@@ -56,6 +56,19 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-19 (25) — Deux alertes de couleur à la pesée
+
+Kevin : savoir quand un athlète dépasse son poids déclaré, et quand il sort
+de la catégorie annoncée. `alertesPesee` (`classement.ts`, pure, testée § 22) :
+**ambre** = pesé au-dessus du déclaré mais même catégorie ; **rouge** = hors de
+la catégorie annoncée (l'affectée, à défaut celle du poids déclaré — qui garde
+la mémoire de l'annonce une fois la validation passée). Affichées sous la
+ligne à l'étape Pesée, conservées après validation, décompte au-dessus de la
+liste. Ce sont des alertes, pas des refus : l'officiel décide — écart avec
+l'original noté dans la cartographie § 4.5. Un invité hors classement n'a que
+l'alerte ambre. `lint` ✓, `build` ✓, `test` 193/193. Non essayé sur matériel
+réel ni en ligne.
 
 ### 2026-09-17 (24) — Le mode d'emploi rattrape tout ce qui a été fait
 

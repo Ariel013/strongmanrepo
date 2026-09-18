@@ -2,6 +2,7 @@
 
 import { C, clubAffiche, nomComplet, virgule } from "@/lib/charte";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { TitreSection } from "@/components/chrome";
 import { Etiquette, styleBouton } from "@/components/ui";
 import { BoutonAction, ChampTexte, ChoixListe } from "@/components/saisie";
@@ -11,6 +12,7 @@ import {
   modifierAthlete,
   validerPesee,
 } from "@/lib/actions";
+import { alertesPesee, categoriePourPoids } from "@/lib/classement";
 import type { CategorieVue, FicheAthlete } from "@/lib/donnees";
 
 /**
@@ -29,6 +31,12 @@ export function EtapePesee({
 }) {
   const valides = athletes.filter((a) => a.peseeValidee).length;
   const peses = athletes.filter((a) => a.poidsCorps !== null).length;
+  const retenues = categories.filter((c) => c.active);
+  const alertes = athletes.map((a) => alertesPesee(a, retenues));
+  const sorties = alertes.filter((x) => x.sortie).length;
+  const depassements = alertes.filter(
+    (x) => x.depassement && !x.sortie,
+  ).length;
 
   return (
     <div>
@@ -46,6 +54,32 @@ export function EtapePesee({
           Imprimer les feuilles de pesée
         </Link>
       </div>
+
+      {sorties + depassements > 0 ? (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            marginBottom: 12,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          {sorties > 0 ? (
+            <span style={{ ...styleAlerte("rouge"), marginTop: 0 }}>
+              {sorties} athlète{sorties > 1 ? "s" : ""} hors de la catégorie
+              annoncée
+            </span>
+          ) : null}
+          {depassements > 0 ? (
+            <span style={{ ...styleAlerte("ambre"), marginTop: 0 }}>
+              {depassements} athlète{depassements > 1 ? "s" : ""} au-dessus du
+              poids déclaré
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       <div
         style={{
@@ -95,14 +129,9 @@ function LignePesee({
   const fond = verrou ? C.papier2 : C.papier;
 
   /** Le groupe déduit du poids, à titre indicatif tant que rien n'est validé. */
-  const deduite = categories
-    .filter((c) => c.active)
-    .find(
-      (c) =>
-        a.poidsCorps !== null &&
-        (c.poidsMin === null || a.poidsCorps > c.poidsMin) &&
-        (c.poidsMax === null || a.poidsCorps <= c.poidsMax),
-    );
+  const retenues = categories.filter((c) => c.active);
+  const deduite = categoriePourPoids(a.poidsCorps, retenues);
+  const { depassement, sortie } = alertesPesee(a, retenues);
 
   const empeche =
     a.poidsCorps === null
@@ -252,6 +281,44 @@ function LignePesee({
           {empeche}
         </div>
       ) : null}
+
+      {/* Les alertes restent après la validation : l'officiel a décidé en les
+          voyant, et la table doit pouvoir le retrouver en cas de réclamation. */}
+      {sortie && a.poidsCorps !== null ? (
+        <div role="alert" style={styleAlerte("rouge")}>
+          Sort de la catégorie annoncée — pesé {virgule(a.poidsCorps)} kg, hors
+          de « {sortie.annoncee} ».{" "}
+          {sortie.reelle
+            ? `Ce poids relève de « ${sortie.reelle} ».`
+            : "Aucune catégorie retenue n'accepte ce poids."}
+        </div>
+      ) : null}
+      {depassement && a.poidsCorps !== null ? (
+        <div role="status" style={styleAlerte("ambre")}>
+          Au-dessus du poids déclaré — pesé {virgule(a.poidsCorps)} kg pour{" "}
+          {virgule(depassement.declare)} kg annoncés, soit +
+          {virgule(depassement.ecart)} kg.
+          {sortie ? "" : " Reste dans sa catégorie."}
+        </div>
+      ) : null}
     </div>
   );
+}
+
+/** Rouge : l'athlète change de catégorie. Ambre : il a seulement grossi. */
+function styleAlerte(ton: "rouge" | "ambre"): CSSProperties {
+  const rouge = ton === "rouge";
+  return {
+    marginTop: 10,
+    padding: "10px 12px",
+    borderRadius: 9,
+    background: rouge ? C.rougeFond : C.ambreFond,
+    border: `1px solid ${rouge ? C.rougeBord : C.ambreBord}`,
+    borderLeft: `4px solid ${rouge ? C.rouge : C.ambreTrait}`,
+    color: rouge ? C.rougeFonce : C.ambreEncre,
+    fontSize: 13,
+    lineHeight: 1.45,
+    fontWeight: 600,
+    textWrap: "pretty",
+  };
 }

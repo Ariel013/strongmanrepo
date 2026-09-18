@@ -35,6 +35,7 @@ import {
 import {
   classementClubs,
   classementEpreuve,
+  alertesPesee,
   incoherencesCategories,
   plusPetitGagne,
   versMesure,
@@ -1005,6 +1006,67 @@ async function principal() {
         { nom: "B", poidsMin: 105, poidsMax: 140 },
       ]).length,
       2,
+    );
+
+    /* ── 22. Alertes de pesée ── */
+    console.log("\n22. Pesée : dépassement du poids déclaré, sortie de catégorie");
+    const catsPesee = [
+      { id: "m", nom: "Moins de 105 kg", poidsMin: null, poidsMax: 105 },
+      { id: "p", nom: "Plus de 105 kg", poidsMin: 105, poidsMax: null },
+    ];
+    const pese = (
+      poidsCorps: number | null,
+      poidsDeclare: number | null,
+      categorieId: string | null = null,
+      horsClassement = false,
+    ) => alertesPesee({ poidsCorps, poidsDeclare, categorieId, horsClassement }, catsPesee);
+
+    egal("sans poids pesé, aucune alerte", pese(null, 100, "m"), {
+      depassement: null,
+      sortie: null,
+    });
+    egal("pesé sous le déclaré : aucune alerte", pese(98.5, 100, "m"), {
+      depassement: null,
+      sortie: null,
+    });
+    egal("pesé au-dessus du déclaré, même catégorie : dépassement seul", pese(102.3, 100, "m"), {
+      depassement: { declare: 100, ecart: 2.3 },
+      sortie: null,
+    });
+    egal("105 kg pile reste en Moins de 105", pese(105, 104, "m").sortie, null);
+    egal("sort de la catégorie affectée : les deux alertes", pese(106.2, 104, "m"), {
+      depassement: { declare: 104, ecart: 2.2 },
+      sortie: { annoncee: "Moins de 105 kg", reelle: "Plus de 105 kg" },
+    });
+    egal(
+      "sans affectation, le poids déclaré désigne la catégorie annoncée",
+      pese(106, 104).sortie,
+      { annoncee: "Moins de 105 kg", reelle: "Plus de 105 kg" },
+    );
+    egal(
+      "après validation, l'affectation suit le poids pesé : l'alerte reste",
+      pese(106, 104, "p").sortie,
+      { annoncee: "Moins de 105 kg", reelle: "Plus de 105 kg" },
+    );
+    egal(
+      "descendre de catégorie est aussi une sortie, sans dépassement",
+      pese(103, 108, "p"),
+      { depassement: null, sortie: { annoncee: "Plus de 105 kg", reelle: "Moins de 105 kg" } },
+    );
+    egal("un invité hors classement n'a pas de catégorie à quitter", pese(106, 104, null, true), {
+      depassement: { declare: 104, ecart: 2 },
+      sortie: null,
+    });
+    egal(
+      "aucune catégorie n'accepte le poids : la sortie le dit",
+      alertesPesee(
+        { poidsCorps: 105.6, poidsDeclare: null, categorieId: "m", horsClassement: false },
+        [
+          { id: "m", nom: "Moins", poidsMin: null, poidsMax: 105.5 },
+          { id: "p", nom: "Plus", poidsMin: 105.6, poidsMax: null },
+        ],
+      ).sortie,
+      { annoncee: "Moins", reelle: null },
     );
 
     // La mesure lue en base ne doit jamais fausser un classement en silence.

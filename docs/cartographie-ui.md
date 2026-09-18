@@ -424,6 +424,18 @@ une fois la ligne verrouillée.
 
 Pied : `resumePesee` (« 8 pesée(s) validée(s) sur 12. … »).
 
+**Écart assumé (2026-09-19, demande de Kevin)** — deux alertes de couleur sous
+la ligne, calculées par `alertesPesee` (`src/lib/classement.ts`) :
+
+- **ambre** (`#FFF6E8` / `#E8A317`) : le poids pesé dépasse le poids déclaré,
+  l'athlète reste dans sa catégorie ;
+- **rouge** (`#FBEFEA` / `#C4361F`) : le poids pesé sort de la catégorie
+  annoncée — celle affectée, à défaut celle que désignait le poids déclaré.
+
+Là où l'original **refusait** un poids hors des bornes de la catégorie choisie,
+le portage **alerte** et laisse l'officiel décider. Les alertes restent
+visibles après validation ; un décompte les reprend au-dessus de la liste.
+
 ### 4.6 Étape 6 — Programme (`etape5`)
 
 > **Écart du portage (2026-09-17, demande de Kevin)** : les récompenses et le
