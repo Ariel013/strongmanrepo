@@ -70,6 +70,10 @@ l'original noté dans la cartographie § 4.5. Un invité hors classement n'a que
 l'alerte ambre. `lint` ✓, `build` ✓, `test` 193/193. Non essayé sur matériel
 réel ni en ligne.
 
+Suite : commit `e96805c` poussé (SHA vérifiés), statut Vercel `success`,
+`/api/sante` en ordre en ligne. Le mode d'emploi, étape Pesée, explique les
+deux alertes et qu'elles ne bloquent rien. `lint` ✓, `build` ✓.
+
 ### 2026-09-17 (24) — Le mode d'emploi rattrape tout ce qui a été fait
 
 Kevin : « est-ce qu'il contient tout ? » Non. Réécrit contre le code : les

@@ -306,10 +306,27 @@ export default function PageAide() {
                   Imprimez d&apos;abord les <strong>feuilles de pesée</strong>,
                   une par catégorie. À la balance, l&apos;officiel note le poids
                   et signe. La table reporte ensuite ici : elle saisit le
-                  poids, le logiciel propose la catégorie, elle valide. La
-                  validation attribue le dossard et verrouille la ligne. Sans
-                  poids, pas de validation : un athlète sans poids ne se classe
-                  nulle part.
+                  poids et le dossard, le logiciel propose la catégorie, elle
+                  valide. La validation fixe la catégorie et verrouille la
+                  ligne. Sans poids ou sans dossard, pas de validation : un
+                  athlète sans poids ne se classe nulle part.
+                </p>
+                <p>
+                  Dès qu&apos;un poids est saisi, le logiciel le compare à ce
+                  que l&apos;athlète avait annoncé et affiche, sous sa ligne,
+                  jusqu&apos;à deux alertes. En <strong>ambre</strong> : il
+                  pèse plus que son poids déclaré, mais reste dans sa
+                  catégorie — l&apos;écart est donné en kilos. En{" "}
+                  <strong>rouge</strong> : son poids le fait sortir de la
+                  catégorie annoncée, et l&apos;alerte nomme celle dont il
+                  relève désormais. Un décompte des deux reprend le tout
+                  au-dessus de la liste.
+                </p>
+                <p>
+                  Ces alertes ne bloquent rien : c&apos;est l&apos;officiel de
+                  pesée qui décide, et la table valide ensuite. Elles restent
+                  affichées après la validation, pour qu&apos;on les retrouve
+                  en cas de réclamation.
                 </p>
                 <p>
                   Le dossard n&apos;est pas décoratif : il fixe l&apos;ordre de
