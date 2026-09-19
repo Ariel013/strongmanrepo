@@ -898,6 +898,13 @@ Palette (l. 1882-1886) : nuit `#0A0D0B` / `#FCFAF6`, jour `#FCFAF6` / `#141210`.
    catégories », deux athlètes de catégories différentes concourent simultanément sur le
    même chronomètre.
 
+   > **Écart du portage (2026-09-20, [ADR 0006](decisions/0006-deux-athletes-de-la-meme-categorie-au-plateau.md))** :
+   > en passage `paire`, **deux** athlètes de la même catégorie sont au plateau
+   > ensemble, sur le même chronomètre. Un troisième appel est refusé. Le
+   > classement ne change pas : ce n'est pas un duel, chacun est classé sur sa
+   > performance. Le comité choisit le format — solo ou paires — en tête de
+   > l'étape Épreuves.
+
 7. **La catégorie qui gouverne le plateau est celle de l'athlète, pas celle du passage.**
    `groupeDuPassage(p)` (l. 895-898) lit `athlete.groupeId` (ou `"sans"`), jamais
    `p.groupeId`. Réaffecter un athlète change donc la mécanique d'appel de ses passages

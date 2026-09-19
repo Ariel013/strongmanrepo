@@ -71,6 +71,8 @@ interface EpreuvePlateau {
   critere: string | null;
   niveau: boolean;
   tours: boolean;
+  /** Deux athlètes de la même catégorie passent ensemble (ADR 0006). */
+  paire: boolean;
   ateliers: string | null;
   distanceTotale: string | null;
 }
@@ -628,16 +630,57 @@ export function Plateau({
     });
   }
 
-  /** Après une validation, l'athlète suivant de la même catégorie est appelé. */
+  /** Les prochains de la file pour une catégorie : deux en passage par paires. */
+  function prochainsDe(categorieId: string | null | undefined) {
+    return avenir
+      .filter((p) => parId.get(p.athleteId)?.categorieId === categorieId)
+      .slice(0, epreuve.paire ? 2 : 1);
+  }
+
+  /** Appelle les passages l'un après l'autre et s'arrête au premier refus. */
+  async function appelerTous(aAppeler: { id: string }[]) {
+    for (const p of aAppeler) {
+      const r = await appelerAuPlateau(p.id);
+      if (!r.ok) return r;
+    }
+    return { ok: true };
+  }
+
+  /**
+   * Après une validation, les suivants de la même catégorie sont appelés. En
+   * passage par paires, seulement quand l'autre athlète de la paire a quitté
+   * le plateau lui aussi : on n'apparie pas un nouveau venu avec quelqu'un
+   * dont l'essai est fini.
+   */
   function appelerSuivant(passageValide: string) {
     const cat = parId.get(
       passages.find((p) => p.id === passageValide)?.athleteId ?? "",
     )?.categorieId;
-    const suivant = avenir.find(
-      (p) => parId.get(p.athleteId)?.categorieId === cat,
+    const encoreLa = auPlateau.some(
+      (p) =>
+        p.id !== passageValide &&
+        parId.get(p.athleteId)?.categorieId === cat,
     );
-    if (suivant) agir(() => appelerAuPlateau(suivant.id));
+    if (epreuve.paire && encoreLa) return;
+    const suivants = prochainsDe(cat);
+    if (suivants.length > 0) agir(() => appelerTous(suivants));
   }
+
+  /**
+   * La paire à appeler : la catégorie affichée, ou en vue « toutes » celle du
+   * premier de la file. Personne tant que cette catégorie occupe le plateau.
+   */
+  const categorieDeLaPaire = epreuve.paire
+    ? parId.get(avenir[0]?.athleteId ?? "")?.categorieId
+    : undefined;
+  const paireSuivante =
+    epreuve.paire &&
+    avenir.length > 0 &&
+    !auPlateau.some(
+      (p) => parId.get(p.athleteId)?.categorieId === categorieDeLaPaire,
+    )
+      ? prochainsDe(categorieDeLaPaire)
+      : [];
 
   /* ── Rendu ────────────────────────────────────────────────────────── */
 
@@ -1124,9 +1167,39 @@ export function Plateau({
             const a = parId.get(p.athleteId);
             if (!a) return null;
             const cat = catDe(p.athleteId);
+            // En passage par paires, la file se lit deux par deux dans chaque
+            // catégorie : un intertitre ouvre chaque paire, et dit quand le
+            // dernier d'un effectif impair passera seul.
+            const duGroupe = epreuve.paire
+              ? avenir.filter(
+                  (q) =>
+                    parId.get(q.athleteId)?.categorieId === a.categorieId,
+                )
+              : [];
+            const place = duGroupe.findIndex((q) => q.id === p.id);
+            const ouvreUnePaire = epreuve.paire && place % 2 === 0;
+            const seul = ouvreUnePaire && place === duGroupe.length - 1;
             return (
+              <div key={p.id}>
+              {ouvreUnePaire ? (
+                <div
+                  style={{
+                    padding: "6px 16px",
+                    borderTop: `1px solid ${C.papier3}`,
+                    background: C.papier2,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: ".08em",
+                    textTransform: "uppercase",
+                    color: place === 0 ? C.orangeFonce : C.encre4,
+                  }}
+                >
+                  {place === 0 ? "Prochaine paire" : `Paire n° ${place / 2 + 1} à venir`}
+                  {melange && cat ? ` · ${cat.nom}` : ""}
+                  {seul ? " · passe seul" : ""}
+                </div>
+              ) : null}
               <div
-                key={p.id}
                 style={{
                   display: "flex",
                   gap: 12,
@@ -1212,6 +1285,7 @@ export function Plateau({
                   Appeler
                 </button>
               </div>
+              </div>
             );
           })}
           {avenir.length === 0 ? (
@@ -1268,7 +1342,32 @@ export function Plateau({
           </EnteteColonne>
 
           <div style={{ padding: 18 }}>
-            {melange ? (
+            {epreuve.paire ? (
+              <button
+                type="button"
+                title="Appelle ensemble les deux prochains athlètes de la même catégorie : ils passent côte à côte, ici et sur le mur LED. Un nombre impair laisse le dernier passer seul."
+                disabled={paireSuivante.length === 0}
+                onClick={() => agir(() => appelerTous(paireSuivante))}
+                style={styleBouton("noir", {
+                  width: "100%",
+                  marginBottom: 14,
+                  padding: 14,
+                  borderRadius: 11,
+                  fontSize: 15,
+                  fontWeight: 700,
+                  background: C.orange,
+                  opacity: paireSuivante.length === 0 ? 0.45 : 1,
+                })}
+              >
+                {paireSuivante.length === 2
+                  ? "Appeler les 2 athlètes suivants (1 contre 1)"
+                  : paireSuivante.length === 1
+                    ? "Appeler le dernier athlète — il passe seul"
+                    : avenir.length === 0
+                      ? "Plus personne à appeler"
+                      : "Validez la paire au plateau avant d'appeler la suivante"}
+              </button>
+            ) : melange ? (
               <button
                 type="button"
                 title="Appelle en une fois le prochain athlète de chaque catégorie : les passages s'ouvrent côte à côte, ici et sur le mur LED"

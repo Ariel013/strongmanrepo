@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **205/205** ✓ (2026-09-20). Les routes répondent 200 sur un build de production local.
+  **217/217** ✓ (2026-09-20). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **La compétition s'est tenue le 2026-09-19.** Deux fonctions livrées
@@ -77,6 +77,28 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-20 (29) — Deux formats au choix du comité : solo, ou deux par deux
+
+Kevin : garder le fonctionnement actuel **et** pouvoir faire du 1 contre 1 —
+deux athlètes de la même catégorie ensemble — selon les règles du comité.
+Le jet du 19, retiré sans commit, est refait et complété.
+[ADR 0006](docs/decisions/0006-deux-athletes-de-la-meme-categorie-au-plateau.md).
+
+Troisième mode de passage `paire` (colonne texte, **aucune migration**). En
+tête de l'étape Épreuves, bloc « Format de la compétition » : un clic règle
+toutes les épreuves (`reglerFormat`, `plateau.ts` ; les « mélangées » gardent
+leur réglage), l'état se lit sur les épreuves, format mixte possible.
+`capacitePlateau` : deux par catégorie en `paire`, un sinon ; troisième appel
+refusé. Plateau : bouton orange « Appeler les 2 athlètes suivants (1 contre
+1) », grisé tant que la paire précédente est là ; paire suivante seulement
+quand la catégorie a quitté le plateau ; colonne « À venir » avec un
+intertitre par paire, « passe seul » sur un effectif impair. Un seul chrono
+pour la paire ; le mur LED réutilise sa vue à deux. Classement inchangé.
+Mode d'emploi, règles métier (invariant n° 6), cartographie à jour.
+
+`lint` ✓, `build` ✓, `test` 217/217 (12 ajoutés, § 23). **Non essayé dans le
+navigateur** : ni le bloc de format, ni l'appel d'une paire, ni le mur LED.
 
 ### 2026-09-20 (28) — Épreuve annulée : des « 0 » en performance avaient distribué des points
 

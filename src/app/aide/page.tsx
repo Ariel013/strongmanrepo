@@ -600,6 +600,20 @@ export default function PageAide() {
               même chronomètre. Ce choix pilote aussi le mur LED.
             </p>
             <p>
+              Le comité peut aussi retenir le format{" "}
+              <strong>1 contre 1</strong> : en tête de l&apos;étape Épreuves,
+              « Deux par deux » règle toutes les épreuves d&apos;un coup —
+              « Un athlète à la fois » revient au fonctionnement habituel. Le
+              bouton orange du plateau appelle alors ensemble les deux
+              prochains athlètes de la même catégorie, sur le même
+              chronomètre, côte à côte sur le mur LED ; la colonne « À venir »
+              se lit par paires. Chacun se valide à part ; la paire suivante
+              s&apos;appelle quand les deux ont quitté le plateau. Sur un
+              effectif impair, le dernier passe seul. Ce n&apos;est pas un
+              duel : chacun reste classé sur sa performance, dans sa
+              catégorie.
+            </p>
+            <p>
               La colonne « À venir » est la file de passage. Elle vient du
               préchargement, ou de « Reconstruire l&apos;ordre », qui remet la
               file dans l&apos;ordre théorique sans toucher aux passages déjà

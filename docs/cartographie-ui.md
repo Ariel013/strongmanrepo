@@ -550,6 +550,15 @@ Titre `libPlateau` (« Au plateau » ou « Au plateau · 2 athlètes »).
 
 1. Si `melange` : bouton noir pleine largeur `appelerDuo` (libellé
    `libAppelerDuo`, « Appeler les N athlètes (un par catégorie) »).
+
+   > **Écart du portage (2026-09-20, [ADR 0006](decisions/0006-deux-athletes-de-la-meme-categorie-au-plateau.md))** :
+   > troisième mode de passage, « Par groupe de poids, deux par deux (1 contre
+   > 1) ». Le même bouton orange devient « Appeler les 2 athlètes suivants (1
+   > contre 1) » — « Appeler le dernier athlète — il passe seul » sur un
+   > effectif impair — et reste grisé tant que la paire précédente occupe le
+   > plateau. La colonne « À venir » porte un intertitre par paire. En tête de
+   > l'étape Épreuves, un bloc « Format de la compétition » (absent de
+   > l'original) règle toutes les épreuves d'un coup.
 2. **Chronomètre** — bloc `#0A0D0B`, bord coloré `chronoEncadre` :
    - affichage 44 px `chronoTexte` au format `mm:ss,d` (couleur
      `chronoCouleurClair`, animation `chronoAnim`),

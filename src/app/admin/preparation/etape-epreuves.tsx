@@ -6,6 +6,7 @@ import { Encart, Etiquette } from "@/components/ui";
 import { BoutonAction, ChampTexte, ChoixListe } from "@/components/saisie";
 import {
   ajouterEpreuve,
+  choisirFormat,
   modifierEpreuve,
   supprimerEpreuve,
 } from "@/lib/actions";
@@ -33,6 +34,8 @@ export function EtapeEpreuves({
         suite="du championnat"
         chapeau="Les cinq épreuves officielles sont pré-remplies avec le critère de classement du règlement. Ajoutez autant d'épreuves que nécessaire, chacune avec sa mesure, son temps imparti et son nombre d'essais."
       />
+
+      <FormatCompetition competitionId={competitionId} epreuves={epreuves} />
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {epreuves.map((ep, i) => (
@@ -229,11 +232,14 @@ function FicheEpreuve({ ep, rang }: { ep: EpreuveComplete; rang: number }) {
             <Etiquette>Passage</Etiquette>
             <ChoixListe
               valeur={ep.passage}
-              title="Par groupe : les −100 kg passent, puis les +100 kg. Mélangé : tout le monde dans un seul ordre. Les classements restent séparés dans les deux cas."
+              title="Par groupe : les −100 kg passent, puis les +100 kg. Deux par deux : pareil, mais deux athlètes de la même catégorie passent ensemble. Mélangé : tout le monde dans un seul ordre. Les classements restent séparés dans tous les cas."
               enregistrer={(v) => modifierEpreuve(ep.id, "passage", v)}
               style={{ padding: "10px 12px", borderRadius: 9 }}
             >
               <option value="groupe">Par groupe de poids</option>
+              <option value="paire">
+                Par groupe de poids, deux par deux (1 contre 1)
+              </option>
               <option value="melange">Tout le monde mélangé</option>
             </ChoixListe>
           </div>
@@ -489,6 +495,88 @@ function FicheEpreuve({ ep, rang }: { ep: EpreuveComplete; rang: number }) {
             />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Le format décidé par le comité avant la compétition : un athlète à la fois
+ * par catégorie, ou deux athlètes de la même catégorie ensemble (1 contre 1).
+ *
+ * Écart avec l'original, [ADR 0006] : ce bloc n'y existe pas. Il règle d'un
+ * coup le champ « Passage » de toutes les épreuves ; chaque fiche reste
+ * modifiable à part, et l'état affiché se lit sur les épreuves elles-mêmes —
+ * jamais stocké à côté, pour ne pas pouvoir les contredire.
+ */
+function FormatCompetition({
+  competitionId,
+  epreuves,
+}: {
+  competitionId: string;
+  epreuves: EpreuveComplete[];
+}) {
+  const enPaire = epreuves.filter((e) => e.passage === "paire").length;
+  const melangees = epreuves.filter((e) => e.passage === "melange").length;
+  const solo = epreuves.length - enPaire - melangees;
+  const etat =
+    epreuves.length === 0
+      ? "Aucune épreuve pour l'instant."
+      : enPaire === epreuves.length
+        ? "Toutes les épreuves se passent deux par deux."
+        : enPaire === 0
+          ? "Toutes les épreuves se passent un athlète à la fois par catégorie."
+          : `Format mixte : ${enPaire} épreuve${enPaire > 1 ? "s" : ""} deux par deux, ${solo + melangees} un athlète à la fois.`;
+
+  const actif = (oui: boolean) => ({
+    flex: "1 1 240px",
+    padding: "14px 16px",
+    borderRadius: 11,
+    fontSize: 14,
+    textAlign: "left" as const,
+    lineHeight: 1.4,
+    outline: oui ? `2px solid ${C.vert}` : "none",
+  });
+
+  return (
+    <div
+      style={{
+        marginBottom: 18,
+        padding: "16px 18px",
+        borderRadius: 14,
+        background: C.blanc,
+        border: `1px solid ${C.bordure}`,
+      }}
+    >
+      <Etiquette>Format de la compétition · décision du comité</Etiquette>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 }}>
+        <BoutonAction
+          ton="blanc"
+          title="Un seul athlète de chaque catégorie au plateau : le fonctionnement habituel."
+          action={() => choisirFormat(competitionId, "groupe")}
+          style={actif(epreuves.length > 0 && enPaire === 0)}
+        >
+          <strong>Un athlète à la fois</strong>
+          <br />
+          Chaque athlète passe seul, catégorie par catégorie.
+        </BoutonAction>
+        <BoutonAction
+          ton="blanc"
+          title="Deux athlètes de la même catégorie au plateau ensemble, sur le même chronomètre. Le classement ne change pas : chacun reste classé sur sa performance."
+          action={() => choisirFormat(competitionId, "paire")}
+          style={actif(epreuves.length > 0 && enPaire === epreuves.length)}
+        >
+          <strong>Deux par deux · 1 contre 1</strong>
+          <br />
+          Deux athlètes de la même catégorie passent ensemble.
+        </BoutonAction>
+      </div>
+      <div style={{ marginTop: 10, fontSize: 13, color: C.encre3, lineHeight: 1.5 }}>
+        {etat}
+        {melangees > 0
+          ? ` ${melangees} épreuve${melangees > 1 ? "s" : ""} « tout le monde mélangé » ${melangees > 1 ? "gardent" : "garde"} ce réglage.`
+          : ""}{" "}
+        Le champ « Passage » de chaque épreuve reste modifiable à part.
       </div>
     </div>
   );

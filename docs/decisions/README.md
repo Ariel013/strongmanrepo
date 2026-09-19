@@ -10,6 +10,7 @@ Un ADR se déclenche quand **plusieurs options existaient**. Pas pour acter une
 | [0003](0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md) | Un seul espace de données : pas de mode démonstration | adopté |
 | [0004](0004-un-passage-peut-attendre-son-resultat.md) | Un passage peut attendre son résultat, plateau libéré | adopté |
 | [0005](0005-un-passage-valide-ne-s-annule-plus-depuis-le-plateau.md) | Un passage validé ne s'annule plus depuis le plateau | adopté |
+| [0006](0006-deux-athletes-de-la-meme-categorie-au-plateau.md) | Deux formats au choix : un athlète à la fois, ou deux de la même catégorie ensemble | adopté |
 
 ## Avant le n° 0001
 

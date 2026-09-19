@@ -194,6 +194,7 @@ export default async function PagePlateau({
           critere: epreuveCourante.critere,
           niveau: epreuveCourante.niveau,
           tours: epreuveCourante.tours,
+          paire: epreuveCourante.passage === "paire",
           ateliers: epreuveCourante.ateliers,
           distanceTotale: epreuveCourante.distanceTotale,
         }}

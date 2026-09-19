@@ -26,8 +26,18 @@ export interface Resultat {
   erreur?: string;
 }
 
+/** Combien d'athlètes d'une même catégorie tiennent au plateau ensemble. */
+export const capacitePlateau = (modeDePassage: string): number =>
+  modeDePassage === "paire" ? 2 : 1;
+
 /**
- * Appelle un athlète au plateau — un seul à la fois PAR CATÉGORIE.
+ * Appelle un athlète au plateau — un seul à la fois PAR CATÉGORIE, ou deux
+ * quand l'épreuve se passe « deux par deux » (ADR 0006).
+ *
+ * En solo, appeler un athlète renvoie le précédent en file : c'est une
+ * correction d'appel. À deux, on ne devine pas lequel des deux céderait sa
+ * place en plein essai : un troisième appel est refusé, et le message dit
+ * quoi faire.
  *
  * Quand l'épreuve se passe tout le monde mélangé, un athlète de chaque
  * catégorie est au plateau en même temps : c'est ainsi que se déroule l'appel
@@ -63,10 +73,23 @@ export async function placerAuPlateau(passageId: string): Promise<Resultat> {
         and(eq(passage.epreuveId, cible.epreuveId), eq(passage.statut, "plateau")),
       );
 
-    const aRenvoyer = dejaAuPlateau
+    const [ep] = await tx
+      .select({ passage: epreuve.passage })
+      .from(epreuve)
+      .where(eq(epreuve.id, cible.epreuveId));
+    const capacite = capacitePlateau(ep?.passage ?? "groupe");
+
+    const memeCategorie = dejaAuPlateau
       .filter((p) => p.categorieId === (athleteAppele?.categorieId ?? null))
       .filter((p) => p.id !== passageId)
       .map((p) => p.id);
+    if (capacite > 1 && memeCategorie.length >= capacite)
+      return {
+        ok: false,
+        erreur:
+          "Deux athlètes de cette catégorie sont déjà au plateau : validez-les, ou remettez-en un en file avant d'appeler.",
+      };
+    const aRenvoyer = capacite > 1 ? [] : memeCategorie;
     if (aRenvoyer.length > 0) {
       await tx
         .update(passage)
@@ -139,6 +162,35 @@ export async function libererLePlateau(
     })
     .where(eq(passage.id, passageId));
   return { ok: true };
+}
+
+/**
+ * Le format de la compétition, décidé par le comité : toutes les épreuves en
+ * solo (`groupe`) ou toutes deux par deux (`paire`), d'un coup.
+ *
+ * Une épreuve réglée « tout le monde mélangé » est laissée telle quelle : ce
+ * réglage-là a été choisi à la main, pour elle, et le format ne l'écrase pas.
+ * Rend le nombre d'épreuves changées.
+ */
+export async function reglerFormat(
+  competitionId: string,
+  format: "groupe" | "paire",
+): Promise<Resultat & { changees: number }> {
+  if (!UUID.test(competitionId))
+    return { ok: false, erreur: "Compétition introuvable.", changees: 0 };
+  if (format !== "groupe" && format !== "paire")
+    return { ok: false, erreur: "Format inconnu.", changees: 0 };
+  const ecrites = await db
+    .update(epreuve)
+    .set({ passage: format })
+    .where(
+      and(
+        eq(epreuve.competitionId, competitionId),
+        eq(epreuve.passage, format === "paire" ? "groupe" : "paire"),
+      ),
+    )
+    .returning({ id: epreuve.id });
+  return { ok: true, changees: ecrites.length };
 }
 
 /**

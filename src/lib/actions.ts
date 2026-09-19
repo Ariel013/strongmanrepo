@@ -40,6 +40,7 @@ import {
   placerAuPlateau,
   realignerFile,
   reconstruireFile,
+  reglerFormat,
   remettreEnFile,
   rouvrirPourCorrection,
 } from "./plateau";
@@ -720,6 +721,26 @@ const MESURES_ADMISES = [
   "medley",
 ] as const;
 
+/**
+ * Bascule toute la compétition en solo ou en deux par deux (ADR 0006). Le
+ * réglage fin reste possible épreuve par épreuve, juste en dessous.
+ */
+export async function choisirFormat(
+  competitionId: string,
+  format: "groupe" | "paire",
+): Promise<Retour> {
+  await exigerSession();
+  const r = await reglerFormat(competitionId, format);
+  if (!r.ok) return { ok: false, erreur: r.erreur };
+  await tracer("competition.format", "competition", competitionId, {
+    format,
+    epreuvesChangees: r.changees,
+  });
+  revalidatePath("/admin", "layout");
+  revalidatePath("/ecran", "layout");
+  return { ok: true };
+}
+
 export async function modifierEpreuve(
   id: string,
   champ: ChampEpreuve,
@@ -747,7 +768,7 @@ export async function modifierEpreuve(
       if (!r.ok) return { ok: false, erreur: r.erreur };
       v = r.valeur;
     } else if (champ === "passage") {
-      const r = parmi(brut, ["groupe", "melange"] as const, "Passage");
+      const r = parmi(brut, ["groupe", "melange", "paire"] as const, "Passage");
       if (!r.ok) return { ok: false, erreur: r.erreur };
       v = r.valeur;
     } else if (type === "duree") {

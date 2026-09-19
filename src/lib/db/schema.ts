@@ -147,8 +147,10 @@ export const epreuve = pgTable(
     equipements: text("equipements"),
 
     /**
-     * Ordre de passage : `groupe` (une catégorie après l'autre) ou `melange`
-     * (tout le monde dans un seul ordre). Les classements restent séparés
+     * Ordre de passage : `groupe` (une catégorie après l'autre), `melange`
+     * (tout le monde dans un seul ordre) ou `paire` (une catégorie après
+     * l'autre, deux athlètes de la même catégorie au plateau ensemble —
+     * ADR 0006). Les classements restent séparés
      * par catégorie dans les deux cas — c'est le passage qui change, pas le
      * barème.
      */

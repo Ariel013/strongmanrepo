@@ -52,6 +52,7 @@ import {
   placerAuPlateau,
   rouvrirPourCorrection,
   realignerFile,
+  reglerFormat,
   reconstruireFile,
   remettreEnFile,
 } from "../src/lib/plateau";
@@ -1177,6 +1178,81 @@ async function principal() {
       egal("l'athlète au plateau n'a pas bougé", apres.find((p) => p.id === auPlateau.id)?.statut, "plateau");
       const encore = await rouvrirPourCorrection(valide.id);
       verifier("rouvrir deux fois est refusé", !encore.ok);
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+    }
+
+    /* ── 23. Passage deux par deux (ADR 0006) ── */
+    console.log("\n23. Paires : deux athlètes de la même catégorie au plateau, et le format d'un clic");
+    {
+      // Les sections précédentes ont défait des affectations : le jeu d'essai
+      // est remis d'aplomb ici, sur les seuls athlètes de la compétition jetable.
+      await db
+        .update(athlete)
+        .set({ categorieId: cats[0].id, horsClassement: false })
+        .where(inArray(athlete.id, [alpha.id, bravo.id, charlie.id, delta.id]));
+      await db
+        .update(athlete)
+        .set({ categorieId: cats[1].id, horsClassement: false })
+        .where(eq(athlete.id, echo.id));
+      const grande = [alpha, bravo, charlie];
+
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+      const file = await db
+        .insert(passage)
+        .values(
+          [...grande, echo].map((a, i) => ({
+            competitionId: comp.id,
+            epreuveId: eps[1].id,
+            athleteId: a.id,
+            ordre: i + 1,
+            statut: "avenir",
+          })),
+        )
+        .returning();
+      const de = (athleteId: string) => file.find((p) => p.athleteId === athleteId)!;
+      const auPlateau = async () =>
+        (await db.select().from(passage).where(eq(passage.epreuveId, eps[1].id)))
+          .filter((p) => p.statut === "plateau")
+          .map((p) => p.id)
+          .sort();
+      const modes = async () =>
+        (await db.select().from(epreuve).where(eq(epreuve.competitionId, comp.id)))
+          .map((e) => e.passage)
+          .sort();
+
+      // Le format du comité : tout en paires d'un coup, sauf le « mélangé » choisi à la main.
+      await db.update(epreuve).set({ passage: "groupe" }).where(eq(epreuve.competitionId, comp.id));
+      await db.update(epreuve).set({ passage: "melange" }).where(eq(epreuve.id, eps[0].id));
+      const bascule = await reglerFormat(comp.id, "paire");
+      egal("le format « deux par deux » change toutes les épreuves en solo", bascule.changees, eps.length - 1);
+      egal("et laisse l'épreuve « mélangée » telle quelle", (await modes()).filter((m) => m === "melange").length, 1);
+      verifier("un format inconnu est refusé", !(await reglerFormat(comp.id, "duel" as "paire")).ok);
+
+      await placerAuPlateau(de(alpha.id).id);
+      const second = await placerAuPlateau(de(bravo.id).id);
+      verifier("le second de la paire est accepté", second.ok);
+      egal(
+        "les deux sont au plateau, le premier n'est pas renvoyé en file",
+        await auPlateau(),
+        [de(alpha.id).id, de(bravo.id).id].sort(),
+      );
+      const troisieme = await placerAuPlateau(de(charlie.id).id);
+      verifier("un troisième de la même catégorie est refusé", !troisieme.ok);
+      egal("et le plateau n'a pas bougé", (await auPlateau()).length, 2);
+      const rappel = await placerAuPlateau(de(alpha.id).id);
+      verifier("rappeler un athlète déjà au plateau ne compte pas comme un troisième", rappel.ok);
+      const temoin = await placerAuPlateau(de(echo.id).id);
+      verifier("une autre catégorie garde sa propre place au plateau", temoin.ok);
+      egal("trois au plateau : la paire et le témoin", (await auPlateau()).length, 3);
+
+      // Retour au format habituel : un seul par catégorie, le précédent cède.
+      await db.update(passage).set({ statut: "avenir" }).where(eq(passage.epreuveId, eps[1].id));
+      const retour = await reglerFormat(comp.id, "groupe");
+      egal("le retour au solo ne touche que les épreuves en paires", retour.changees, eps.length - 1);
+      await placerAuPlateau(de(alpha.id).id);
+      await placerAuPlateau(de(bravo.id).id);
+      egal("hors paires, un seul athlète par catégorie au plateau", await auPlateau(), [de(bravo.id).id]);
+      await db.update(epreuve).set({ passage: "groupe" }).where(eq(epreuve.competitionId, comp.id));
       await db.delete(passage).where(eq(passage.competitionId, comp.id));
     }
 
