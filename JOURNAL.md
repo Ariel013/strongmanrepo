@@ -34,13 +34,23 @@
   **205/205** ✓ (2026-09-20). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
-- **Branche** : `main` alignée avec `origin/main` sur `c46b319`, poussée le
-  2026-09-19 (vérifié par comparaison des SHA). Le commit de capitalisation
-  qui suit n'est pas compté ici.
-- **Dernier déploiement vérifié** : `c46b319`, le 2026-09-19 — statut Vercel
-  `success`, et `/aide` en ligne porte le texte des alertes de pesée, propre
-  à ce commit. **Non vu à l'écran** : les alertes elles-mêmes à l'étape Pesée,
-  derrière la connexion.
+- **La compétition s'est tenue le 2026-09-19.** Deux fonctions livrées
+  pendant l'épreuve et confirmées par Kevin (« ça marche ») : « Corriger » un
+  résultat validé (`4bf882e`), classement général complet imprimable
+  (`9d3022b`).
+- **Résultats réparés le 2026-09-20** : « Tirage de camion » annulé, 22
+  passages passés en verdict Zéro par script gardé, 22 lignes d'audit. **Relu
+  en base** : 22 `zero`, 2 `forfait`, 0 point distribué sur l'épreuve.
+  Podiums recalculés — Moins de 105 kg : BOUA 61, KAMAGATE 54, DOUCOURE 51 ;
+  Plus de 105 kg : YAO 27, KANGAH 21, TRAHA 17. **Non vérifié** : s'ils
+  coïncident avec ce qui a été proclamé.
+- **Branche** : `main` alignée avec `origin/main` sur `70de7e6`, poussée le
+  2026-09-20 (SHA comparés). Le commit de capitalisation qui suit n'est pas
+  compté ici.
+- **Dernier déploiement vérifié** : `70de7e6`, le 2026-09-20 — statut Vercel
+  `success`, `/aide` en ligne porte « Ne tapez jamais 0 », propre à ce
+  commit. **Non vu à l'écran** : le refus d'une performance de 0, et les
+  alertes de pesée (derrière la connexion).
 - **Déploiement** : ✅ **vérifié en ligne le 2026-09-16** sur
   https://strongman-pied.vercel.app — `/api/sante` répond `etat: en ordre`,
   les 7 écrans publics d'alors servent du vrai contenu, la garde d'accès renvoie 307
@@ -51,15 +61,18 @@
   au-dessus du plancher réseau. Le reste est le trajet Abidjan → `cpt1` →
   `dub1`, qui ne se règle pas depuis le code.
 
-- **À contrôler par Kevin, deux minutes** : à l'étape Pesée en ligne, un poids
-  au-dessus du déclaré (bandeau ambre), un poids hors de la catégorie annoncée
-  (bandeau rouge), et le décompte au-dessus de la liste.
-- **Prochaine action** : rien ne bloque la compétition. Le plus utile
-  maintenant est de **se connecter à l'administration en ligne et de dérouler
-  une épreuve de bout en bout** — appel, chrono, « résultat plus tard »,
-  saisie différée, mur LED — sur du matériel réel. **Critère de fin** : un
-  passage validé apparaît sur `/ecran/classement` en moins de deux secondes,
-  et un passage en attente n'y apparaît pas.
+- **À faire par Kevin** : comparer les podiums recalculés à ceux proclamés ;
+  réimprimer le classement complet et le palmarès, qui sont désormais les
+  pièces à signer.
+- **Prochaine action** : la compétition est passée, plus rien ne presse. Le
+  chantier qui reste dû est le **parcours « juge principal »** promis par
+  l'ADR 0005 : aujourd'hui « Corriger » est ouvert à toute session, la
+  signature du juge reste une règle d'organisation. Avec lui, les reports
+  consignés le 2026-09-17 (révocation de session, limitation de débit en
+  base, `competition_id` dans le journal d'audit — le script de réparation du
+  20 le renseigne, `tracer` toujours pas). **Critère de fin** : une
+  correction de résultat exige une identité d'officiel, et le journal la
+  porte.
 
 ---
 
@@ -85,6 +98,8 @@ plus léger prenait le maximum. Le temps imparti n'y est pour rien.
   l'erreur du serveur. Règles métier (invariant n° 4) et mode d'emploi à jour.
 
 `lint` ✓, `build` ✓, `test` 205/205. Refus non essayé dans le navigateur.
+Commit `70de7e6` poussé, déploiement vérifié par le contenu de `/aide`.
+Capitalisation : deux notes nouvelles au coffre, une enrichie, fiche projet.
 
 ### 2026-09-19 (27) — Le classement général complet s'imprime
 
@@ -706,7 +721,26 @@ vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
 
+### Un verrou livré sans sa voie de correction se paie le jour J (2026-09-19)
+
+*Au coffre : `brain/10-lecons/un-verrou-se-livre-avec-sa-voie-de-correction.md`.*
+
+**Symptôme.** En pleine compétition : une erreur de saisie sur un athlète,
+épreuve terminée, plus aucun moyen d'y revenir.
+
+**Cause.** L'ADR 0005 (2026-09-17) avait retiré toute annulation du plateau et
+renvoyé la correction à un parcours « juge principal » **à venir**. Le besoin
+est arrivé deux jours après, en direct ; il a fallu coder et déployer pendant
+l'épreuve.
+
+**Règle.** Ici, tout verrou sur un résultat se livre avec le geste sûr qui le
+remplace. « Corriger » en est la forme : jamais au plateau, prérempli,
+confirmé, ancien résultat au journal d'audit.
+
 ### Une borne qui commence à 0 accepte « rien » comme une valeur (2026-09-20)
+
+*Au coffre : seconde occurrence dans `brain/10-lecons/refuser-plutot-que-convertir.md` ;
+et `brain/10-lecons/lire-la-donnee-avant-l-hypothese.md` pour le diagnostic.*
 
 **Symptôme.** Épreuve annulée, « 0 » saisi partout, et des points distribués.
 L'utilisateur accusait le temps imparti non renseigné.
