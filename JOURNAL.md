@@ -24,14 +24,14 @@
 
 ## 📍 État actuel & prochaine action
 
-*(Mis à jour le 2026-09-19.)*
+*(Mis à jour le 2026-09-20.)*
 
 - **Front** : portage fidèle du poste autonome terminé. Relevé automatique :
   **96 % des textes visibles** de l'original retrouvés ; les 4 % restants sont
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **200/200** ✓ (2026-09-19). Les routes répondent 200 sur un build de production local.
+  **205/205** ✓ (2026-09-20). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `c46b319`, poussée le
@@ -64,6 +64,27 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-20 (28) — Épreuve annulée : des « 0 » en performance avaient distribué des points
+
+Kevin, après la compétition : « Tirage de camion » annulé, zéro à tout le
+monde, et des points quand même. Il soupçonnait les 90 s. **Lu en base avant
+le code** : 21 passages `termine · ok · valeur 0 · temps 0` — une performance
+de 0 m, pas le verdict ZÉRO (valeur vide). `classementEpreuve` classe tout
+« ok » avec valeur ; à égalité parfaite, le poids de corps départageait : le
+plus léger prenait le maximum. Le temps imparti n'y est pour rien.
+
+- **Réparé en base**, à sa demande : `scripts/annuler-epreuve-camion.ts`
+  (gardé si la cible n'est pas exactement 21 + le dossard 6 resté en attente,
+  une transaction) → 22 passages en verdict ZÉRO, 22 lignes au journal d'audit
+  (`passage.epreuve_annulee`, ancien résultat conservé). Relu : 22 `zero`,
+  2 `forfait`, 0 point distribué sur l'épreuve dans les deux catégories.
+- **Corrigé dans le logiciel** : `performanceMesuree` (`validation.ts`) —
+  `validerPassage` refuse 0 avec « 0 n'est pas une performance : utilisez le
+  verdict Zéro ». Les trois chemins de validation du plateau affichent déjà
+  l'erreur du serveur. Règles métier (invariant n° 4) et mode d'emploi à jour.
+
+`lint` ✓, `build` ✓, `test` 205/205. Refus non essayé dans le navigateur.
 
 ### 2026-09-19 (27) — Le classement général complet s'imprime
 
@@ -684,6 +705,21 @@ s'exécute pas du tout, donc elle n'est pas testable. Les écritures du plateau
 vivent désormais dans `src/lib/plateau.ts`, en fonctions ordinaires, et les
 actions n'en gardent que l'enveloppe : session, journal, rafraîchissement. Ce
 qui décide de l'état de la compétition doit pouvoir être appelé par un test.
+
+### Une borne qui commence à 0 accepte « rien » comme une valeur (2026-09-20)
+
+**Symptôme.** Épreuve annulée, « 0 » saisi partout, et des points distribués.
+L'utilisateur accusait le temps imparti non renseigné.
+
+**Cause.** La performance était bornée de 0 à 100 000 : 0 passait. Or 0 est
+précisément le cas pour lequel un verdict distinct existe (ZÉRO, valeur vide,
+hors classement). Deux façons de dire « rien », une seule comprise par le
+classement — et l'autre acceptée sans un mot, puis départagée au poids de corps.
+
+**Règle.** Quand un état dédié existe pour « rien » (verdict, case à cocher,
+null), la valeur numérique équivalente se **refuse** avec un message qui nomme
+l'état à utiliser. Et devant un résultat surprenant, lire la donnée en base
+avant de suivre l'hypothèse — même celle de l'utilisateur.
 
 ### Un libellé hérité de l'original ne dit pas ce que fait le bouton (2026-09-19)
 

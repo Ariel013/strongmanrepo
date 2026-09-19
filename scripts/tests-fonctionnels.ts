@@ -61,6 +61,7 @@ import {
   entierFacultatif,
   heureFrancaise,
   parmi,
+  performanceMesuree,
   tempsImparti,
   texteObligatoire,
   trierProgramme,
@@ -1177,6 +1178,34 @@ async function principal() {
       const encore = await rouvrirPourCorrection(valide.id);
       verifier("rouvrir deux fois est refusé", !encore.ok);
       await db.delete(passage).where(eq(passage.competitionId, comp.id));
+    }
+
+    /* ── 24. Une performance de 0 n'en est pas une ── */
+    console.log("\n24. Performance : 0 se refuse, le verdict Zéro existe pour ça");
+    egal("0 est refusé, et le message dit quoi faire", performanceMesuree(0), {
+      ok: false,
+      erreur: "0 n'est pas une performance : utilisez le verdict Zéro.",
+    });
+    verifier("une valeur négative est refusée", !performanceMesuree(-3).ok);
+    verifier("une valeur absente est refusée", !performanceMesuree(null).ok);
+    egal("0,5 m est une performance", performanceMesuree(0.5), { ok: true, valeur: 0.5 });
+    {
+      // Ce qui s'est passé le 2026-09-19 : tout le monde « ok » à 0 m. Le
+      // classement départageait alors au poids de corps et donnait des points.
+      // Avec le verdict Zéro, personne ne marque.
+      const deux = [
+        { id: "a", dossard: 1, poidsCorps: 73, horsClassement: false },
+        { id: "b", dossard: 2, poidsCorps: 95, horsClassement: false },
+      ];
+      const zeros = classementEpreuve(
+        deux,
+        "distance",
+        new Map([
+          ["a", { statut: "zero" as const, valeur: null, temps: null }],
+          ["b", { statut: "zero" as const, valeur: null, temps: null }],
+        ]),
+      );
+      egal("épreuve annulée en verdicts Zéro : aucun point, aucun rang", zeros.map((l) => [l.rang, l.points]), [[null, 0], [null, 0]]);
     }
 
     /* ── 19. Classement des clubs ── */

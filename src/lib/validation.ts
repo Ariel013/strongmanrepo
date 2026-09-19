@@ -21,6 +21,25 @@ export type Verdict<T> = { ok: true; valeur: T } | { ok: false; erreur: string }
 const bon = <T,>(valeur: T): Verdict<T> => ({ ok: true, valeur });
 const mauvais = <T,>(erreur: string): Verdict<T> => ({ ok: false, erreur });
 
+/* ── Performance ──────────────────────────────────────────────────────── */
+
+/**
+ * Une performance validée « ok » est strictement positive.
+ *
+ * Zéro mètre, zéro répétition, zéro seconde : ce n'est pas une performance,
+ * c'est le verdict ZÉRO — qui, lui, ne classe pas et ne rapporte aucun point.
+ * Le 2026-09-19, une épreuve annulée a été soldée en tapant « 0 » partout :
+ * vingt-et-un athlètes « à 0 m » ont été classés, départagés au poids de
+ * corps, et ont marqué des points. Accepter 0 en silence était la faute.
+ */
+export function performanceMesuree(v: number | null): Verdict<number> {
+  if (v === null || !Number.isFinite(v))
+    return mauvais("Saisissez la performance mesurée avant de valider.");
+  if (v <= 0)
+    return mauvais("0 n'est pas une performance : utilisez le verdict Zéro.");
+  return bon(v);
+}
+
 /* ── Texte ────────────────────────────────────────────────────────────── */
 
 /**

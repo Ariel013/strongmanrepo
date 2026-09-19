@@ -879,6 +879,14 @@ Palette (l. 1882-1886) : nuit `#0A0D0B` / `#FCFAF6`, jour `#FCFAF6` / `#141210`.
    terminé, mais `meilleurResultat` les ignore : l'athlète est traité comme « sans
    résultat », rang `null`, 0 point.
 
+   > **Précision du portage (2026-09-20)** : une performance validée `ok` est
+   > **strictement positive**. `validerPassage` refuse 0 avec « 0 n'est pas une
+   > performance : utilisez le verdict Zéro » (`performanceMesuree`,
+   > `src/lib/validation.ts`). Le 2026-09-19, une épreuve annulée soldée par
+   > des « 0 » en performance a classé 21 athlètes à égalité, départagés au
+   > poids de corps, points distribués. Une épreuve annulée se solde par le
+   > verdict **Zéro** sur chaque passage : personne ne marque.
+
 5. **Les essais multiples sont implicites.** Le champ `essais` n'est jamais contrôlé ;
    plusieurs passages terminés pour le même couple (épreuve, athlète) sont possibles et
    c'est le meilleur qui compte. Mais `file()` (l. 818-821) empêche l'appel d'un athlète

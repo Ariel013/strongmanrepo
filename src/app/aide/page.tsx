@@ -763,6 +763,14 @@ export default function PageAide() {
               nombre d&apos;engagés classables, pas du nombre de performances
               réalisées.
             </p>
+            <p>
+              <strong>Ne tapez jamais « 0 » dans la case performance.</strong>{" "}
+              Le logiciel le refuse : zéro mètre ou zéro répétition, c&apos;est
+              le bouton de verdict <strong>Zéro</strong>. Si une épreuve est
+              annulée, donnez le verdict Zéro à chaque athlète : personne ne
+              marque de point sur cette épreuve, et le classement général ne
+              bouge pas.
+            </p>
           </Encadre>
         </Section>
 

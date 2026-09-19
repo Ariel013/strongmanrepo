@@ -51,6 +51,7 @@ import {
   entierObligatoire,
   heureFrancaise,
   parmi,
+  performanceMesuree,
   tempsImparti,
   texteFacultatif,
   texteObligatoire,
@@ -427,6 +428,8 @@ export async function validerPassage(
     const v = nombreBorne(resultat.valeur, 0, 100_000);
     if (!v.ok || v.valeur === null)
       return { ok: false, erreur: "Saisissez la performance mesurée avant de valider." };
+    const mesuree = performanceMesuree(v.valeur);
+    if (!mesuree.ok) return { ok: false, erreur: mesuree.erreur };
     const t = nombreBorne(resultat.tempsS, 0, 36_000);
     if (!t.ok) return { ok: false, erreur: "Temps intermédiaire : un nombre de secondes, 0 à 36 000." };
     const c = nombreBorne(resultat.chronoS, 0, 36_000);
