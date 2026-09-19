@@ -685,8 +685,9 @@ export default function PageAide() {
                 <p>
                   Depuis le plateau, l&apos;athlète suivant de la catégorie est
                   appelé automatiquement. Un passage validé ne s&apos;annule
-                  pas depuis le plateau : une correction passe par la feuille
-                  de notation et la signature du juge principal.
+                  pas ; une erreur de saisie se corrige avec le bouton
+                  « Corriger » de sa ligne, dans la colonne des terminés —
+                  voir « En cas de problème ».
                 </p>
               </Etape>
             </ol>
@@ -977,12 +978,17 @@ export default function PageAide() {
               dans « À venir » sans rien enregistrer.
             </p>
             <p>
-              <strong>Après validation</strong>, un passage ne s&apos;annule
-              pas depuis le plateau : c&apos;est un résultat officiel, déjà lu
-              sur le mur LED. La correction passe par la feuille de notation
-              signée du juge principal, puis par la personne qui administre le
-              logiciel. Prévenez le directeur de compétition avant de corriger
-              un résultat déjà annoncé au public.
+              <strong>Après validation</strong>, une erreur de saisie se
+              corrige, même quand toute l&apos;épreuve est terminée. Sur le
+              plateau, choisissez l&apos;épreuve et la catégorie, puis, dans
+              la colonne des terminés, « Corriger » sur la ligne de
+              l&apos;athlète. Son résultat passe dans « En attente de
+              résultat », prérempli : rectifiez, validez. Entre-temps il ne
+              compte plus au classement ni sur le mur LED. L&apos;ancien
+              résultat reste au journal d&apos;audit. La correction se fait
+              sur la foi de la feuille de notation signée du juge principal ;
+              prévenez le directeur de compétition avant de corriger un
+              résultat déjà annoncé au public.
             </p>
           </Carte>
 

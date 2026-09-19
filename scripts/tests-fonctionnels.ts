@@ -50,6 +50,7 @@ import {
   completerFile,
   libererLePlateau,
   placerAuPlateau,
+  rouvrirPourCorrection,
   realignerFile,
   reconstruireFile,
   remettreEnFile,
@@ -1148,6 +1149,33 @@ async function principal() {
       await placerAuPlateau(apres[0].id);
       const r2 = await realignerFile(comp.id, eps[1].id);
       verifier("une épreuve commencée n'est plus réalignée", !r2.realignee);
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+    }
+
+    /* ── 22 bis. Corriger un résultat validé, épreuve terminée ou non ── */
+    console.log("\n22 bis. Correction : un passage validé se rouvre, prérempli, sans toucher au plateau");
+    {
+      await db.delete(passage).where(eq(passage.competitionId, comp.id));
+      const [valide, auPlateau] = await db
+        .insert(passage)
+        .values([
+          { competitionId: comp.id, epreuveId: eps[1].id, athleteId: alpha.id, ordre: 1, statut: "termine", resultatStatut: "ok", valeur: 7, tempsS: 58, chronoS: 90, valideLe: new Date() },
+          { competitionId: comp.id, epreuveId: eps[1].id, athleteId: bravo.id, ordre: 2, statut: "plateau" },
+        ])
+        .returning();
+      const refus = await rouvrirPourCorrection(auPlateau.id);
+      verifier("un passage non validé ne se « corrige » pas", !refus.ok);
+
+      const r = await rouvrirPourCorrection(valide.id);
+      verifier("un passage validé se rouvre", r.ok);
+      egal("l'ancien résultat est rendu pour le journal d'audit", [r.avant?.resultatStatut, Number(r.avant?.valeur)], ["ok", 7]);
+      const apres = await db.select().from(passage).where(eq(passage.epreuveId, eps[1].id));
+      const rouvert = apres.find((p) => p.id === valide.id);
+      egal("il attend son résultat, sans verdict", [rouvert?.statut, rouvert?.resultatStatut, rouvert?.valideLe], ["a_saisir", null, null]);
+      egal("ses valeurs restent pour préremplir la ressaisie", [Number(rouvert?.valeur), Number(rouvert?.tempsS), Number(rouvert?.chronoS)], [7, 58, 90]);
+      egal("l'athlète au plateau n'a pas bougé", apres.find((p) => p.id === auPlateau.id)?.statut, "plateau");
+      const encore = await rouvrirPourCorrection(valide.id);
+      verifier("rouvrir deux fois est refusé", !encore.ok);
       await db.delete(passage).where(eq(passage.competitionId, comp.id));
     }
 

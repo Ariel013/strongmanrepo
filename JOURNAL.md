@@ -31,7 +31,7 @@
   les trois écarts assumés (mode démo → [ADR 0003](docs/decisions/0003-un-seul-espace-de-donnees-pas-de-mode-demonstration.md),
   compte unique à la connexion, import limité au CSV et au texte collé).
 - **Vérifications** : `pnpm run build` ✓, `pnpm run lint` ✓, `pnpm run test`
-  **193/193** ✓ (2026-09-19). Les routes répondent 200 sur un build de production local.
+  **200/200** ✓ (2026-09-19). Les routes répondent 200 sur un build de production local.
 - **Base** : migrations `0001` à `0008` appliquées sur Supabase (dernière le
   2026-09-17).
 - **Branche** : `main` alignée avec `origin/main` sur `c46b319`, poussée le
@@ -64,6 +64,21 @@
 ---
 
 ## 📓 Journal des sessions
+
+### 2026-09-19 (26) — En pleine compétition : corriger un résultat validé
+
+Kevin, pendant l'épreuve : une erreur de saisie sur un athlète, épreuve
+terminée, impossible d'y revenir (ADR 0005). Bouton **« Corriger »** sur chaque
+ligne des terminés : le passage repart « en attente de résultat », prérempli
+avec sa valeur, jamais au plateau ; confirmation qui dit qu'il sort du
+classement jusqu'à revalidation ; ancien résultat au journal d'audit
+(`passage.correction_ouverte`). Écriture dans `rouvrirPourCorrection`
+(`plateau.ts`), 7 tests. ADR 0005 amendé, mode d'emploi et cartographie à jour.
+`lint` ✓, `build` ✓, `test` 200/200. **Non essayé dans le navigateur.**
+
+Même jour, abandonné avant tout commit à la demande de Kevin : un mode de
+passage « deux par deux » (deux athlètes de la même catégorie au plateau). La
+compétition s'est faite ainsi sans lui ; rien n'en reste dans le code.
 
 ### 2026-09-19 (25) — Deux alertes de couleur à la pesée
 

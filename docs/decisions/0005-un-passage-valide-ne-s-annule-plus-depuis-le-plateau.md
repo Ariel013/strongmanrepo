@@ -50,3 +50,26 @@ Ce que l'après-validation gagne à la place :
   « juge principal » à venir. D'ici là, `rouvrirPassage` n'est joignable que
   par le code.
 - Écart avec l'original, documenté dans `docs/cartographie-ui.md` § 6.4.
+
+## Amendement du 2026-09-19 — la correction revient au plateau, tracée
+
+En pleine compétition, une erreur de saisie a été constatée sur un athlète
+après la fin de son épreuve. Le parcours « juge principal » n'existait pas
+encore : le résultat était incorrigible sans passer par le code. Kevin a
+demandé la correction depuis le plateau.
+
+Décision : un bouton **« Corriger »** sur chaque passage terminé, épreuve finie
+ou non. Ce n'est pas le retour des annulations de l'original :
+
+- le passage part « en attente de résultat », **jamais au plateau** — aucun
+  athlète n'est chassé, aucun chronomètre relancé ;
+- ses valeurs sont **conservées et préremplies** : on rectifie, on ne ressaisit
+  pas à l'aveugle ;
+- une confirmation dit qu'il sort du classement et du mur LED jusqu'à sa
+  revalidation ;
+- l'ancien résultat complet part au journal d'audit (`passage.correction_ouverte`),
+  et la revalidation y laisse le nouveau (`passage.valide`).
+
+L'écriture vit dans `rouvrirPourCorrection` (`src/lib/plateau.ts`), testée.
+La signature du juge principal reste une règle d'organisation, pas un contrôle
+du logiciel : le parcours dédié reste à faire après la compétition.

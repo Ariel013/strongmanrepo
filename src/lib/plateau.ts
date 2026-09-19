@@ -142,6 +142,33 @@ export async function libererLePlateau(
 }
 
 /**
+ * Rouvre un passage validé pour corriger sa saisie.
+ *
+ * Il part toujours « à saisir », jamais au plateau : corriger une saisie ne
+ * chasse pas l'athlète qui concourt. Les valeurs sont conservées pour
+ * préremplir la ressaisie ; `avant` rend l'ancien résultat, que l'action
+ * consigne au journal d'audit.
+ */
+export async function rouvrirPourCorrection(passageId: string): Promise<
+  Resultat & { avant?: typeof passage.$inferSelect }
+> {
+  if (!UUID.test(passageId)) return { ok: false, erreur: "Passage introuvable." };
+  const [avant] = await db.select().from(passage).where(eq(passage.id, passageId));
+  if (!avant) return { ok: false, erreur: "Passage introuvable." };
+  if (avant.statut !== "termine")
+    return { ok: false, erreur: "Seul un passage validé se corrige : celui-ci ne l'est pas." };
+
+  const ecrit = await db
+    .update(passage)
+    .set({ statut: "a_saisir", resultatStatut: null, valideLe: null })
+    .where(and(eq(passage.id, passageId), eq(passage.statut, "termine")))
+    .returning({ id: passage.id });
+  if (ecrit.length === 0)
+    return { ok: false, erreur: "Ce passage vient d'être rouvert ailleurs : rechargez la page." };
+  return { ok: true, avant };
+}
+
+/**
  * Reconstruit la file de passage d'une épreuve, DANS UN PÉRIMÈTRE.
  *
  * Les passages déjà terminés sont conservés : refaire l'ordre ne doit jamais

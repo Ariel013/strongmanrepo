@@ -596,7 +596,9 @@ Pastille dossard, nom (rouge `#A6371C` si forfait), résultat `t.texte`
 (valeur + unité, éventuellement « · temps s », ou « ZÉRO » / « FORFAIT » en
 rouge), fond de ligne `#FBEFEA` pour un zéro ou un forfait. Bouton « Annuler »
 (`t.renvoyer`) qui renvoie le passage dans « À venir ».
-> **Écart du portage** : pas de bouton « Annuler » par ligne (ADR 0005). En
+> **Écart du portage** : pas de bouton « Annuler » par ligne (ADR 0005) ; depuis
+> le 2026-09-19, un bouton « Corriger » par ligne (amendement de l'ADR 0005) :
+> le passage repart en attente de résultat, prérempli, ancien résultat tracé. En
 > tête de colonne, un rappel et un lien « Imprimer les résultats » vers
 > `/admin/impression/resultats`. Le portage ajoute aussi un huitième écran
 > public, `/ecran/resultats` (résultats de l'épreuve par catégorie), et son

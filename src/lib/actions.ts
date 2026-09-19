@@ -41,6 +41,7 @@ import {
   realignerFile,
   reconstruireFile,
   remettreEnFile,
+  rouvrirPourCorrection,
 } from "./plateau";
 import {
   dateFrancaise,
@@ -506,6 +507,37 @@ export async function rouvrirPassage(passageId: string): Promise<Retour> {
   await tracer("passage.rouvert", "passage", passageId, {
     ancienResultat: { statut: avant.resultatStatut, valeur: avant.valeur },
     revenu: plateauPris ? "a_saisir" : "plateau",
+  });
+  revalidatePath("/admin/plateau");
+  revalidatePath("/ecran", "layout");
+  return { ok: true };
+}
+
+/**
+ * Rouvre un passage validé pour en corriger la saisie — y compris quand toute
+ * l'épreuve est terminée (amendement de l'ADR 0005, 2026-09-19).
+ *
+ * Le passage part TOUJOURS « en attente de résultat », jamais au plateau : une
+ * correction de saisie ne doit ni chasser l'athlète qui concourt, ni relancer
+ * un chronomètre. Les valeurs validées sont conservées pour préremplir la
+ * ressaisie ; l'ancien résultat complet part au journal d'audit, seule pièce
+ * en cas de réclamation. Tant qu'il n'est pas revalidé, le passage ne compte
+ * plus au classement — l'écran le dit avant de confirmer.
+ */
+export async function corrigerPassage(passageId: string): Promise<Retour> {
+  await exigerSession();
+  const r = await rouvrirPourCorrection(passageId);
+  if (!r.ok || !r.avant) return { ok: false, erreur: r.erreur };
+
+  await tracer("passage.correction_ouverte", "passage", passageId, {
+    ancienResultat: {
+      statut: r.avant.resultatStatut,
+      valeur: r.avant.valeur,
+      tempsS: r.avant.tempsS,
+      tours: r.avant.tours,
+      chronoS: r.avant.chronoS,
+      valideLe: r.avant.valideLe,
+    },
   });
   revalidatePath("/admin/plateau");
   revalidatePath("/ecran", "layout");

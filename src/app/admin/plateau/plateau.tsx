@@ -33,6 +33,7 @@ import {
   appelerAuPlateau,
   choisirEpreuve,
   construireFile,
+  corrigerPassage,
   majChrono,
   mettreEnAttente,
   preparerToutes,
@@ -383,7 +384,14 @@ export function Plateau({
   >({});
   const saisieAttenteDe = (p: PassageVue) =>
     saisiesAttente[p.id] ?? {
-      valeur: epreuve.tours && p.tours?.length ? String(p.tours.length) : "",
+      // Une correction revient ici avec sa valeur validée : elle se relit
+      // avant de se retaper.
+      valeur:
+        p.valeur !== null
+          ? virgule(p.valeur)
+          : epreuve.tours && p.tours?.length
+            ? String(p.tours.length)
+            : "",
       temps: p.tempsS !== null ? virgule(p.tempsS) : "",
       chrono: p.chronoS !== null ? virgule(p.chronoS) : "",
       erreur: "",
@@ -1923,6 +1931,32 @@ export function Plateau({
                     {texte}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  title="Rouvre ce résultat pour corriger une erreur de saisie. Il passe dans « En attente de résultat », prérempli ; l'ancien résultat est gardé au journal d'audit."
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Corriger le résultat de ${nomComplet(a)} (${texte}) ?\n\n` +
+                          "Il passe dans « En attente de résultat », prérempli avec sa valeur actuelle. " +
+                          "Tant que vous ne l'avez pas revalidé, il ne compte plus au classement ni sur le mur LED. " +
+                          "L'ancien résultat est conservé au journal d'audit.",
+                      )
+                    )
+                      agir(
+                        () => corrigerPassage(p.id),
+                        "Résultat rouvert : corrigez-le dans « En attente de résultat », puis validez.",
+                      );
+                  }}
+                  style={styleBouton("blanc", {
+                    padding: "7px 11px",
+                    borderRadius: 8,
+                    fontSize: 12,
+                    flex: "none",
+                  })}
+                >
+                  Corriger
+                </button>
               </div>
             );
           })}
