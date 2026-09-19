@@ -65,6 +65,18 @@
 
 ## 📓 Journal des sessions
 
+### 2026-09-19 (27) — Le classement général complet s'imprime
+
+Kevin, en compétition, correction validée (« ça marche ») : « on ne peut tirer
+que les 3 de chaque catégorie ». Le palmarès n'imprime que les places dotées.
+`/admin/impression/classement` : une feuille A4 paysage par catégorie, tous
+les athlètes du premier au dernier, points de chaque épreuve, total, décompte
+des places qui départage, invités sous le classement, bandeau définitif /
+provisoire, signatures. `?categorie=<id>` pour une seule. Recalculée par
+`tableauGeneral`, rien de neuf côté règle. Accès : accueil et palmarès ; mode
+d'emploi à neuf feuilles. `lint` ✓, `build` ✓. **Non vue dans le navigateur
+ni imprimée.**
+
 ### 2026-09-19 (26) — En pleine compétition : corriger un résultat validé
 
 Kevin, pendant l'épreuve : une erreur de saisie sur un athlète, épreuve

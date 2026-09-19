@@ -306,6 +306,17 @@ export default async function PageAccueil() {
           Imprimer le palmarès
         </Link>
         <Link
+          href="/admin/impression/classement"
+          title="Le classement général complet : tous les athlètes de chaque catégorie, du premier au dernier, avec les points de chaque épreuve"
+          style={styleBouton("blanc", {
+            padding: "10px 16px",
+            borderRadius: 9,
+            fontSize: 13,
+          })}
+        >
+          Imprimer le classement complet
+        </Link>
+        <Link
           href="/admin/clubs"
           title="Classement des meilleurs clubs, barème 15 / 10 / 5 / 4 / 3 / 1 sur le rang final de chaque athlète"
           style={styleBouton("blanc", {

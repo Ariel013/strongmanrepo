@@ -864,7 +864,7 @@ export default function PageAide() {
           titre="7. Ce qui s'imprime"
           chapeau="Le papier demande exactement ce que l'écran demandera à la ressaisie, avec les mêmes mots. Le juge n'a rien à traduire."
         >
-          <Carte titre="Les huit feuilles, et qui les remplit">
+          <Carte titre="Les neuf feuilles, et qui les remplit">
             <dl className="space-y-4">
               {[
                 [
@@ -894,6 +894,10 @@ export default function PageAide() {
                 [
                   "Palmarès",
                   "Par catégorie, chaque place dotée avec son lauréat, puis le meilleur club et sa récompense, à signer. Depuis l'étape Récompenses ou l'accueil.",
+                ],
+                [
+                  "Classement général complet",
+                  "Tous les athlètes de chaque catégorie, du premier au dernier, avec les points de chaque épreuve et le total. Une feuille paysage par catégorie, provisoire tant qu'un passage reste à valider. Depuis l'accueil ou le palmarès.",
                 ],
                 [
                   "Classement des clubs",

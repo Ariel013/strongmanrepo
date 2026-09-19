@@ -45,6 +45,9 @@ export default async function PagePalmares() {
         <Link href="/admin/preparation?etape=6" style={styleBouton("blanc", { padding: "10px 16px", borderRadius: 9 })}>
           ← Modifier les récompenses
         </Link>
+        <Link href="/admin/impression/classement" style={styleBouton("blanc", { padding: "10px 16px", borderRadius: 9 })}>
+          Classement complet, tous les athlètes →
+        </Link>
         <div style={{ fontSize: 13, color: C.encre4, lineHeight: 1.5 }}>
           Les lauréats de chaque place dotée, par catégorie, puis le meilleur
           club. Provisoire tant que toutes les épreuves ne sont pas validées.
